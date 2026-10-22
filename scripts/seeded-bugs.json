@@ -11495,8 +11495,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/astro/resolve.ts",
-          "search": "  try {\n    found = await content.getEntry(PAGES_COLLECTION, slug);\n  } catch {\n    // No emvb_pages collection yet (EmVB not set up): not an EmVB page.\n    return null;\n  }",
-          "replace": "  found = await content.getEntry(PAGES_COLLECTION, slug);"
+          "search": "  try {\n    found = await content.getEntry(collection, slug);\n  } catch {\n    // The selected collection does not exist yet: let the host render its fallback.\n    return null;\n  }",
+          "replace": "  found = await content.getEntry(collection, slug);"
         }
       ],
       "command": ["bun", "test", "./packages/emvb/src/astro/resolve.test.ts"],
@@ -12321,8 +12321,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/TopBar.tsx",
-          "search": "              aria-disabled={busy !== null}\n              aria-busy={busy === \"publish\"}",
-          "replace": "              aria-disabled={false}\n              aria-busy={busy === \"publish\"}"
+          "search": "                aria-disabled={busy !== null}\n                aria-busy={busy === \"publish\"}",
+          "replace": "                aria-disabled={false}\n                aria-busy={busy === \"publish\"}"
         }
       ],
       "command": ["bun", "test", "./packages/emvb/src/admin/editor/top-bar.test.tsx"],
@@ -17617,7 +17617,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/constants.ts",
-          "search": "export const PLUGIN_VERSION = \"0.8.0\";",
+          "search": "export const PLUGIN_VERSION = \"0.8.0-dev.1\";",
           "replace": "export const PLUGIN_VERSION = \"0.0.0\";"
         }
       ],
@@ -17631,7 +17631,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/constants.ts",
-          "search": "export const PLUGIN_VERSION = \"0.8.0\";",
+          "search": "export const PLUGIN_VERSION = \"0.8.0-dev.1\";",
           "replace": "export const PLUGIN_VERSION = \"0.0.0\";"
         }
       ],
@@ -25731,7 +25731,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/EditorOverlay.tsx",
-          "search": "    shell.inert = true;\n",
+          "search": "    if (shell) shell.inert = true;\n",
           "replace": ""
         }
       ],
@@ -27313,8 +27313,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/index.ts",
-          "search": "options: canvasStyles.length > 0 ? { canvasStyles } : {},",
-          "replace": "options: {},"
+          "search": "...(canvasStyles.length > 0 ? { canvasStyles } : {}),",
+          "replace": "...{},"
         }
       ],
       "command": ["bun", "test", "./packages/emvb/test/server/canvas-styles-options.test.ts"],
@@ -30441,7 +30441,7 @@
       "edits": [
         {
           "file": "packages/emvb-mcp/src/bridge.ts",
-          "search": "export const BRIDGE_VERSION = \"0.8.0\";",
+          "search": "export const BRIDGE_VERSION = \"0.8.0-dev.1\";",
           "replace": "export const BRIDGE_VERSION = \"0.4.9\";"
         }
       ],
@@ -40423,6 +40423,118 @@
           "replace": "};"
         }
       ]
+    },
+    {
+      "id": "page-canvas/host-save-validation",
+      "requirement": "Page canvas host field",
+      "description": "host page layout bypasses the trusted layout boundary",
+      "edits": [
+        {
+          "file": "packages/emvb/src/server/hooks.ts",
+          "search": "if (!canvasCollections.includes(event.collection)) return;",
+          "replace": "return;"
+        }
+      ],
+      "command": ["bun", "test", "packages/emvb/test/server/host-fields.test.ts"],
+      "expect": "configured Page layout"
+    },
+    {
+      "id": "page-canvas/host-editor-config",
+      "requirement": "Page canvas host field",
+      "description": "host collection options are not sent to the field editor",
+      "edits": [
+        {
+          "file": "packages/emvb/src/server/plugin.ts",
+          "search": "({ canvasStyles, canvasCollections })",
+          "replace": "({ canvasStyles, canvasCollections: [] })"
+        }
+      ],
+      "command": ["bun", "test", "packages/emvb/test/server/host-fields.test.ts"],
+      "expect": "host canvas collection configuration"
+    },
+    {
+      "id": "page-canvas/host-collection-ssr",
+      "requirement": "Page canvas host field",
+      "description": "the host canvas resolves a different content record",
+      "edits": [
+        {
+          "file": "packages/emvb/src/astro/resolve.ts",
+          "search": "content.getEntry(collection, slug)",
+          "replace": "content.getEntry(PAGES_COLLECTION, slug)"
+        }
+      ],
+      "command": ["bun", "test", "packages/emvb/src/astro/resolve.test.ts"],
+      "expect": "host|pages|collection"
+    },
+    {
+      "id": "page-canvas/apply-on-change",
+      "requirement": "Page canvas host field",
+      "description": "Apply drops the host unsaved canvas value",
+      "edits": [
+        {
+          "file": "packages/emvb/src/admin/widgets/CanvasField.tsx",
+          "search": "      onChange(layout);",
+          "replace": "      void layout;"
+        }
+      ],
+      "command": ["bun", "test", "packages/emvb/src/admin/widgets/CanvasField.test.tsx"],
+      "expect": "controlled Page canvas field"
+    },
+    {
+      "id": "page-canvas/narrow-exit-guard",
+      "requirement": "Page canvas host field",
+      "description": "narrow-screen Back discards dirty host canvas without confirmation",
+      "edits": [
+        {
+          "file": "packages/emvb/src/admin/editor/Editor.tsx",
+          "search": "<SmallScreenNotice onBack={fieldSession ? requestExit : undefined} />",
+          "replace": "<SmallScreenNotice />"
+        }
+      ],
+      "command": ["bun", "test", "packages/emvb/src/admin/widgets/CanvasField.test.tsx"],
+      "expect": "narrow|resize|controlled Page canvas field"
+    },
+    {
+      "id": "page-canvas/editor-config-permission",
+      "requirement": "Page canvas host field",
+      "description": "editors cannot load the canvas configuration",
+      "edits": [
+        {
+          "file": "packages/emvb/src/server/plugin.ts",
+          "search": "        permission: \"content:edit_any\",\n",
+          "replace": ""
+        }
+      ],
+      "command": ["bun", "test", "packages/emvb/test/server/host-fields.test.ts"],
+      "expect": "editors can read the private config"
+    },
+    {
+      "id": "page-canvas/author-clear-guard",
+      "requirement": "Page canvas host field",
+      "description": "authors can remove an existing canvas through an empty JSON value",
+      "edits": [
+        {
+          "file": "packages/emvb/src/server/hooks.ts",
+          "search": "    if (!usesCanvas && event.id && event.actor && event.actor.role < EDITOR_ROLE) {",
+          "replace": "    if (false) {"
+        }
+      ],
+      "command": ["bun", "test", "packages/emvb/test/server/host-fields.test.ts"],
+      "expect": "author|canvas"
+    },
+    {
+      "id": "page-canvas/mcp-host-publish-policy",
+      "requirement": "Page canvas host field",
+      "description": "host Pages bypass the existing agent publication policy",
+      "edits": [
+        {
+          "file": "packages/emvb/src/server/agent-settings.ts",
+          "search": "if (!OWNED.has(event.collection) && !canvasCollections.includes(event.collection))\n    return undefined;",
+          "replace": "if (!OWNED.has(event.collection)) return undefined;"
+        }
+      ],
+      "command": ["bun", "test", "packages/emvb/test/server/host-fields.test.ts"],
+      "expect": "MCP publish policy"
     }
   ]
 }

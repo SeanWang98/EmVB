@@ -19,8 +19,17 @@ describe("the editor/config route (W-327)", () => {
       handler: (ctx: never) => Promise<unknown>;
     };
     expect(route.public).toBeUndefined();
-    expect(await route.handler({} as never)).toEqual({ canvasStyles: ["/a.css"] });
+    expect(await route.handler({} as never)).toEqual({
+      canvasStyles: ["/a.css"],
+      canvasCollections: [],
+    });
     const none = createPlugin().routes["editor/config"] as typeof route;
-    expect(await none.handler({} as never)).toEqual({ canvasStyles: [] });
+    expect(await none.handler({} as never)).toEqual({ canvasStyles: [], canvasCollections: [] });
   });
 });
+/**
+ * [INPUT]: 依赖描述符与原生插件工厂。
+ * [OUTPUT]: 验证主站样式配置跨描述符与私有配置路由一致。
+ * [POS]: 配置传输测试；宿主画布测试另见 host-fields。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */

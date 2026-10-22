@@ -1,5 +1,17 @@
+/**
+ * [INPUT]: 依赖内容 API、编辑状态与布局校验。
+ * [OUTPUT]: 提供独立条目保存及受控字段应用命令。
+ * [POS]: 编辑器持久化边界；字段模式只回传布局。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
 import * as React from "react";
-import { byteLength, MAX_LAYOUT_BYTES, nodeIdAtPath, type Layout } from "../../core/index.ts";
+import {
+  byteLength,
+  MAX_LAYOUT_BYTES,
+  nodeIdAtPath,
+  validateLayout,
+  type Layout,
+} from "../../core/index.ts";
 import { PAGES_COLLECTION, THEME_PARTS_COLLECTION } from "../../constants.ts";
 import { ApiError, type Fetcher } from "../api.ts";
 import { publishPage, savePage } from "../content-api.ts";
@@ -10,6 +22,9 @@ import { loadEntry } from "./useEditorData.ts";
 export type SaveStatus =
   | { kind: "idle" | "saving" | "saved" }
   | { kind: "error"; message: string; retry: boolean };
+
+/** 字段只向宿主表单应用布局，不拥有条目发布权限。 */
+export type FieldSession = { onApply: (layout: Layout | null) => void };
 
 const FIX_AND_SAVE = "Couldn't save. Fix the highlighted setting and save again.";
 const OFFLINE = "Couldn't save. Check your connection and try again.";
@@ -101,6 +116,7 @@ export function useSave(
   state: EditorState,
   dispatch: React.Dispatch<EditorAction>,
   collection: string = PAGES_COLLECTION,
+  fieldSession?: FieldSession,
 ) {
   const latest = React.useRef(state);
   latest.current = state;
@@ -121,6 +137,21 @@ export function useSave(
       setSlugError(null);
       setRejection(null);
       try {
+        if (fieldSession) {
+          const layout = current.page.layout;
+          if (layout) {
+            const checked = validateLayout(layout);
+            if (!checked.ok)
+              throw new ApiError(
+                422,
+                "INVALID_LAYOUT",
+                "The canvas layout is invalid. Fix it before applying.",
+              );
+          }
+          // 外层 Page 保留所有未保存字段，由其统一保存、发布。
+          fieldSession.onApply(layout);
+          return "field-applied";
+        }
         const next =
           collection === THEME_PARTS_COLLECTION
             ? await saveThemePart(
@@ -162,7 +193,7 @@ export function useSave(
         return null;
       }
     },
-    [fetcher, dispatch, collection],
+    [fetcher, dispatch, collection, fieldSession],
   );
 
   // W-199: one save at a time. A save asked for while one is in flight (Ctrl+S, autosave) runs once
@@ -198,6 +229,7 @@ export function useSave(
   // Ctrl+S, autosave) waits for it and uses its new revision instead of the stale one, which
   // reopened the conflict right after a successful overwrite.
   const overwrite = React.useCallback(async () => {
+    if (fieldSession) return;
     setConflict(false);
     const run: Promise<string | null> = (async () => {
       try {
@@ -212,9 +244,10 @@ export function useSave(
     });
     inFlight.current = run;
     await run;
-  }, [fetcher, write, collection]);
+  }, [fetcher, write, collection, fieldSession]);
 
   const publish = React.useCallback(async (): Promise<boolean> => {
+    if (fieldSession) return false;
     let rev: string | null = latest.current.rev;
     const pending = queued.current ?? inFlight.current;
     if (pending) {
@@ -240,7 +273,7 @@ export function useSave(
       setStatus({ kind: "error", message: publishFailureMessage(error), retry: false });
       return false;
     }
-  }, [fetcher, dispatch, start, collection]);
+  }, [fetcher, dispatch, start, collection, fieldSession]);
 
   return {
     status,

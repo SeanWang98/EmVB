@@ -1,5 +1,11 @@
+/**
+ * [INPUT]: 依赖 EmDash 插件身份与本包发布版本。
+ * [OUTPUT]: 提供稳定集合名、存储键和插件元数据常量。
+ * [POS]: 各运行时共享的身份入口；版本与 package.json 同步。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
 export const PLUGIN_ID = "emvb";
-export const PLUGIN_VERSION = "0.8.0";
+export const PLUGIN_VERSION = "0.8.0-dev.1";
 export const PACKAGE_NAME = "@perkyzz/emvb";
 export const ADMIN_ENTRY = `${PACKAGE_NAME}/admin`;
 export const PAGES_COLLECTION = "emvb_pages";

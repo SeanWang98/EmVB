@@ -71,6 +71,10 @@ A fixed route has no slug parameter. Pass the page's slug: `await resolveEmVBPag
 
 Then sign in as an admin, open **Pages VisualBuilder** and click **Set up EmVB** once.
 
+## Edit an existing Page (fork extension)
+
+Register `emvb({ canvasCollections: ["pages"] })`, add an optional `layout` JSON field with `widget: "emvb:canvas"`, and resolve it with `resolveEmVBPage(Astro, { collection: "pages" })`. The full-screen canvas applies changes to the Page form, whose native autosave persists the draft. Page owns preview, revisions, SEO and publishing; Site styles keep their separate publish flow. Cancel only discards canvas changes that have not been applied. Existing `emvb_pages` and Theme Builder remain compatible. See [the Page canvas guide](../../docs/guides/page-canvas-field.md).
+
 ## AI agents (MCP)
 
 On EmDash 1.2+ with `emdash({ mcp: true, … })`, AI agents can build and edit draft EmVB pages. An admin turns them on in **Pages VisualBuilder → AI agents** (off by default) and approves the EmVB tools on EmDash's Plugins screen. Agents connect to EmDash's own endpoint (`/_emdash/api/mcp`) or through the local bridge, `npx -y @perkyzz/emvb-mcp --site https://your.site` with the token in `EMVB_TOKEN`. Tokens need the `mcp:tools:emvb` scope and an editor (not an admin) user. Agents only change drafts unless an admin allows publishing; each token may make 300 reads and 60 changes a minute and 10 publishes an hour. Every agent change shows in the version timeline with an **Agent** badge. See the [MCP guide](https://github.com/PerkyZZ999/EmVB/blob/main/docs/guides/mcp.md).

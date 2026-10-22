@@ -1,3 +1,9 @@
+/**
+ * [INPUT]: 依赖编辑状态、面板命令与字段模式。
+ * [OUTPUT]: 提供初始状态、弹窗开关与编辑弹窗。
+ * [POS]: 编辑器交互编排；字段模式阻断条目历史及回退。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
 import type { createKumoToastManager } from "@cloudflare/kumo";
 import { focusWhenLost } from "./focus-when-lost.ts";
 import type { SavedSectionActions } from "./useSavedSections.ts";
@@ -210,6 +216,7 @@ export function EditorDialogs({
   setAnnouncement,
   parts,
   saved,
+  fieldMode = false,
 }: {
   chrome: ChromeFlags;
   fetcher: Fetcher;
@@ -236,6 +243,7 @@ export function EditorDialogs({
   parts?: ThemeDynamicData;
   /** My sections for the palette's Insert group (W-876). */
   saved?: SavedSectionActions;
+  fieldMode?: boolean;
 }) {
   const [leaveSaving, setLeaveSaving] = React.useState(false);
   return (
@@ -316,25 +324,27 @@ export function EditorDialogs({
           toasts.add({ title: note, description: "Undo takes it back." });
         }}
       />
-      <TimelineDialog
-        open={chrome.flags.timeline}
-        onOpenChange={chrome.setOpen("timeline")}
-        fetcher={fetcher}
-        collection={collection}
-        entryId={state.id}
-        current={state.page.layout}
-        design={state.design}
-        canvasStyles={canvasStyles}
-        onApply={(layout, note) => {
-          dispatch({
-            type: "apply-arranged",
-            layout,
-            selected: latest.current.selectedId ?? layout.root.id,
-          });
-          setAnnouncement(note);
-          toasts.add({ title: note, description: "Undo takes it back. Save to keep it." });
-        }}
-      />
+      {!fieldMode && (
+        <TimelineDialog
+          open={chrome.flags.timeline}
+          onOpenChange={chrome.setOpen("timeline")}
+          fetcher={fetcher}
+          collection={collection}
+          entryId={state.id}
+          current={state.page.layout}
+          design={state.design}
+          canvasStyles={canvasStyles}
+          onApply={(layout, note) => {
+            dispatch({
+              type: "apply-arranged",
+              layout,
+              selected: latest.current.selectedId ?? layout.root.id,
+            });
+            setAnnouncement(note);
+            toasts.add({ title: note, description: "Undo takes it back. Save to keep it." });
+          }}
+        />
+      )}
       <ShareLinkDialog
         open={chrome.flags.share}
         onOpenChange={chrome.setOpen("share")}
@@ -351,28 +361,33 @@ export function EditorDialogs({
         parts={parts}
         onSelect={(id) => dispatch({ type: "select", id })}
       />
-      <ConflictDialog
-        open={saver.conflict}
-        onOpenChange={(open) => !open && saver.closeConflict()}
-        onReload={() => void reloadEntry({ fetcher, collection, state, dispatch, saver })}
-        onOverwrite={() => void saver.overwrite()}
-      />
-      <RevertDialog
-        open={chrome.flags.revert}
-        onOpenChange={chrome.setOpen("revert")}
-        onRevert={() =>
-          void revertToPublished({
-            fetcher,
-            collection,
-            latest,
-            dispatch,
-            saver,
-            toasts,
-            close: () => chrome.close("revert"),
-          })
-        }
-      />
+      {!fieldMode && (
+        <ConflictDialog
+          open={saver.conflict}
+          onOpenChange={(open) => !open && saver.closeConflict()}
+          onReload={() => void reloadEntry({ fetcher, collection, state, dispatch, saver })}
+          onOverwrite={() => void saver.overwrite()}
+        />
+      )}
+      {!fieldMode && (
+        <RevertDialog
+          open={chrome.flags.revert}
+          onOpenChange={chrome.setOpen("revert")}
+          onRevert={() =>
+            void revertToPublished({
+              fetcher,
+              collection,
+              latest,
+              dispatch,
+              saver,
+              toasts,
+              close: () => chrome.close("revert"),
+            })
+          }
+        />
+      )}
       <LeaveDialog
+        fieldMode={fieldMode}
         open={chrome.flags.leave}
         onOpenChange={chrome.setOpen("leave")}
         onDiscard={() => chrome.setLeaving(true)}

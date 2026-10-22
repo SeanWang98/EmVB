@@ -1,3 +1,9 @@
+/**
+ * [INPUT]: 依赖编辑器确认动作、脏状态与字段模式。
+ * [OUTPUT]: 提供冲突、回退、离开与删除确认弹窗。
+ * [POS]: 编辑器确认边界；字段离开明确区分应用与保存。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
 import { Button, Dialog, Loader } from "@cloudflare/kumo";
 import { useMediaQuery } from "./useMediaQuery.ts";
 import { useEditedNoun } from "./edited-noun.ts";
@@ -83,11 +89,13 @@ export function LeaveDialog({
   onDiscard,
   onSaveAndLeave,
   saving = false,
+  fieldMode = false,
 }: OpenProps & {
   onDiscard: () => void;
   onSaveAndLeave: () => void;
   /** W-834: Save and leave is saving; the dialog shows it and ignores presses and closing. */
   saving?: boolean;
+  fieldMode?: boolean;
 }) {
   const noun = useEditedNoun();
   const reducedMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
@@ -105,8 +113,16 @@ export function LeaveDialog({
       <Dialog size="base" className="p-6">
         <style>{UI_CSS}</style>
         <div data-emvb-dialog="leave" className="emvb-dialog">
-          <Dialog.Title>Leave without saving?</Dialog.Title>
-          <Dialog.Description>You have unsaved changes on this {noun}.</Dialog.Description>
+          <Dialog.Title>
+            {fieldMode ? "Discard canvas changes?" : "Leave without saving?"}
+          </Dialog.Title>
+          <Dialog.Description>
+            {fieldMode ? (
+              "Only Apply changes returns this layout to the Page form. Site styles and shared resources save separately."
+            ) : (
+              <>You have unsaved changes on this {noun}.</>
+            )}
+          </Dialog.Description>
           <div className="emvb-dialog-actions">
             <Dialog.Close
               render={(props) => (
@@ -132,7 +148,7 @@ export function LeaveDialog({
               aria-busy={saving}
               onClick={unlessSaving(onSaveAndLeave)}
             >
-              {saving ? "Saving…" : "Save and leave"}
+              {saving ? "Saving…" : fieldMode ? "Apply and return" : "Save and leave"}
             </Button>
           </div>
         </div>

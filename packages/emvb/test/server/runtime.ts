@@ -1,3 +1,9 @@
+/**
+ * [INPUT]: 依赖 EmDash 内存 SQLite 与原生插件工厂。
+ * [OUTPUT]: 提供内容写入、插件路由与代理策略测试运行时。
+ * [POS]: 服务端边界测试夹具，支持配置宿主画布集合。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
 import { SchemaRegistry } from "emdash";
 import { createDialect } from "emdash/db/sqlite";
 // EmDash 1.0 moved the test runtime under `emdash/internal/` (upgrade guide). `@emdash-cms/plugin-test`
@@ -40,13 +46,16 @@ async function createPagesCollection(schema: SchemaRegistry) {
 }
 
 /** A real EmDash runtime on in-memory SQLite with EmVB installed and the pages collection created. */
-export async function createTestRuntime({ setUp = true }: { setUp?: boolean } = {}) {
+export async function createTestRuntime({
+  setUp = true,
+  canvasCollections = [],
+}: { setUp?: boolean; canvasCollections?: string[] } = {}) {
   const runtime = await EmDashRuntime.create({
     // The runtime caches its database per entrypoint, so each test runtime gets its own.
     config: {
       database: { entrypoint: `emvb-test-${crypto.randomUUID()}`, config: {}, type: "sqlite" },
     },
-    plugins: [createPlugin()],
+    plugins: [createPlugin({ canvasCollections })],
     createDialect: () => createDialect({ url: ":memory:" }),
     createStorage: null,
     sandboxEnabled: false,

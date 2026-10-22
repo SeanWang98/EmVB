@@ -65,6 +65,50 @@ beforeEach(() => {
 });
 
 describe("resolveEmVBPage (W-091, R-030, R-052)", () => {
+  test("a host collection renders its own Page and preserves its SEO entry and preview identity", async () => {
+    const found = page(
+      {
+        title: "Original Page",
+        layout: layout(heading),
+        canvas_mode: "blank",
+        seo: { title: "Original SEO" },
+      },
+      true,
+    );
+    lookup = async (collection) => {
+      if (collection !== "pages") throw new Error("emvb_pages is not set up");
+      return found;
+    };
+    const resolved = await resolveEmVBPage(astro({ slug: "about" }), { collection: "pages" });
+    expect(lookups).toEqual(["pages/about"]);
+    expect(resolved?.entry === found.entry).toBe(true);
+    expect(resolved?.collection).toBe("pages");
+    expect(resolved?.canvasMode).toBe("site-layout");
+    expect(resolved?.isPreview).toBe(true);
+    expect(resolved?.html).toContain(">Hello</h1>");
+    lookups.length = 0;
+    expect(await resolveEmVBPage(astro({ slug: "about" }))).toBeNull();
+    expect(lookups).toEqual(["emvb_pages/about"]);
+  });
+
+  test.each([undefined, null, "", " ", "null"])(
+    "an empty host layout (%p) falls through without loading design",
+    async (empty) => {
+      lookup = async () => page({ title: "Original marketing page", layout: empty });
+      expect(await resolveEmVBPage(astro({ slug: "about" }), { collection: "pages" })).toBeNull();
+      expect(handlerCalls).toEqual([]);
+    },
+  );
+
+  test("reserved collections are refused without reading content", async () => {
+    const invalid = await Promise.all(
+      ["../pages", "emvb_theme_parts", "system_users"].map((collection) =>
+        resolveEmVBPage(astro({ slug: "about" }), { collection }),
+      ),
+    );
+    expect(invalid).toEqual([null, null, null]);
+    expect(lookups).toEqual([]);
+  });
   test("no slug is not an EmVB page and reads nothing", async () => {
     expect(await resolveEmVBPage(astro({}))).toBeNull();
     expect(await resolveEmVBPage(astro({ slug: "" }))).toBeNull();
@@ -215,3 +259,9 @@ describe("Loop Item parts on a page (W-666)", () => {
     }
   });
 });
+/**
+ * [INPUT]: 依赖可替换内容端口与真实画布渲染器。
+ * [OUTPUT]: 验证集合选择、宿主回退与请求级动态渲染。
+ * [POS]: SSR 页面解析契约测试，不依赖浏览器。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */

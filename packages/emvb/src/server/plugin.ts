@@ -1,3 +1,9 @@
+/**
+ * [INPUT]: 依赖 EmDash 原生插件 API、服务端能力与主站配置。
+ * [OUTPUT]: 注册画布字段、内容校验、样式及插件路由。
+ * [POS]: 服务端装配入口，配置集合继续使用 EmDash 内容存储。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
 import { definePlugin } from "emdash";
 import { ADMIN_ENTRY, PLUGIN_ID, PLUGIN_VERSION } from "../constants.ts";
 import {
@@ -22,11 +28,15 @@ import {
   pageAgentVersionsRoute,
 } from "./agent-settings.ts";
 import { canvasStyleUrls } from "../core/canvas-styles.ts";
+import { canvasCollectionSlugs } from "../core/host-fields.ts";
 import { TOOLS } from "../mcp/tools.ts";
 import { mcpRoutes, mcpToolConfig } from "./mcp-routes.ts";
 
-export function createPlugin(options: { canvasStyles?: unknown } = {}) {
+export function createPlugin(
+  options: { canvasStyles?: unknown; canvasCollections?: unknown } = {},
+) {
   const canvasStyles = canvasStyleUrls(options.canvasStyles);
+  const canvasCollections = canvasCollectionSlugs(options.canvasCollections);
   return definePlugin({
     id: PLUGIN_ID,
     version: PLUGIN_VERSION,
@@ -48,9 +58,14 @@ export function createPlugin(options: { canvasStyles?: unknown } = {}) {
       emvb_saved_sections: { indexes: ["updatedAt"] },
     },
     hooks: {
-      "content:beforeSave": { handler: beforeSave, errorPolicy: "abort" },
+      "content:beforeSave": {
+        handler: (event, ctx) => beforeSave(event, ctx, canvasCollections),
+        errorPolicy: "abort",
+      },
       // D-055: EmDash's own MCP tools can't publish EmVB pages unless the admin allowed it.
-      "content:beforePublish": { handler: beforePublish },
+      "content:beforePublish": {
+        handler: (event, ctx) => beforePublish(event, ctx, canvasCollections),
+      },
     },
     admin: {
       entry: ADMIN_ENTRY,
@@ -59,7 +74,10 @@ export function createPlugin(options: { canvasStyles?: unknown } = {}) {
         { path: "/theme", label: "Theme Builder", icon: "layout" },
         { path: "/agents", label: "AI agents", icon: "layout" },
       ],
-      fieldWidgets: [{ name: "layout", label: "EmVB page (read-only)", fieldTypes: ["json"] }],
+      fieldWidgets: [
+        { name: "layout", label: "EmVB page (read-only)", fieldTypes: ["json"] },
+        { name: "canvas", label: "EmVB canvas", fieldTypes: ["json"] },
+      ],
     },
     routes: {
       health: {
@@ -67,7 +85,10 @@ export function createPlugin(options: { canvasStyles?: unknown } = {}) {
         handler: async () => ({ ok: true, plugin: PLUGIN_ID, version: PLUGIN_VERSION }),
       },
       // W-327: what the editor needs from the host's `emvb()` options.
-      "editor/config": { handler: async () => ({ canvasStyles }) },
+      "editor/config": {
+        permission: "content:edit_any",
+        handler: async () => ({ canvasStyles, canvasCollections }),
+      },
       design: designRoute,
       "design/draft": designDraftRoute,
       "design/save": designSaveRoute,

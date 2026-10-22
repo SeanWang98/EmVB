@@ -1,3 +1,9 @@
+/**
+ * [INPUT]: 依赖编辑状态、命令与字段模式标记。
+ * [OUTPUT]: 提供页面操作栏或字段应用操作栏。
+ * [POS]: 编辑器顶部入口；字段模式不展示页面发布动作。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
 import { Button, DropdownMenu, Loader } from "@cloudflare/kumo";
 import * as React from "react";
 import {
@@ -79,6 +85,7 @@ export function TopBar({
   canRevert = false,
   onRevert,
   tools,
+  fieldMode = false,
 }: {
   page: TopBarPage | null;
   dirty: boolean;
@@ -99,6 +106,7 @@ export function TopBar({
   onRevert?: () => void;
   /** Extra tools beside Site styles: the page weight and accessibility meters, … (W-310). */
   tools?: React.ReactNode;
+  fieldMode?: boolean;
 }) {
   const reducedMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
   // W-769: a disabled button drops focus to the page body, so the button that was focused when
@@ -119,12 +127,13 @@ export function TopBar({
     <header className="emvb-topbar">
       <div className="emvb-topbar-start">
         <Button
+          type="button"
           variant="ghost"
           className={BUTTON}
           icon={<SignOutIcon aria-hidden="true" />}
           onClick={onExit}
         >
-          Exit
+          {fieldMode ? "Cancel" : "Exit"}
         </Button>
         {page && (
           <>
@@ -132,10 +141,12 @@ export function TopBar({
             <span className="emvb-topbar-title" title={page.title ? page.title : "Untitled page"}>
               {page.title || "Untitled page"}
             </span>
-            <span className="emvb-status" data-status={page.status}>
-              <span className="emvb-status-dot" aria-hidden="true" />
-              {statusLabel(page.status)}
-            </span>
+            {!fieldMode && (
+              <span className="emvb-status" data-status={page.status}>
+                <span className="emvb-status-dot" aria-hidden="true" />
+                {statusLabel(page.status)}
+              </span>
+            )}
           </>
         )}
       </div>
@@ -197,37 +208,39 @@ export function TopBar({
               gap: 8,
             }}
           >
-            <div className="emvb-preview-split">
-              <Button
-                variant="secondary"
-                className={BUTTON}
-                icon={<ArrowSquareOutIcon aria-hidden="true" />}
-                onClick={() => onPreview()}
-              >
-                Preview
-                {/* UX-082: the icon shows a new tab opens; screen readers hear it. */}
-                <span className="emvb-sr-only"> (opens in a new tab)</span>
-              </Button>
-              <DropdownMenu>
-                <DropdownMenu.Trigger>
-                  <Button
-                    variant="secondary"
-                    shape="square"
-                    className={`${BUTTON} emvb-preview-sizes`}
-                    aria-label="Preview size"
-                    title="Preview size"
-                    icon={<CaretDownIcon aria-hidden="true" />}
-                  />
-                </DropdownMenu.Trigger>
-                <DropdownMenu.Content data-emvb-preview-sizes="">
-                  {PREVIEW_SIZES.map(({ device, label, icon }) => (
-                    <DropdownMenu.Item key={device} icon={icon} onClick={() => onPreview(device)}>
-                      {label}
-                    </DropdownMenu.Item>
-                  ))}
-                </DropdownMenu.Content>
-              </DropdownMenu>
-            </div>
+            {!fieldMode && (
+              <div className="emvb-preview-split">
+                <Button
+                  variant="secondary"
+                  className={BUTTON}
+                  icon={<ArrowSquareOutIcon aria-hidden="true" />}
+                  onClick={() => onPreview()}
+                >
+                  Preview
+                  {/* UX-082: the icon shows a new tab opens; screen readers hear it. */}
+                  <span className="emvb-sr-only"> (opens in a new tab)</span>
+                </Button>
+                <DropdownMenu>
+                  <DropdownMenu.Trigger>
+                    <Button
+                      variant="secondary"
+                      shape="square"
+                      className={`${BUTTON} emvb-preview-sizes`}
+                      aria-label="Preview size"
+                      title="Preview size"
+                      icon={<CaretDownIcon aria-hidden="true" />}
+                    />
+                  </DropdownMenu.Trigger>
+                  <DropdownMenu.Content data-emvb-preview-sizes="">
+                    {PREVIEW_SIZES.map(({ device, label, icon }) => (
+                      <DropdownMenu.Item key={device} icon={icon} onClick={() => onPreview(device)}>
+                        {label}
+                      </DropdownMenu.Item>
+                    ))}
+                  </DropdownMenu.Content>
+                </DropdownMenu>
+              </div>
+            )}
             {onRevert && (page.status === "published" || page.status === "changed") && (
               <Button
                 variant="ghost"
@@ -247,6 +260,7 @@ export function TopBar({
               </Button>
             )}
             <Button
+              type="button"
               variant="secondary"
               className={`${BUTTON} emvb-save-button`}
               icon={
@@ -258,44 +272,48 @@ export function TopBar({
               }
               aria-disabled={busy !== null}
               aria-busy={busy === "save"}
-              aria-label={dirty ? "Save draft (unsaved changes)" : "Save draft"}
+              aria-label={
+                fieldMode ? "Apply changes" : dirty ? "Save draft (unsaved changes)" : "Save draft"
+              }
               onClick={(event) => {
                 if (busy !== null) return;
                 remember(event);
                 onSave();
               }}
             >
-              Save draft
+              {fieldMode ? "Apply changes" : "Save draft"}
               {dirty && <span className="emvb-unsaved-dot" aria-hidden="true" />}
             </Button>
-            <Button
-              variant="primary"
-              className={`${BUTTON} emvb-publish-button`}
-              style={SOLID_PRIMARY}
-              icon={
-                busy === "publish" && !reducedMotion ? (
-                  <Loader size={14} />
-                ) : (
-                  <UploadSimpleIcon size={14} aria-hidden="true" />
-                )
-              }
-              aria-disabled={busy !== null}
-              aria-busy={busy === "publish"}
-              aria-label={stylesUnpublished ? "Publish (site styles unpublished)" : undefined}
-              title={
-                stylesUnpublished
-                  ? "Site styles have unpublished changes. After publishing the page, you can publish them too."
-                  : undefined
-              }
-              data-emvb-styles-pending={stylesUnpublished ? "true" : undefined}
-              onClick={(event) => {
-                if (busy !== null) return;
-                remember(event);
-                onPublish();
-              }}
-            >
-              Publish
-            </Button>
+            {!fieldMode && (
+              <Button
+                variant="primary"
+                className={`${BUTTON} emvb-publish-button`}
+                style={SOLID_PRIMARY}
+                icon={
+                  busy === "publish" && !reducedMotion ? (
+                    <Loader size={14} />
+                  ) : (
+                    <UploadSimpleIcon size={14} aria-hidden="true" />
+                  )
+                }
+                aria-disabled={busy !== null}
+                aria-busy={busy === "publish"}
+                aria-label={stylesUnpublished ? "Publish (site styles unpublished)" : undefined}
+                title={
+                  stylesUnpublished
+                    ? "Site styles have unpublished changes. After publishing the page, you can publish them too."
+                    : undefined
+                }
+                data-emvb-styles-pending={stylesUnpublished ? "true" : undefined}
+                onClick={(event) => {
+                  if (busy !== null) return;
+                  remember(event);
+                  onPublish();
+                }}
+              >
+                Publish
+              </Button>
+            )}
           </div>
         )}
       </div>

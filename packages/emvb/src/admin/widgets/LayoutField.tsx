@@ -1,3 +1,9 @@
+/**
+ * [INPUT]: 依赖独立页面的布局值与后台 URL。
+ * [OUTPUT]: 提供只读布局摘要及共享字段属性类型。
+ * [POS]: 独立 EmVB 页面兼容入口；canvas 负责可编辑字段。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
 import { LinkButton, Text } from "@cloudflare/kumo";
 import { ArrowSquareOutIcon } from "@phosphor-icons/react";
 import { summarizeLayout } from "../../core/index.ts";

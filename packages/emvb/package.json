@@ -1,6 +1,6 @@
 {
   "name": "@perkyzz/emvb",
-  "version": "0.8.0",
+  "version": "0.8.0-dev.1",
   "description": "Visual page builder plugin for EmDash CMS",
   "keywords": [
     "astro",
@@ -12,12 +12,12 @@
   ],
   "homepage": "https://emvb.dev",
   "bugs": {
-    "url": "https://github.com/PerkyZZ999/EmVB/issues"
+    "url": "https://github.com/SeanWang98/EmVB/issues"
   },
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/PerkyZZ999/EmVB.git",
+    "url": "git+https://github.com/SeanWang98/EmVB.git",
     "directory": "packages/emvb"
   },
   "files": [

@@ -1,3 +1,9 @@
+/**
+ * [INPUT]: 依赖 EmDash 保存事件、主站集合白名单与布局校验。
+ * [OUTPUT]: 校验并升级画布 JSON，拒绝无权与无效写入。
+ * [POS]: 共用保存边界，不创建内容或改写 revision 流程。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
 import { ContentSaveRejectedError, type ContentHookEvent, type PluginContext } from "emdash";
 import {
   summarizeIssues,
@@ -8,6 +14,7 @@ import {
   validateTriggers,
 } from "../core/index.ts";
 import { EDITOR_ROLE, PAGES_COLLECTION, THEME_PARTS_COLLECTION } from "../constants.ts";
+import { hasCanvasLayout } from "../core/host-fields.ts";
 
 function parseJsonField(raw: unknown): unknown {
   if (typeof raw !== "string") return raw;
@@ -58,8 +65,21 @@ const THEME_PART_FIELDS: [string, (raw: unknown) => FieldValidation, string?][] 
 export async function beforeSave(
   event: ContentHookEvent,
   ctx: PluginContext,
+  canvasCollections: readonly string[] = [],
 ): Promise<Record<string, unknown> | void> {
-  if (!OWNED.has(event.collection)) return;
+  if (!OWNED.has(event.collection)) {
+    if (!canvasCollections.includes(event.collection)) return;
+    let usesCanvas = hasCanvasLayout(event.content["layout"]);
+    if (!usesCanvas && event.id && event.actor && event.actor.role < EDITOR_ROLE) {
+      // getVersioned 读取最新草稿，不能只查已发布字段而漏掉尚未发布的画布。
+      const existing = await ctx.content?.getVersioned?.(event.collection, event.id);
+      if (!existing) {
+        throw new ContentSaveRejectedError("The existing page could not be read before saving.");
+      }
+      usesCanvas = hasCanvasLayout(existing.item.data["layout"]);
+    }
+    if (!usesCanvas) return;
+  }
   const pageId = event.id ?? null;
   const kind = event.collection === THEME_PARTS_COLLECTION ? "theme part" : "page";
   if (event.actor && event.actor.role < EDITOR_ROLE) {

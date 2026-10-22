@@ -1,3 +1,9 @@
+/**
+ * [INPUT]: 依赖 EmDash 发布事件、版本化设置与主站集合白名单。
+ * [OUTPUT]: 提供代理设置、活动记录及画布发布策略。
+ * [POS]: 代理权限边界，显式配置的宿主集合统一遵守发布开关。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
 import {
   PluginRouteError,
   type ContentPolicyDecision,
@@ -145,8 +151,10 @@ const OWNED = new Set([PAGES_COLLECTION, THEME_PARTS_COLLECTION]);
 export async function beforePublish(
   event: ContentPolicyEvent,
   ctx: PluginContext,
+  canvasCollections: readonly string[] = [],
 ): Promise<ContentPolicyDecision> {
-  if (!OWNED.has(event.collection)) return undefined;
+  if (!OWNED.has(event.collection) && !canvasCollections.includes(event.collection))
+    return undefined;
   const source = event.origin.source === "mcp" || event.actor?.source === "mcp";
   if (!source) return undefined;
   const { settings } = await readAgentSettings(ctx);

@@ -1,4 +1,11 @@
+/**
+ * [INPUT]: 依赖主站选定集合、EmDash 内容与请求级渲染数据。
+ * [OUTPUT]: 解析单条 Page 的画布、SEO 原始条目与集合身份。
+ * [POS]: 服务端页面桥接；空宿主画布回退到主站原正文。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
 import { PAGES_COLLECTION } from "../constants.ts";
+import { canvasCollectionSlugs, hasCanvasLayout } from "../core/host-fields.ts";
 import { emdashContent, type ContentPort } from "./content-port.ts";
 import { formIdsInLayouts } from "./forms-definitions.ts";
 import { readLayout, renderStored, type RenderedPage } from "./render.ts";
@@ -12,6 +19,8 @@ type EmDashEntry = NonNullable<Awaited<ReturnType<ContentPort["getEntry"]>>["ent
 export type ResolvedEmVBPage = RenderedPage & {
   /** The EmDash entry, for `getSeoMeta` and the host's layout. */
   entry: EmDashEntry;
+  /** The collection selected by the host route, including for preview/edit context. */
+  collection: string;
   title: string;
   canvasMode: "site-layout" | "blank";
   /** A valid `_preview` token is serving the draft: don't cache the response. */
@@ -36,6 +45,8 @@ export async function resolveEmVBPage(
     param?: string;
     /** The page's slug, used as-is (not URL-decoded) in place of the route parameter. */
     slug?: string;
+    /** Existing collection with a `layout` JSON field; defaults to EmVB's own pages. */
+    collection?: string;
     /** What the host knows about the visitor: segments and facts Visitors rules use (W-329). */
     visitor?: HostVisitor;
     /** The page's language, e.g. "fr-CA", for Post Dates; defaults to Astro's locale (W-688). */
@@ -52,6 +63,7 @@ export async function resolveEmVBPageWith(
   options: {
     param?: string;
     slug?: string;
+    collection?: string;
     visitor?: HostVisitor;
     /** The page's language, e.g. "fr-CA", for Post Dates; defaults to Astro's locale (W-688). */
     lang?: string;
@@ -59,16 +71,24 @@ export async function resolveEmVBPageWith(
 ): Promise<ResolvedEmVBPage | null> {
   const slug = options.slug ?? content.decodeSlug(astro.params[options.param ?? "slug"]);
   if (!slug) return null;
+  const collection = options.collection ?? PAGES_COLLECTION;
+  if (
+    collection !== PAGES_COLLECTION &&
+    !canvasCollectionSlugs([collection]).includes(collection)
+  ) {
+    return null;
+  }
   let found: Awaited<ReturnType<ContentPort["getEntry"]>>;
   try {
-    found = await content.getEntry(PAGES_COLLECTION, slug);
+    found = await content.getEntry(collection, slug);
   } catch {
-    // No emvb_pages collection yet (EmVB not set up): not an EmVB page.
+    // The selected collection does not exist yet: let the host render its fallback.
     return null;
   }
   const entry = found.entry;
   if (!entry) return null;
   const data = entry.data as Record<string, unknown>;
+  if (collection !== PAGES_COLLECTION && !hasCanvasLayout(data["layout"])) return null;
   const handler = content.pluginHandler(astro.locals as never);
   const design = await designFor(astro, handler, astro.url);
   const layout = readLayout(data["layout"]);
@@ -113,8 +133,10 @@ export async function resolveEmVBPageWith(
       options.lang ?? astro.currentLocale,
     ),
     entry,
+    collection,
     title: typeof data["title"] === "string" ? data["title"] : "",
-    canvasMode: data["canvas_mode"] === "blank" ? "blank" : "site-layout",
+    canvasMode:
+      collection === PAGES_COLLECTION && data["canvas_mode"] === "blank" ? "blank" : "site-layout",
     isPreview: Boolean(found.isPreview),
   };
 }

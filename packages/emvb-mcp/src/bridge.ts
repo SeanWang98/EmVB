@@ -1,3 +1,9 @@
+/**
+ * [INPUT]: 依赖 MCP SDK、共享工具定义与远程站点接口。
+ * [OUTPUT]: 提供 stdio 桥接服务器与同步发布版本。
+ * [POS]: emvb-mcp 协议适配器；不直接访问站点数据库。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
 import { McpServer, ResourceTemplate } from "@modelcontextprotocol/server";
 import { z } from "zod";
 import { DOCS, SKILL_FILES } from "./content.ts";
@@ -10,7 +16,7 @@ import {
 } from "@perkyzz/emvb/mcp";
 import type { Remote, ToolResult } from "./remote.ts";
 
-export const BRIDGE_VERSION = "0.8.0";
+export const BRIDGE_VERSION = "0.8.0-dev.1";
 
 const failure = (message: string): ToolResult => ({
   content: [{ type: "text", text: message }],

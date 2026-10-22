@@ -1,3 +1,9 @@
+/**
+ * [INPUT]: 依赖布局状态、画布面板与持久化适配。
+ * [OUTPUT]: 提供条目编辑器及受控字段复用的 EditorApp。
+ * [POS]: 编辑器编排层；页面模式写 API，字段模式回传布局。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
 import { Button, createKumoToastManager, Empty } from "@cloudflare/kumo";
 import {
   ArrowsClockwiseIcon,
@@ -62,7 +68,7 @@ import { A11yScoreButton } from "./A11yCopilot.tsx";
 import { restoreOnUndo, type Deletion } from "./restore-deleted.ts";
 import { useEditorCommands } from "./useEditorCommands.ts";
 import { editableSource } from "../image-editor/load.ts";
-import { useSave } from "./useSave.ts";
+import { useSave, type FieldSession } from "./useSave.ts";
 import { type ShortcutHandlers, useEditorShortcuts } from "./useEditorShortcuts.ts";
 import { useNodeActions } from "./useNodeActions.ts";
 import { useSavedSections } from "./useSavedSections.ts";
@@ -131,18 +137,20 @@ function EditorBody({
 /** How long a refused paste stays outlined on the canvas (W-093). */
 const REFUSAL_MS = 4000;
 
-function EditorApp({
+export function EditorApp({
   fetcher,
   entry,
   design,
   wideEnough,
   collection,
+  fieldSession,
 }: {
   fetcher: Fetcher;
   entry: EditorEntry;
   design: LoadedDesign;
   wideEnough: boolean;
   collection: string;
+  fieldSession?: FieldSession;
 }) {
   const [history, dispatch] = React.useReducer(historyReducer, undefined, () =>
     emptyHistory(initialState(entry, design)),
@@ -152,12 +160,19 @@ function EditorApp({
   const host = useEditorHost();
   const canvasStyles = useCanvasStyles(fetcher);
   const { exit } = host;
-  const saver = useSave(fetcher, state, dispatch, collection);
+  const saver = useSave(fetcher, state, dispatch, collection, fieldSession);
   // W-466: tell the person when an agent (or anyone) changed the page while they were idle.
-  const remoteChange = useRemoteChange(fetcher, collection, entry.id, state.rev, !dirty);
+  const remoteChange = useRemoteChange(
+    fetcher,
+    collection,
+    entry.id,
+    state.rev,
+    !fieldSession && !dirty,
+  );
   const noun = useEditedNoun();
   const toasts = React.useMemo(() => createKumoToastManager(), []);
   const chrome = useChromeFlags();
+  const requestExit = () => (dirty ? chrome.open("leave") : exit());
   const [device, setDevice] = React.useState<PopupDevice>("desktop");
   const [zoom, setZoom] = React.useState<CanvasZoom>("fit");
   const [scale, setScale] = React.useState(1);
@@ -372,7 +387,9 @@ function EditorApp({
     canDelete: canArrangeSelection,
     a11yHint: `${a11y.score}/100`,
     runners: commandRunners,
-  });
+  }).filter((command) => !fieldSession || !["publish", "preview", "timeline"].includes(command.id));
+  const saveCommand = fieldSession && paletteActions.find((command) => command.id === "save");
+  if (saveCommand) saveCommand.label = "Apply changes";
   const hideOnDevice = editorCommands({
     surface: "device",
     targetId: state.selectedId,
@@ -389,6 +406,7 @@ function EditorApp({
       label={`EmVB editor: ${state.page.title || "Untitled page"}`}
       dirty={dirty && !chrome.leaving}
       onPalette={() => chrome.open("palette")}
+      onFieldSave={fieldSession ? () => void save() : undefined}
     >
       <EditorToasts toastManager={toasts}>
         {remoteChange && (
@@ -416,19 +434,20 @@ function EditorApp({
         {wideEnough ? (
           <>
             <TopBar
+              fieldMode={!!fieldSession}
               page={{ title: state.page.title, status: state.status }}
               dirty={dirty}
               status={saver.status}
               busy={busy}
-              onExit={() => (dirty ? chrome.open("leave") : exit())}
+              onExit={requestExit}
               onShortcuts={() => chrome.open("shortcuts")}
               onSiteStyles={() => chrome.open("siteStyles")}
               onPreview={(size) => preview(size ?? device)}
               onSave={() => void save()}
               onPublish={() => void publish()}
               stylesUnpublished={state.designUnpublished === true}
-              canRevert={canRevert}
-              onRevert={() => chrome.open("revert")}
+              canRevert={!fieldSession && canRevert}
+              onRevert={fieldSession ? undefined : () => chrome.open("revert")}
               tools={
                 <>
                   {/* UX-084: undo and redo were keyboard-only; toasts already say "Undo takes it back". */}
@@ -465,16 +484,18 @@ function EditorApp({
                     icon={<GaugeIcon aria-hidden="true" />}
                     onClick={() => chrome.open("perf")}
                   />
-                  <Button
-                    variant="ghost"
-                    shape="square"
-                    className="emvb-icon-btn"
-                    aria-label="Version timeline"
-                    title="Version timeline"
-                    data-emvb-timeline-open=""
-                    icon={<ClockCounterClockwiseIcon aria-hidden="true" />}
-                    onClick={() => chrome.open("timeline")}
-                  />
+                  {!fieldSession && (
+                    <Button
+                      variant="ghost"
+                      shape="square"
+                      className="emvb-icon-btn"
+                      aria-label="Version timeline"
+                      title="Version timeline"
+                      data-emvb-timeline-open=""
+                      icon={<ClockCounterClockwiseIcon aria-hidden="true" />}
+                      onClick={() => chrome.open("timeline")}
+                    />
+                  )}
                   <Button
                     variant="ghost"
                     shape="square"
@@ -561,6 +582,7 @@ function EditorApp({
                 )}
               </main>
               <SettingsPanel
+                fieldMode={!!fieldSession}
                 state={state}
                 latest={latest}
                 dispatch={dispatch}
@@ -585,9 +607,10 @@ function EditorApp({
             </div>
           </>
         ) : (
-          <SmallScreenNotice />
+          <SmallScreenNotice onBack={fieldSession ? requestExit : undefined} />
         )}
         <EditorDialogs
+          fieldMode={!!fieldSession}
           parts={partDynamic}
           chrome={chrome}
           fetcher={fetcher}

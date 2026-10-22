@@ -64,6 +64,10 @@ export default defineConfig({
 
 Then add the public route and run **Set up EmVB** once, as [docs/guides/install-in-a-host-site.md](docs/guides/install-in-a-host-site.md) describes. The demos in `demos/node` and `demos/cloudflare` are complete host sites; their `src/pages/[slug].astro` shows the public route.
 
+### Page canvas field (fork extension)
+
+This fork can edit an existing EmDash Page's `layout` JSON field instead of creating a second page. Register `emvb({ canvasCollections: ["pages"] })` and bind the field to `emvb:canvas`. **Apply changes** returns the layout to the Page form; the native Page then autosaves the draft. EmDash keeps the single preview and publish flow. See [the Page canvas guide](docs/guides/page-canvas-field.md). Existing independent EmVB pages and Theme Builder remain supported.
+
 ## Development and testing
 
 | Task                                                           | Command                                                      |
@@ -80,6 +84,7 @@ Then add the public route and run **Set up EmVB** once, as [docs/guides/install-
 ## Docs
 
 - [docs/guides/install-in-a-host-site.md](docs/guides/install-in-a-host-site.md): install, the public route, runtimes and visitor data.
+- [docs/guides/page-canvas-field.md](docs/guides/page-canvas-field.md): edit an existing Page field and keep one content record and publish flow (fork extension).
 - [docs/guides/mcp.md](docs/guides/mcp.md): connecting AI agents, tokens, tools, rate limits and publishing.
 - [docs/guides/icon-library.md](docs/guides/icon-library.md): the Icon library, uploads and attribution.
 - [docs/guides/image-editor.md](docs/guides/image-editor.md): edit a library picture (crop, adjust, filters, curves, blur, metadata) and save a copy.
