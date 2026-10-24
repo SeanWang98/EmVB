@@ -1,3 +1,9 @@
+/**
+ * [INPUT]: 依赖 Token 文件读取与内存 MCP 桥接连接。
+ * [OUTPUT]: 验证文件权限提示、凭据撤销与资源可见性。
+ * [POS]: 真实使用问题的离线回归；每项测试关闭协议连接。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
 import { afterEach, describe, expect, test } from "bun:test";
 import { Client, InMemoryTransport } from "@modelcontextprotocol/client";
 import { mkdtempSync, writeFileSync } from "node:fs";

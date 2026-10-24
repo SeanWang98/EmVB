@@ -1,3 +1,9 @@
+/**
+ * [INPUT]: 依赖内存 MCP 连接、宿主测试运行时与工具定义。
+ * [OUTPUT]: 验证权限、协议转发、资源与超时反馈。
+ * [POS]: 桥接器集成回归；工具结果与真实站点接口对照。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { Client, InMemoryTransport } from "@modelcontextprotocol/client";
 import { TOOLS } from "@perkyzz/emvb/mcp";
@@ -154,6 +160,27 @@ describe("stdio bridge (W-461, W-462)", () => {
     const result = (await client.callTool({ name: "list_pages", arguments: {} })) as ToolResult;
     expect(result.isError).toBe(true);
     expect(result.content[0]?.text).toContain("EMVB_TOKEN");
+  });
+
+  test("a site that doesn't answer in time says so (W-894)", async () => {
+    const [clientSide, serverSide] = InMemoryTransport.createLinkedPair();
+    const server = createBridgeServer({
+      remote: {
+        call: async () => {
+          throw new Error("MCP error -32001: Request timed out");
+        },
+        close: async () => undefined,
+      },
+      allowPublish: false,
+    });
+    await server.connect(serverSide);
+    client = new Client({ name: "test", version: "1.0.0" });
+    await client.connect(clientSide);
+    const result = (await client.callTool({ name: "list_pages", arguments: {} })) as ToolResult;
+    expect(result.isError).toBe(true);
+    expect(result.content[0]?.text).toBe(
+      "The site didn't answer within 60 s. It may be down or slow; try again.",
+    );
   });
 });
 

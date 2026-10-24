@@ -1,3 +1,9 @@
+/**
+ * [INPUT]: 依赖技能触发样本、工具约束与布局验证器。
+ * [OUTPUT]: 验证触发覆盖、样式配方与工具输入有效性。
+ * [POS]: 无模型技能验收；直接对照代码中的数据契约。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";

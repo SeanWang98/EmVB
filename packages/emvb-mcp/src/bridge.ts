@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 MCP SDK、共享工具定义与远程站点接口。
+ * [INPUT]: 依赖 MCP SDK、共享工具定义与远程调用时限。
  * [OUTPUT]: 提供 stdio 桥接服务器与同步发布版本。
- * [POS]: emvb-mcp 协议适配器；不直接访问站点数据库。
+ * [POS]: emvb-mcp 协议适配器；将远程超时转为工具错误。
  * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
  */
 import { McpServer, ResourceTemplate } from "@modelcontextprotocol/server";
@@ -14,7 +14,7 @@ import {
   visibleTools,
   type ToolDef,
 } from "@perkyzz/emvb/mcp";
-import type { Remote, ToolResult } from "./remote.ts";
+import { CALL_TIMEOUT_MS, type Remote, type ToolResult } from "./remote.ts";
 
 export const BRIDGE_VERSION = "0.8.0-dev.2";
 
@@ -39,6 +39,11 @@ function explain(error: unknown, tool: string): ToolResult {
   if (/not found|unknown tool/i.test(message)) {
     return failure(
       `The site doesn't offer emvb__${tool}. Check that EmDash's MCP is on (mcp: true, EmDash 1.2+) and that an admin approved the EmVB tools.`,
+    );
+  }
+  if (/timed out|timeout/i.test(message)) {
+    return failure(
+      `The site didn't answer within ${CALL_TIMEOUT_MS / 1000} s. It may be down or slow; try again.`,
     );
   }
   return failure(`Couldn't reach the site: ${message}`);

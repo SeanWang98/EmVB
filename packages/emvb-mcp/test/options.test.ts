@@ -1,3 +1,9 @@
+/**
+ * [INPUT]: 依赖 CLI 选项解析、发布清单与凭据脱敏。
+ * [OUTPUT]: 验证配置来源、地址约束与版本一致性。
+ * [POS]: 桥接器启动边界回归；错误不得泄露 Token。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
 import { describe, expect, test } from "bun:test";
 import { parseOptions } from "../src/options.ts";
 import { redactToken } from "../src/remote.ts";

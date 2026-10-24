@@ -1,3 +1,9 @@
+/**
+ * [INPUT]: 依赖分发技能文本、包清单与公开工具定义。
+ * [OUTPUT]: 验证技能格式、引用路径与随包文件。
+ * [POS]: 技能分发契约；保持代理指令与可调用工具一致。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";

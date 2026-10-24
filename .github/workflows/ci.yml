@@ -1,3 +1,7 @@
+# [INPUT]: 依赖 Bun 1.4.3、workspace 锁文件与漏洞公告数据库。
+# [OUTPUT]: 提供离线回归结果与独立依赖审计结果。
+# [POS]: 仓库合入检查入口；审计联网，不向运行时增加依赖。
+# [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
 name: CI
 
 on:
@@ -25,3 +29,13 @@ jobs:
       - run: bun run check:seeds
       - run: bun run test
       - run: bun run test:astro
+
+  audit:
+    # Separate from the offline checks: needs the advisory database (W-890).
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.3
+      - run: bun audit --audit-level=high

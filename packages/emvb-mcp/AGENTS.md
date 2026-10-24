@@ -10,7 +10,7 @@
 
 src/：CLI、远程传输与 MCP 资源注册。见 [模块地图](src/AGENTS.md)。
 skill/：随桥接器分发的页面搭建技能与参考文档。
-test/：桥接、选项、技能内容与真实工具回归验收。
+test/：桥接、重试、选项与技能验收。见 [模块地图](test/AGENTS.md)。
 evals/：技能触发提示的固定样本。
 package.json：Node CLI 打包、发布文件与固定主插件依赖。
 README.md：安装配置、Token 约束与工具入口。

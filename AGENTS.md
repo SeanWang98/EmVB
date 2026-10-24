@@ -2,6 +2,7 @@
 
 Bun workspace + TypeScript 7.0.2 + React 19 + Astro 7 + EmDash 1.3.1。
 代码基线为上游 v0.8.0。
+已同步上游 main 至 `68dd2ab4`。
 此 fork 为 `@perkyzz/emvb@0.8.0-dev.2`。
 包版本与 `PLUGIN_VERSION` 须保持一致。
 MCP 桥接器同步版本，但本次未安装或发布桥接器。
@@ -14,7 +15,7 @@ e2e/ - Playwright 后台与公开页面验收。
 scripts/ - 打包、运行时与缺陷注入。见 [模块地图](scripts/AGENTS.md)。
 site/ - emvb.dev 展示站与交互示例。
 test/ - 跨包、宿主与文档回归检查。
-.github/ - 上游协作模板与 CI 工作流。
+.github/ - 协作模板与独立检查、依赖审计。见 [模块地图](.github/AGENTS.md)。
 </directory>
 
 <config>
@@ -88,6 +89,7 @@ Bun 与 CI 同为 1.4.3，Node 使用 24 系列。
 依赖安装显式运行 `bun install --frozen-lockfile`。
 运行 `bun run check` 检查 workspace。
 运行 `bun run pack:smoke` 检查发布包形状。
+运行 `bun audit --audit-level=high` 复核依赖告警。
 宿主还须验证保存、预览、发布与生产 SSR。
 
 [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
