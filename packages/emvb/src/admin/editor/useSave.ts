@@ -1,9 +1,10 @@
 /**
- * [INPUT]: 依赖内容 API、编辑状态与布局校验。
- * [OUTPUT]: 提供独立条目保存及受控字段应用命令。
- * [POS]: 编辑器持久化边界；字段模式只回传布局。
+ * [INPUT]: 依赖内容 API、布局校验与延迟翻译消息。
+ * [OUTPUT]: 提供独立条目持久化、字段应用及当前语言的字段错误。
+ * [POS]: 保存边界；状态保留模板与参数，API 原文不进入词典。
  * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
  */
+import { translate, useI18n, type Translate } from "../i18n/index.ts";
 import * as React from "react";
 import {
   byteLength,
@@ -18,10 +19,11 @@ import { publishPage, savePage } from "../content-api.ts";
 import { publishThemePart, saveThemePart } from "../theme-api.ts";
 import type { EditorAction, EditorState } from "./store.ts";
 import { loadEntry } from "./useEditorData.ts";
+import { formatMessage, literalMessage, type LocalizedMessage } from "./localized-message.ts";
 
 export type SaveStatus =
   | { kind: "idle" | "saving" | "saved" }
-  | { kind: "error"; message: string; retry: boolean };
+  | { kind: "error"; message: LocalizedMessage; retry: boolean };
 
 /** 字段只向宿主表单应用布局，不拥有条目发布权限。 */
 export type FieldSession = { onApply: (layout: Layout | null) => void };
@@ -29,35 +31,40 @@ export type FieldSession = { onApply: (layout: Layout | null) => void };
 const FIX_AND_SAVE = "Couldn't save. Fix the highlighted setting and save again.";
 const OFFLINE = "Couldn't save. Check your connection and try again.";
 
-export const tooLargeMessage = (bytes: number) =>
-  `Couldn't save. This page is ${Math.ceil(bytes / 1024)} KB and the limit is ${
-    MAX_LAYOUT_BYTES / 1024
-  } KB. Remove some content and save again.`;
+export const tooLargeMessage = (bytes: number, t: Translate = translate) =>
+  t(
+    "Couldn't save. This page is {size} KB and the limit is {limit} KB. Remove some content and save again.",
+    { size: Math.ceil(bytes / 1024), limit: MAX_LAYOUT_BYTES / 1024 },
+  );
 
-export const slugTakenMessage = (slug: string) =>
-  `A page with the slug "${slug}" already exists. Choose a different slug.`;
+export const slugTakenMessage = (slug: string, t: Translate = translate) =>
+  t('A page with the slug "{slug}" already exists. Choose a different slug.', { slug });
 
 /** What the editor shows and does after a failed save. */
 export type SaveFailure = {
   status: SaveStatus;
   /** The inline error for the Slug field. */
-  slugError?: string;
+  slugError?: LocalizedMessage;
   /** Open the "changed somewhere else" dialog. */
   conflict?: true;
   /** Move the selection: to the rejected element, or `null` to show page settings. */
   select?: string | null;
   /** The server's rejection, shown in the element panel. */
-  rejection?: string;
+  rejection?: LocalizedMessage;
 };
 
-const fixAndSave: SaveStatus = { kind: "error", message: FIX_AND_SAVE, retry: false };
-const offline: SaveStatus = { kind: "error", message: OFFLINE, retry: true };
+const fixAndSave = (): SaveStatus => ({
+  kind: "error",
+  message: FIX_AND_SAVE,
+  retry: false,
+});
+const offline = (): SaveStatus => ({ kind: "error", message: OFFLINE, retry: true });
 
 export function saveFailure(
   error: unknown,
   page: { slug: string; layout: Layout | null },
 ): SaveFailure {
-  if (!(error instanceof ApiError) || error.status >= 500) return { status: offline };
+  if (!(error instanceof ApiError) || error.status >= 500) return { status: offline() };
   if (error.status === 401) {
     // W-205: the session ran out. The edits stay here; signing in again in another tab and
     // retrying saves them.
@@ -71,7 +78,12 @@ export function saveFailure(
     return { status: { kind: "error", message, retry: true } };
   }
   if (error.status === 409 && error.code === "SLUG_CONFLICT") {
-    return { status: fixAndSave, slugError: slugTakenMessage(page.slug), select: null };
+    const slug = page.slug;
+    return {
+      status: fixAndSave(),
+      slugError: { format: (t) => slugTakenMessage(slug, t) },
+      select: null,
+    };
   }
   if (error.status === 409) {
     const message = "Couldn't save. This page was changed somewhere else.";
@@ -82,12 +94,25 @@ export function saveFailure(
     const id = path && page.layout ? nodeIdAtPath(page.layout, path) : null;
     // UX-095: with no element to highlight, "fix the highlighted setting" pointed at nothing.
     if (!id) {
-      const message = `Couldn't save. ${error.message}`;
-      return { status: { kind: "error", message, retry: false }, rejection: error.message };
+      const reason = error.message;
+      const message: LocalizedMessage = {
+        format: (t) => t("Couldn't save. {message}", { message: reason }),
+      };
+      return {
+        status: { kind: "error", message, retry: false },
+        rejection: literalMessage(reason),
+      };
     }
-    return { status: fixAndSave, rejection: error.message, select: id };
+    return { status: fixAndSave(), rejection: literalMessage(error.message), select: id };
   }
-  return { status: { kind: "error", message: `Couldn't save. ${error.message}`, retry: false } };
+  const reason = error.message;
+  return {
+    status: {
+      kind: "error",
+      message: { format: (t) => t("Couldn't save. {message}", { message: reason }) },
+      retry: false,
+    },
+  };
 }
 
 export function publishFailureMessage(error: unknown): string {
@@ -118,19 +143,24 @@ export function useSave(
   collection: string = PAGES_COLLECTION,
   fieldSession?: FieldSession,
 ) {
+  const currentLanguage = useI18n();
   const latest = React.useRef(state);
   latest.current = state;
   const [status, setStatus] = React.useState<SaveStatus>({ kind: "idle" });
   const [conflict, setConflict] = React.useState(false);
-  const [slugError, setSlugError] = React.useState<string | null>(null);
-  const [rejection, setRejection] = React.useState<string | null>(null);
+  const [slugError, setSlugError] = React.useState<LocalizedMessage | null>(null);
+  const [rejection, setRejection] = React.useState<LocalizedMessage | null>(null);
 
   const write = React.useCallback(
     async (rev: string | null): Promise<string | null> => {
       const current = latest.current;
       const bytes = current.page.layout ? byteLength(current.page.layout) : 0;
       if (bytes > MAX_LAYOUT_BYTES) {
-        setStatus({ kind: "error", message: tooLargeMessage(bytes), retry: false });
+        setStatus({
+          kind: "error",
+          message: { format: (t) => tooLargeMessage(bytes, t) },
+          retry: false,
+        });
         return null;
       }
       setStatus({ kind: "saving" });
@@ -141,12 +171,16 @@ export function useSave(
           const layout = current.page.layout;
           if (layout) {
             const checked = validateLayout(layout);
-            if (!checked.ok)
-              throw new ApiError(
-                422,
-                "INVALID_LAYOUT",
-                "The canvas layout is invalid. Fix it before applying.",
-              );
+            if (!checked.ok) {
+              const reason = "The canvas layout is invalid. Fix it before applying.";
+              setRejection(reason);
+              setStatus({
+                kind: "error",
+                message: { format: (t) => t("Couldn't save. {message}", { message: t(reason) }) },
+                retry: false,
+              });
+              return null;
+            }
           }
           // 外层 Page 保留所有未保存字段，由其统一保存、发布。
           fieldSession.onApply(layout);
@@ -283,8 +317,8 @@ export function useSave(
     conflict,
     closeConflict: () => setConflict(false),
     markIdle: () => setStatus({ kind: "idle" }),
-    slugError,
+    slugError: slugError === null ? null : formatMessage(slugError, currentLanguage),
     clearSlugError: () => setSlugError(null),
-    rejection,
+    rejection: rejection === null ? null : formatMessage(rejection, currentLanguage),
   };
 }

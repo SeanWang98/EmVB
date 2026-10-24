@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖设计令牌生成器与本地化上下文。
+ * [OUTPUT]: 导出字号和间距比例尺编辑器。
+ * [POS]: 站点变量的批量生成入口；保存结果仅缓存计数，渲染时翻译。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { useI18n } from "../../i18n/index.ts";
 import { Checkbox, Input } from "@cloudflare/kumo";
 import * as React from "react";
 import {
@@ -31,13 +38,19 @@ export function TokenScales({
   /** Resolves false when the save failed (the drawer shows why). */
   onSave: (design: DesignSystem) => Promise<boolean | void>;
 }) {
+  const t = useI18n();
   const id = React.useId();
   const [kind, setKind] = React.useState<"type" | "space">("type");
   const [base, setBase] = React.useState("18");
   const [minBase, setMinBase] = React.useState("16");
   const [fluid, setFluid] = React.useState(true);
   const [ratio, setRatio] = React.useState(String(SCALE_RATIOS[2].value));
-  const [done, setDone] = React.useState<string | null>(null);
+  const [done, setDone] = React.useState<{
+    added: number;
+    updated: number;
+    left: number;
+    target: "fontSizes" | "spacings";
+  } | null>(null);
   // W-609, W-626: an "added" message is about the scale as it was; any change clears it.
   const edit =
     (setter: (value: string) => void) => (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -61,28 +74,29 @@ export function TokenScales({
   const minValue = num(minBase);
   const minOff = fluid && !(minValue !== undefined && minValue >= lo && minValue <= hi);
   const list = kind === "type" ? "fontSizes" : "spacings";
-  const updating = tokens.filter((t) =>
-    (design.variables[list] ?? []).some((v) => v.id === t.id),
+  const updating = tokens.filter((token) =>
+    (design.variables[list] ?? []).some((v) => v.id === token.id),
   ).length;
   return (
     <section className="emvb-site-section emvb-tokens" data-emvb-tokens="">
-      <h3 className="emvb-bind-title">Scales</h3>
+      <h3 className="emvb-bind-title">{t("Scales")}</h3>
       <p className="emvb-helper">
-        Generate a whole scale from two numbers. Fluid sizes grow smoothly from small to large
-        screens with CSS clamp(), no breakpoints.
+        {t(
+          "Generate a whole scale from two numbers. Fluid sizes grow smoothly from small to large screens with CSS clamp(), no breakpoints.",
+        )}
       </p>
       <div className="emvb-tokens-grid">
         <div className="emvb-tokens-field">
           <span className="emvb-bind-label" id={`${id}-kind`}>
-            Scale
+            {t("Scale")}
           </span>
           <PanelSelect
             labelledBy={`${id}-kind`}
             value={kind}
             data={{ "data-emvb-tokens-kind": "" }}
             options={[
-              { value: "type", label: "Type scale" },
-              { value: "space", label: "Spacing scale" },
+              { value: "type", label: t("Type scale") },
+              { value: "space", label: t("Spacing scale") },
             ]}
             onChange={(value) => {
               setKind(value === "space" ? "space" : "type");
@@ -91,7 +105,9 @@ export function TokenScales({
           />
         </div>
         <label>
-          <span className="emvb-bind-label">{kind === "type" ? "Body size" : "Base gap"} (px)</span>
+          <span className="emvb-bind-label">
+            {t(kind === "type" ? "Body size" : "Base gap")} (px)
+          </span>
           <Input
             className={FIELD}
             inputMode="decimal"
@@ -103,13 +119,13 @@ export function TokenScales({
         {kind === "type" && (
           <div className="emvb-tokens-field" data-emvb-tokens-row="full">
             <span className="emvb-bind-label" id={`${id}-ratio`}>
-              Ratio
+              {t("Ratio")}
             </span>
             <PanelSelect
               labelledBy={`${id}-ratio`}
               value={ratio}
               data={{ "data-emvb-tokens-ratio": "" }}
-              options={SCALE_RATIOS.map((r) => ({ value: String(r.value), label: r.label }))}
+              options={SCALE_RATIOS.map((r) => ({ value: String(r.value), label: t(r.label) }))}
               onChange={(value) => {
                 setRatio(value);
                 setDone(null);
@@ -119,7 +135,7 @@ export function TokenScales({
         )}
         <Checkbox
           className="emvb-tokens-fluid"
-          label="Fluid"
+          label={t("Fluid")}
           checked={fluid}
           data-emvb-tokens-fluid=""
           onCheckedChange={(checked) => {
@@ -129,7 +145,7 @@ export function TokenScales({
         />
         {fluid && (
           <label data-emvb-tokens-row="full">
-            <span className="emvb-bind-label">On small screens (px)</span>
+            <span className="emvb-bind-label">{t("On small screens (px)")}</span>
             <Input
               className={FIELD}
               inputMode="decimal"
@@ -142,35 +158,48 @@ export function TokenScales({
         )}
         {minOff && (
           <p className="emvb-helper" data-emvb-tokens-min-error="">
-            {`Use a small-screen size from ${lo} to ${hi} px. Until then the sizes aren't fluid.`}
+            {t(
+              "Use a small-screen size from {min} to {max} px. Until then the sizes aren't fluid.",
+              { min: lo, max: hi },
+            )}
           </p>
         )}
       </div>
       {tokens.length === 0 ? (
         <p className="emvb-helper" role="alert">
-          {kind === "type" ? "Use a body size from 8 to 64 px." : "Use a base gap from 2 to 64 px."}
+          {t(
+            kind === "type"
+              ? "Use a body size from 8 to 64 px."
+              : "Use a base gap from 2 to 64 px.",
+          )}
         </p>
       ) : (
         <ol className="emvb-tokens-preview" data-emvb-tokens-preview="">
-          {tokens.map((t) => (
-            <li key={t.id}>
+          {tokens.map((token) => (
+            <li key={token.id}>
               <span
                 className="emvb-tokens-sample"
                 style={
                   kind === "type"
-                    ? { fontSize: `${Math.min(t.value.value, 40)}px` }
-                    : { width: `${Math.min(t.value.value, 64)}px` }
+                    ? { fontSize: `${Math.min(token.value.value, 40)}px` }
+                    : { width: `${Math.min(token.value.value, 64)}px` }
                 }
               >
                 {kind === "type" ? "Aa" : ""}
               </span>
-              <span>{t.name}</span>
+              <span>{token.name}</span>
               {/* UX-032: clamp() values ellipsize; the tooltip gives the whole value. */}
               <code
                 className="emvb-mono"
-                title={t.fluid ? fluidClamp(t.fluid.min, t.fluid.max, range) : `${t.value.value}px`}
+                title={
+                  token.fluid
+                    ? fluidClamp(token.fluid.min, token.fluid.max, range)
+                    : `${token.value.value}px`
+                }
               >
-                {t.fluid ? fluidClamp(t.fluid.min, t.fluid.max, range) : `${t.value.value}px`}
+                {token.fluid
+                  ? fluidClamp(token.fluid.min, token.fluid.max, range)
+                  : `${token.value.value}px`}
               </code>
             </li>
           ))}
@@ -183,26 +212,30 @@ export function TokenScales({
         data-emvb-tokens-apply=""
         onClick={() => {
           const next = applyTokens(design, list, tokens);
-          const label = kind === "type" ? "Font sizes" : "Spacing";
           // W-609: count what landed under the list's limit, not what was generated.
           const added = (next.variables[list] ?? []).length - (design.variables[list] ?? []).length;
           const left = tokens.length - updating - added;
           void onSave(next).then((ok) => {
             if (ok === false) return;
-            setDone(
-              `${added} added${updating ? `, ${updating} updated` : ""} in ${label}.` +
-                (left > 0
-                  ? ` ${left} didn't fit: ${label} holds up to ${list === "fontSizes" ? 50 : 100}.`
-                  : ""),
-            );
+            setDone({ added, updated: updating, left, target: list });
           });
         }}
       >
-        {updating > 0 ? "Update the scale in site styles" : "Add the scale to site styles"}
+        {t(updating > 0 ? "Update the scale in site styles" : "Add the scale to site styles")}
       </button>
       {done && (
         <p className="emvb-helper" role="status">
-          {done}
+          {t("{count} added{updated} in {name}.", {
+            count: done.added,
+            updated: done.updated ? t(", {count} updated", { count: done.updated }) : "",
+            name: t(done.target === "fontSizes" ? "Font sizes" : "Spacing"),
+          })}
+          {done.left > 0 &&
+            t(" {count} didn't fit: {name} holds up to {limit}.", {
+              count: done.left,
+              name: t(done.target === "fontSizes" ? "Font sizes" : "Spacing"),
+              limit: done.target === "fontSizes" ? 50 : 100,
+            })}
         </p>
       )}
     </section>

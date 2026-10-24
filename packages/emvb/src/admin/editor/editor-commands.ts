@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖命令执行器、设备状态与即时翻译器。
+ * [OUTPUT]: 导出稳定命令目录及统一执行入口。
+ * [POS]: 多界面动作注册表；只翻译标签，不改变命令 ID。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { translate } from "../i18n/index.ts";
 import type { PasteMode, PopupDevice, WrapType } from "../../core/index.ts";
 
 /** Where an editor command is offered. Shortcuts call `runCommand` for the same ids. */
@@ -265,8 +272,9 @@ function blocked(id: string, input: CommandInput): boolean {
 }
 
 function labelFor(spec: Spec, input: CommandInput): string {
-  if (spec.id === "hide-on-device") return `Hide on ${input.device}`;
-  return spec.labels[input.surface] ?? spec.id;
+  if (spec.id === "hide-on-device")
+    return translate("Hide on {device}", { device: translate(input.device) });
+  return translate(spec.labels[input.surface] ?? spec.id);
 }
 
 /** Commands one surface shows for this target, in that surface's order. */
@@ -278,7 +286,7 @@ export function editorCommands(input: CommandInput): EditorCommand[] {
       id: spec.id,
       label: labelFor(spec, input),
       hint: spec.id === "a11y" ? input.a11yHint : spec.hint,
-      keywords: spec.keywords,
+      keywords: `${spec.labels[input.surface] ?? ""} ${spec.keywords ?? ""}`.trim(),
       disabled: blocked(spec.id, input),
       danger: spec.danger,
       surfaces: spec.surfaces,

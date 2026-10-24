@@ -1,3 +1,11 @@
+/**
+ * [INPUT]: 依赖图标库状态、Radix 对话框与虚拟网格尺寸。
+ * [OUTPUT]: 提供IconLibraryDialog 与网格导航计算函数。
+ * [POS]: 图标选择界面，保持图标名、SVG 和上传标识原值。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { mediaLabel } from "../../image-editor/media-labels.ts";
+import { useI18n, type LocalizedTranslate } from "../../i18n/index.ts";
 import { Button, Dialog } from "@cloudflare/kumo";
 import {
   MagnifyingGlassIcon,
@@ -95,11 +103,14 @@ export function moveActive(
 const optionId = (base: string, index: number) => `${base}-${index}`;
 
 /** "Font Awesome Solid", or just "Lucide" for a set with one style. */
-const iconSource = (icon: LibraryIcon) =>
-  icon.styleLabel === icon.setLabel ? icon.setLabel : `${icon.setLabel} ${icon.styleLabel}`;
+const iconSource = (icon: LibraryIcon, t: LocalizedTranslate) =>
+  icon.styleLabel === icon.setLabel
+    ? mediaLabel(icon.setLabel, t)
+    : `${icon.setLabel} ${mediaLabel(icon.styleLabel, t)}`;
 
 /** What a screen reader hears for a tile: "Rocket, Font Awesome Solid". */
-const iconSpokenName = (icon: LibraryIcon) => `${icon.label}, ${iconSource(icon)}`;
+const iconSpokenName = (icon: LibraryIcon, t: LocalizedTranslate) =>
+  `${icon.label}, ${iconSource(icon, t)}`;
 
 function IconGrid({
   icons,
@@ -122,6 +133,7 @@ function IconGrid({
   onCursor: (index: number) => void;
   onInsert: (icon: LibraryIcon) => void;
 }) {
+  const t = useI18n();
   const base = React.useId();
   const [box, setBox] = React.useState(FALLBACK);
   const [scrollTop, setScrollTop] = React.useState(0);
@@ -181,7 +193,7 @@ function IconGrid({
           aria-selected={selected}
           aria-setsize={icons.length}
           aria-posinset={index + 1}
-          aria-label={iconSpokenName(icon)}
+          aria-label={iconSpokenName(icon, t)}
           title={`${icon.label} (${icon.id})`}
           className="emvb-icon-library-tile"
           data-emvb-icon-id={icon.id}
@@ -260,6 +272,7 @@ function IconLibrary({
   loadSet?: typeof loadIconSet;
   onInsert: (icon: LibraryIcon) => void;
 }) {
+  const t = useI18n();
   const {
     categories,
     categoryId,
@@ -296,10 +309,11 @@ function IconLibrary({
     <div className="emvb-icon-library" data-emvb-dialog="icon-library">
       <header className="emvb-icon-library-head">
         <div>
-          <Dialog.Title className="emvb-icon-library-title">Icon library</Dialog.Title>
+          <Dialog.Title className="emvb-icon-library-title">{t("Icon library")}</Dialog.Title>
           <Dialog.Description className="emvb-helper">
-            Lucide, Font Awesome Free, Tabler and Remix. The icon you insert is saved into the page
-            as SVG, so visitors never download an icon set.
+            {t(
+              "Lucide, Font Awesome Free, Tabler and Remix. The icon you insert is saved into the page as SVG, so visitors never download an icon set.",
+            )}
           </Dialog.Description>
         </div>
         <Dialog.Close
@@ -309,7 +323,7 @@ function IconLibrary({
               variant="ghost"
               shape="square"
               size="sm"
-              aria-label="Close icon library"
+              aria-label={t("Close icon library")}
               className="emvb-icon-btn"
             >
               <XIcon size={16} aria-hidden="true" />
@@ -318,7 +332,7 @@ function IconLibrary({
         />
       </header>
 
-      <nav className="emvb-icon-library-nav" aria-label="Icon sets">
+      <nav className="emvb-icon-library-nav" aria-label={t("Icon sets")}>
         <ul>
           {categories.map((item) => {
             const count = counts.get(item.id);
@@ -334,7 +348,7 @@ function IconLibrary({
                   aria-current={current ? "true" : undefined}
                   onClick={() => setCategoryId(item.id)}
                 >
-                  <span>{item.label}</span>
+                  <span>{mediaLabel(item.label, t)}</span>
                   {count !== undefined ? (
                     <span className="emvb-icon-library-count">{fmt(count)}</span>
                   ) : null}
@@ -351,7 +365,7 @@ function IconLibrary({
       <div className="emvb-icon-library-main">
         <div className="emvb-icon-library-search">
           <label htmlFor={searchId} className="emvb-sr-only">
-            Search icons
+            {t("Search icons")}
           </label>
           <MagnifyingGlassIcon
             size={16}
@@ -365,7 +379,9 @@ function IconLibrary({
             // The dialog opens straight into the search, like a command palette.
             autoFocus
             value={query}
-            placeholder={`Search ${category.id === ALL_ICONS ? "all icons" : category.label}…`}
+            placeholder={t("Search {category}…", {
+              category: category.id === ALL_ICONS ? t("all icons") : mediaLabel(category.label, t),
+            })}
             onChange={(event) => setQuery(event.target.value)}
             onKeyDown={(event) => {
               // W-682: not the Enter that confirms an IME word (W-606).
@@ -396,8 +412,8 @@ function IconLibrary({
               }}
             >
               <span className="emvb-icon-upload-label">
-                <span aria-hidden={uploading}>Upload SVG</span>
-                <span aria-hidden={!uploading}>Uploading…</span>
+                <span aria-hidden={uploading}>{t("Upload SVG")}</span>
+                <span aria-hidden={!uploading}>{t("Uploading…")}</span>
               </span>
             </Button>
             <input
@@ -417,13 +433,15 @@ function IconLibrary({
               aria-live={uploadNote?.error ? "assertive" : "polite"}
             >
               {uploadNote?.text ??
-                "Up to 256 KB. Scripts, event handlers and outside images are removed or refused; the icon is saved with the page."}
+                t(
+                  "Up to 256 KB. Scripts, event handlers and outside images are removed or refused; the icon is saved with the page.",
+                )}
             </span>
           </div>
         )}
         {inUploads && uploadsFailed ? (
           <div className="emvb-icon-library-empty">
-            <p>Your uploads didn&apos;t load: {uploadsFailed}</p>
+            <p>{t("Your uploads didn't load: {reason}", { reason: uploadsFailed })}</p>
             <Button
               variant="secondary"
               size="sm"
@@ -435,12 +453,16 @@ function IconLibrary({
                 setAttempt((n) => n + 1);
               }}
             >
-              Try again
+              {t("Try again")}
             </Button>
           </div>
         ) : failed ? (
           <div className="emvb-icon-library-empty">
-            <p>The {failed} icons didn&apos;t load. Check the connection and try again.</p>
+            <p>
+              {t("The {set} icons didn't load. Check the connection and try again.", {
+                set: failed,
+              })}
+            </p>
             <Button
               variant="secondary"
               size="sm"
@@ -451,7 +473,7 @@ function IconLibrary({
                 setAttempt((n) => n + 1);
               }}
             >
-              Try again
+              {t("Try again")}
             </Button>
           </div>
         ) : !ready ? (
@@ -471,7 +493,7 @@ function IconLibrary({
                   searchRef.current?.focus();
                 }}
               >
-                Clear search
+                {t("Clear search")}
               </Button>
             )}
           </div>
@@ -480,7 +502,7 @@ function IconLibrary({
             icons={filtered}
             selectedId={selectedId}
             active={active}
-            label={`${category.label} icons`}
+            label={t("{category} icons", { category: mediaLabel(category.label, t) })}
             gridRef={gridRef}
             onActive={activate}
             onCursor={setActive}
@@ -501,13 +523,13 @@ function IconLibrary({
               <span className="emvb-icon-library-picked-text">
                 <strong>{selected.label}</strong>
                 <span>
-                  {iconSource(selected)} · <code className="emvb-mono">{selected.id}</code>
+                  {iconSource(selected, t)} · <code className="emvb-mono">{selected.id}</code>
                 </span>
               </span>
             </>
           ) : (
             <span className="emvb-helper">
-              Pick an icon, then Insert. Double-click or Enter inserts at once.
+              {t("Pick an icon, then Insert. Double-click or Enter inserts at once.")}
             </span>
           )}
         </div>
@@ -522,7 +544,7 @@ function IconLibrary({
                 data-emvb-icon-rename=""
                 onClick={renameUpload}
               >
-                Rename
+                {t("Rename")}
               </Button>
               <Button
                 type="button"
@@ -532,11 +554,11 @@ function IconLibrary({
                 data-emvb-icon-delete=""
                 onClick={deleteUpload}
               >
-                Delete
+                {t("Delete")}
               </Button>
             </>
           )}
-          <DialogCloseButton>Close</DialogCloseButton>
+          <DialogCloseButton>{t("Close")}</DialogCloseButton>
           <Button
             variant="primary"
             className={`${BUTTON} ${SOLID_PRIMARY}`}
@@ -546,7 +568,7 @@ function IconLibrary({
               if (selected) onInsert(selected);
             }}
           >
-            Insert
+            {t("Insert")}
           </Button>
         </div>
       </footer>

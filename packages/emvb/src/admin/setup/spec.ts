@@ -1,3 +1,9 @@
+/**
+ * [INPUT]: 依赖插件集合身份与主题类型定义。
+ * [OUTPUT]: 提供独立集合及其字段的稳定初始化规格。
+ * [POS]: 持久化结构契约；不随当前界面语言改写字段数据。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
 import { PAGES_COLLECTION, PLUGIN_ID, THEME_PARTS_COLLECTION } from "../../constants.ts";
 import { THEME_PART_TYPES } from "../../core/index.ts";
 

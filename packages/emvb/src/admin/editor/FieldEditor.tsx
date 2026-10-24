@@ -1,9 +1,10 @@
 /**
- * [INPUT]: 依赖共享空值判定、宿主布局与站点样式。
- * [OUTPUT]: 提供不读写独立页面的受控画布会话。
- * [POS]: 字段与 EditorApp 的适配层；宿主拥有保存发布。
+ * [INPUT]: 依赖宿主字段快照、布局错误标记、站点样式与后台语言。
+ * [OUTPUT]: 提供不读写独立条目的受控画布会话。
+ * [POS]: 字段适配层；加载错误切语言不重请求，宿主持久化布局。
  * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
  */
+import { useI18n } from "../i18n/index.ts";
 import { Button } from "@cloudflare/kumo";
 import * as React from "react";
 import { validateLayout, type Layout } from "../../core/index.ts";
@@ -13,6 +14,12 @@ import { EditorApp } from "./Editor.tsx";
 import { EditorOverlay } from "./EditorOverlay.tsx";
 import { EditorHostContext, useEditorHost } from "./host.ts";
 import { LiveDataProvider } from "./live-data.tsx";
+import {
+  errorMessage,
+  formatMessage,
+  literalMessage,
+  LocalizedMessageError,
+} from "./localized-message.ts";
 import { loadDesign, type LoadedDesign, type EditorEntry } from "./useEditorData.ts";
 import { EDITOR_MIN_WIDTH_QUERY, useMediaQuery } from "./useMediaQuery.ts";
 
@@ -24,11 +31,16 @@ export function readFieldLayout(value: unknown): Layout | null {
     try {
       raw = JSON.parse(raw) as unknown;
     } catch {
-      throw new Error("此页面的画布数据无法读取，原值未修改。");
+      throw new LocalizedMessageError(
+        "This page’s canvas data cannot be read. The original value was not changed.",
+      );
     }
   }
   const checked = validateLayout(raw);
-  if (!checked.ok) throw new Error("此页面的画布数据无法读取，原值未修改。");
+  if (!checked.ok)
+    throw new LocalizedMessageError(
+      "This page’s canvas data cannot be read. The original value was not changed.",
+    );
   return checked.layout;
 }
 
@@ -45,11 +57,12 @@ export function FieldEditor({
   onApply: (layout: Layout | null) => void;
   onCancel: () => void;
 }) {
+  const t = useI18n();
   const host = useEditorHost();
   const wideEnough = useMediaQuery(EDITOR_MIN_WIDTH_QUERY);
   const scope = `field${React.useId().replace(/[^a-z0-9]/gi, "")}`;
   const [loaded, setLoaded] = React.useState<
-    { entry: EditorEntry; design: LoadedDesign } | { error: string } | null
+    { entry: EditorEntry; design: LoadedDesign } | { error: unknown } | null
   >(null);
   const [attempt, setAttempt] = React.useState(0);
   // value 是打开时的快照，编辑期间宿主重新渲染不会重置画布。
@@ -77,7 +90,7 @@ export function FieldEditor({
             design,
           });
       } catch (error) {
-        if (active) setLoaded({ error: error instanceof Error ? error.message : String(error) });
+        if (active) setLoaded({ error });
       }
     })();
     return () => {
@@ -90,9 +103,9 @@ export function FieldEditor({
     () => ({
       ...host,
       exit: onCancel,
-      back: { label: "Page form", go: onCancel },
+      back: { label: t("Page form"), go: onCancel },
     }),
-    [host, onCancel],
+    [host, onCancel, t],
   );
   return (
     <EditorHostContext.Provider value={fieldHost}>
@@ -108,16 +121,20 @@ export function FieldEditor({
           />
         </LiveDataProvider>
       ) : (
-        <EditorOverlay label={`EmVB canvas: ${label}`} onFieldSave={() => undefined}>
+        <EditorOverlay label={t("EmVB canvas: {label}", { label })} onFieldSave={() => undefined}>
           <div className="emvb-state" role="status">
-            <p>{loaded && "error" in loaded ? loaded.error : "正在打开画布…"}</p>
+            <p>
+              {loaded && "error" in loaded
+                ? formatMessage(errorMessage(loaded.error, literalMessage(String(loaded.error))), t)
+                : t("Opening the canvas…")}
+            </p>
             {loaded && "error" in loaded && (
               <Button type="button" onClick={() => setAttempt((n) => n + 1)}>
-                Retry
+                {t("Retry")}
               </Button>
             )}
             <Button type="button" variant="secondary" onClick={onCancel}>
-              Cancel
+              {t("Cancel")}
             </Button>
           </div>
         </EditorOverlay>

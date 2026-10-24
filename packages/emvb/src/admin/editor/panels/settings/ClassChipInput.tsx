@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖共享样式类操作、命令错误源消息与后台翻译。
+ * [OUTPUT]: 导出 ClassChipInput。
+ * [POS]: 元素样式类选择器；当前语言格式化反馈，保留用户类名。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { useI18n } from "../../../i18n/index.ts";
 import { Button, Input } from "@cloudflare/kumo";
 import { MapPinIcon, PlusIcon, TagSimpleIcon } from "@phosphor-icons/react";
 import * as React from "react";
@@ -10,7 +17,6 @@ import {
   renameClass,
   classNameTaken,
   cleanClassName,
-  classNameTakenMessage,
   replaceClassId,
   type DesignSystem,
 } from "../../../../core/index.ts";
@@ -25,6 +31,8 @@ import {
   type ClassOption,
 } from "./class-suggest.ts";
 import { isCancelEscape, isCommitEnter } from "../../ime.ts";
+import { formatError, type LocalizedError } from "./localized-error.ts";
+import { errorMessage } from "../../localized-message.ts";
 
 type Props = {
   applied: readonly string[] | undefined;
@@ -57,6 +65,7 @@ export function ClassChipInput({
   onDesignChange,
   onSaveLocal,
 }: Props) {
+  const t = useI18n();
   const ids = applied ?? [];
   const catalog = design.classes ?? [];
   const byId = new Map(catalog.map((cls) => [cls.id, cls]));
@@ -65,11 +74,13 @@ export function ClassChipInput({
   const [query, setQuery] = React.useState("");
   const [open, setOpen] = React.useState(false);
   const [active, setActive] = React.useState(0);
-  const [error, setError] = React.useState<string | null>(null);
+  const [error, setError] = React.useState<LocalizedError | null>(null);
+  const errorText = formatError(error, t);
   const [focusAt, setFocusAt] = React.useState<{ index: number } | null>(null);
   const [naming, setNaming] = React.useState(false);
   const [localName, setLocalName] = React.useState("");
-  const [savedNote, setSavedNote] = React.useState<string | null>(null);
+  const [savedNote, setSavedNote] = React.useState<LocalizedError | null>(null);
+  const savedNoteText = formatError(savedNote, t);
   const chipRefs = React.useRef<Array<HTMLButtonElement | null>>([]);
   const inputRef = React.useRef<HTMLInputElement>(null);
 
@@ -96,7 +107,12 @@ export function ClassChipInput({
 
   const create = async (name: string) => {
     if (catalog.length >= MAX_SITE_CLASSES) {
-      setError(`This site already has ${MAX_SITE_CLASSES} classes, the most allowed.`);
+      setError({
+        format: (currentT) =>
+          currentT("This site already has {count} classes, the most allowed.", {
+            count: MAX_SITE_CLASSES,
+          }),
+      });
       return;
     }
     const id = uniqueId(
@@ -107,7 +123,7 @@ export function ClassChipInput({
     try {
       await onDesignChange({ ...design, classes: [...catalog, { id, name, style: {} }] });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn't create the class. Try again.");
+      setError(errorMessage(err, "Couldn't create the class. Try again."));
       return;
     }
     commit(addClassId(ids, id));
@@ -130,14 +146,20 @@ export function ClassChipInput({
       await onDesignChange(next);
       return true;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn't save the class. Try again.");
+      setError(errorMessage(err, "Couldn't save the class. Try again."));
       return false;
     }
   };
 
   const rename = (id: string, name: string) => {
     if (classNameTaken(design, name, id)) {
-      setError(classNameTakenMessage(name));
+      const duplicateName = cleanClassName(name);
+      setError({
+        format: (currentT) =>
+          currentT('A class named "{name}" already exists. Pick another name.', {
+            name: duplicateName,
+          }),
+      });
       return;
     }
     void saveDesign(renameClass(design, id, name));
@@ -163,18 +185,24 @@ export function ClassChipInput({
     const name = cleanClassName(localName);
     if (!name || !onSaveLocal) return;
     if (classNameTaken(design, name)) {
-      setError(classNameTakenMessage(name));
+      setError({
+        format: (currentT) =>
+          currentT('A class named "{name}" already exists. Pick another name.', { name }),
+      });
       return;
     }
     setError(null);
     try {
       await onSaveLocal(name);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn't save the class. Try again.");
+      setError(errorMessage(err, "Couldn't save the class. Try again."));
       return;
     }
     closeNaming();
-    setSavedNote(`Saved as class "${name}". Publish site styles to show it on the site.`);
+    setSavedNote({
+      format: (currentT) =>
+        currentT('Saved as class "{name}". Publish site styles to show it on the site.', { name }),
+    });
   };
 
   const reorder = (index: number, delta: -1 | 1) => commit(moveClassId(ids, index, delta));
@@ -196,7 +224,10 @@ export function ClassChipInput({
     } else if (isCommitEnter(event)) {
       event.preventDefault();
       if (query.trim() && appliedByName(catalog, ids, query)) {
-        setError(`"${query.trim()}" is already on this element.`);
+        const name = query.trim();
+        setError({
+          format: (currentT) => currentT('"{name}" is already on this element.', { name }),
+        });
         return;
       }
       choose(current);
@@ -238,14 +269,14 @@ export function ClassChipInput({
   return (
     <div className="emvb-class-field" data-emvb-class-picker="">
       <label className="emvb-field-label" htmlFor={`${baseId}-input`}>
-        Classes
+        {t("Classes")}
       </label>
       <div className="emvb-chip-anchor">
         <div
           className="emvb-chip-box"
           data-emvb-chip-box=""
           role="group"
-          aria-label="Classes on this element"
+          aria-label={t("Classes on this element")}
           onMouseDown={(event) => {
             if (event.target === event.currentTarget) {
               event.preventDefault();
@@ -265,12 +296,12 @@ export function ClassChipInput({
               }}
               className="emvb-chip-main"
               aria-pressed={editing === null}
-              title="Local styles: this element only"
+              title={t("Local styles: this element only")}
               onClick={() => onEdit(null)}
               onKeyDown={(event) => onChipKey(event, 0)}
             >
               <MapPinIcon size={12} weight="fill" aria-hidden="true" />
-              <span className="emvb-chip-label">Local</span>
+              <span className="emvb-chip-label">{t("Local")}</span>
             </button>
           </span>
           {ids.map((id, index) => (
@@ -309,7 +340,7 @@ export function ClassChipInput({
             autoComplete="off"
             spellCheck={false}
             disabled={full}
-            placeholder={full ? "" : "Add class…"}
+            placeholder={full ? "" : t("Add class…")}
             value={query}
             onChange={(event) => {
               setQuery(event.target.value);
@@ -326,17 +357,17 @@ export function ClassChipInput({
           <ul
             id={listId}
             role="listbox"
-            aria-label="Class suggestions"
+            aria-label={t("Class suggestions")}
             className="emvb-chip-listbox"
             data-emvb-class-options=""
           >
             {options.length === 0 && (
               <li role="presentation" className="emvb-chip-option-hint">
                 {catalog.length === 0
-                  ? "No classes yet. Type a name to create one."
+                  ? t("No classes yet. Type a name to create one.")
                   : query.trim()
-                    ? "That class is already on this element."
-                    : "Every class is already on this element."}
+                    ? t("That class is already on this element.")
+                    : t("Every class is already on this element.")}
               </li>
             )}
             {options.map((option, index) => (
@@ -363,7 +394,7 @@ export function ClassChipInput({
                   <>
                     <PlusIcon size={14} aria-hidden="true" />
                     <span className="emvb-chip-option-name">
-                      Create class &quot;{option.name}&quot;
+                      {t('Create class "{name}"', { name: option.name })}
                     </span>
                   </>
                 )}
@@ -374,10 +405,11 @@ export function ClassChipInput({
       </div>
       {editing !== null && (
         <p className="emvb-helper emvb-class-scope" data-emvb-class-scope="">
-          Editing class &quot;{byId.get(editing)?.name ?? editing}&quot;. Changes apply to every
-          element that uses it.{" "}
+          {t('Editing class "{name}". Changes apply to every element that uses it.', {
+            name: byId.get(editing)?.name ?? editing,
+          })}{" "}
           <button type="button" className="emvb-link-button" onClick={() => onEdit(null)}>
-            Back to local styles
+            {t("Back to local styles")}
           </button>
         </p>
       )}
@@ -392,7 +424,7 @@ export function ClassChipInput({
             setError(null);
           }}
         >
-          Save local styles as class
+          {t("Save local styles as class")}
         </button>
       )}
       {naming && (
@@ -402,7 +434,7 @@ export function ClassChipInput({
           onKeyDown={stopEditorShortcuts}
         >
           <Input
-            label="New class name"
+            label={t("New class name")}
             className={FIELD}
             value={localName}
             maxLength={60}
@@ -422,7 +454,7 @@ export function ClassChipInput({
           {/* UX-064: Cancel, then the action, right-aligned, like New variable and dialogs. */}
           <div className="emvb-dialog-actions emvb-save-local-actions">
             <Button type="button" variant="secondary" className={BUTTON} onClick={closeNaming}>
-              Cancel
+              {t("Cancel")}
             </Button>
             <Button
               type="button"
@@ -431,27 +463,29 @@ export function ClassChipInput({
               disabled={localName.trim() === ""}
               onClick={() => void saveLocal()}
             >
-              Save as class
+              {t("Save as class")}
             </Button>
           </div>
         </div>
       )}
       {savedNote && (
         <p className="emvb-helper" role="status" data-emvb-save-local-done="">
-          {savedNote}
+          {savedNoteText}
         </p>
       )}
       {error && (
         <p className="emvb-inline-error" role="alert" data-emvb-class-error="">
-          {error}
+          {errorText}
         </p>
       )}
       {/* UX-025: the cascade rule only matters once two classes can disagree. */}
       {(full || ids.length >= 2) && (
         <p className="emvb-helper" data-emvb-cascade-caption="">
           {full
-            ? `${MAX_ELEMENT_CLASSES} classes is the most one element can have.`
-            : "When two classes set the same property, the one lower in Site styles wins. Local styles still win."}
+            ? t("{count} classes is the most one element can have.", { count: MAX_ELEMENT_CLASSES })
+            : t(
+                "When two classes set the same property, the one lower in Site styles wins. Local styles still win.",
+              )}
         </p>
       )}
     </div>

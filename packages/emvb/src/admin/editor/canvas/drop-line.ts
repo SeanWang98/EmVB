@@ -1,3 +1,9 @@
+/**
+ * [INPUT]: 依赖容器与相邻子元素的几何边界。
+ * [OUTPUT]: 提供dropLineBox。
+ * [POS]: 拖放插入位置的纯几何计算，供选区层绘制。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
 import type { Rect } from "../dnd/drop-target.ts";
 import type { Box } from "./SelectionOverlay.tsx";
 

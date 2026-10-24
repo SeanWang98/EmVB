@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖布局树动作、元素描述与即时翻译器。
+ * [OUTPUT]: 提供节点动作、删除确认源数据和撤销反馈。
+ * [POS]: 节点动作边界；确认保留元素类型和用户标签，显示层翻译。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { translate } from "../i18n/index.ts";
 import * as React from "react";
 import type { createKumoToastManager } from "@cloudflare/kumo";
 import {
@@ -39,13 +46,25 @@ function movedTo(layout: Layout, id: string): string {
   const siblings: LayoutNode[] =
     parent && "children" in parent && Array.isArray(parent.children) ? parent.children : [];
   const index = siblings.findIndex((child) => child.id === id);
-  const name = ELEMENT_NAMES[node?.type ?? "container"] ?? "Element";
-  const where = ELEMENT_NAMES[parent?.type ?? "container"] ?? "its container";
-  return `Moved. ${name} is ${index + 1} of ${siblings.length} in ${where}.`;
+  const name = translate(ELEMENT_NAMES[node?.type ?? "container"] ?? "Element");
+  const where = translate(ELEMENT_NAMES[parent?.type ?? "container"] ?? "its container");
+  return translate("Moved. {name} is {index} of {count} in {where}.", {
+    name,
+    index: index + 1,
+    count: siblings.length,
+    where,
+  });
 }
 
 const RESTORE_TIMEOUT_MS = 6000;
 const NOTICE_TIMEOUT_MS = 4000;
+
+export type DeleteAsk = {
+  id: string;
+  nodeType: LayoutNode["type"];
+  userLabel?: string;
+  count: number;
+};
 
 /**
  * UX-070: when an action removes the focused control (a deleted row, a closing toast), move focus
@@ -77,11 +96,7 @@ export function useNodeActions({
   announce: (message: string) => void;
   toasts: ReturnType<typeof createKumoToastManager>;
 }) {
-  const [deleteAsk, setDeleteAsk] = React.useState<{
-    id: string;
-    label: string;
-    count: number;
-  } | null>(null);
+  const [deleteAsk, setDeleteAsk] = React.useState<DeleteAsk | null>(null);
   const lastToast = React.useRef<string | null>(null);
 
   const canDelete = (id: string) => !!state.page.layout && state.page.layout.root.id !== id;
@@ -91,8 +106,13 @@ export function useNodeActions({
     // UX-062: the toast names what went, as the confirm button does ("Delete 3 elements").
     const layout = latest.current.page.layout;
     const count = layout ? subtreeSize(layout, id) : 1;
-    const name = ELEMENT_NAMES[(layout && findNode(layout, id)?.type) || "container"] ?? "Element";
-    const title = count > 1 ? `${count} elements deleted` : `${name} deleted`;
+    const name = translate(
+      ELEMENT_NAMES[(layout && findNode(layout, id)?.type) || "container"] ?? "Element",
+    );
+    const title =
+      count > 1
+        ? translate("{count} elements deleted", { count })
+        : translate("{name} deleted", { name });
     dispatch({ type: "delete-node", id });
     // UX-070: the deleted row or canvas element took focus with it; keep the keyboard in Layers.
     keepFocusInLayers();
@@ -103,7 +123,7 @@ export function useNodeActions({
       timeout: RESTORE_TIMEOUT_MS,
       actions: [
         {
-          children: "Restore",
+          children: translate("Restore"),
           variant: "secondary",
           onClick: () => {
             dispatch({ type: "restore" });
@@ -126,7 +146,8 @@ export function useNodeActions({
       const node = findNode(layout, id);
       setDeleteAsk({
         id,
-        label: ELEMENT_NAMES[node?.type ?? "container"] ?? "Element",
+        nodeType: node?.type ?? "container",
+        ...(node?.label ? { userLabel: node.label } : {}),
         count,
       });
       return;
@@ -140,18 +161,18 @@ export function useNodeActions({
     if (!layout) return;
     const result = run(layout, id);
     if (!result.ok) {
-      announce(result.reason);
+      announce(translate(result.reason));
       return;
     }
     dispatch({ type: "apply-arranged", layout: result.layout, selected: result.selected });
     // W-770: a keyboard move only announced refusals; say where the element landed.
     if (MOVES.has(run)) announce(movedTo(result.layout, id));
     if (result.note) {
-      announce(`Duplicated. ${result.note}`);
+      announce(translate("Duplicated. {note}", { note: translate(result.note) }));
       if (lastToast.current) toasts.close(lastToast.current);
       lastToast.current = toasts.add({
-        title: "Duplicated",
-        description: result.note,
+        title: translate("Duplicated"),
+        description: translate(result.note),
         timeout: NOTICE_TIMEOUT_MS,
       });
     }
@@ -171,11 +192,11 @@ export function useNodeActions({
         "children" in parent && Array.isArray(parent.children) ? parent.children.length : 0;
       const result = addNode(layout, node, { parentId, index });
       if (!result.ok) {
-        announce(result.reason);
+        announce(translate(result.reason));
         return;
       }
       dispatch({ type: "apply-arranged", layout: result.layout, selected: parentId });
-      announce(`${ELEMENT_NAMES[node.type] ?? "Item"} added`);
+      announce(translate("{name} added", { name: translate(ELEMENT_NAMES[node.type] ?? "Item") }));
     },
     remove: (id) => remove(id),
     move: (id, direction) => {
@@ -183,7 +204,7 @@ export function useNodeActions({
       if (!layout) return;
       const result = (direction === "up" ? moveUp : moveDown)(layout, id);
       if (!result.ok) {
-        announce(result.reason);
+        announce(translate(result.reason));
         return;
       }
       dispatch({
@@ -195,9 +216,9 @@ export function useNodeActions({
   };
 
   const notice = (message: string) => {
-    announce(message);
+    announce(translate(message));
     if (lastToast.current) toasts.close(lastToast.current);
-    lastToast.current = toasts.add({ title: message, timeout: NOTICE_TIMEOUT_MS });
+    lastToast.current = toasts.add({ title: translate(message), timeout: NOTICE_TIMEOUT_MS });
   };
 
   /** Puts a new element (or a recipe's section) where the selection says (W-175). */
@@ -212,14 +233,26 @@ export function useNodeActions({
       return;
     }
     dispatch({ type: "apply-arranged", layout: result.layout, selected: result.selected });
-    const nameOf = (id: string) => ELEMENT_NAMES[findNode(layout, id)?.type ?? "container"];
+    const nameOf = (id: string) =>
+      translate(ELEMENT_NAMES[findNode(layout, id)?.type ?? "container"] ?? "Container");
     if (result.fallback) {
       // Added next to the nearest ancestor that takes it, rather than refused (W-175).
-      const after = nameOf(result.fallback.after) ?? "the selection";
-      notice(`${label} added after ${after} instead. ${result.fallback.refused}`);
+      const after = nameOf(result.fallback.after) ?? translate("the selection");
+      notice(
+        translate("{name} added after {after} instead. {reason}", {
+          name: label,
+          after,
+          reason: translate(result.fallback.refused),
+        }),
+      );
       return;
     }
-    announce(`${label} added inside ${nameOf(result.parentId) ?? "Container"}`);
+    announce(
+      translate("{name} added inside {parent}", {
+        name: label,
+        parent: nameOf(result.parentId) ?? translate("Container"),
+      }),
+    );
   };
 
   const addFromPanel = (type: ElementType) => {
@@ -233,7 +266,7 @@ export function useNodeActions({
     const layout = current ?? startingLayout();
     const node = newElement(type);
     if (!node) return;
-    place(layout, node, ELEMENT_DESCRIPTORS.find((d) => d.type === type)?.name ?? type);
+    place(layout, node, translate(ELEMENT_DESCRIPTORS.find((d) => d.type === type)?.name ?? type));
   };
 
   /** A section recipe built from the site's styles (W-320). */
@@ -241,7 +274,14 @@ export function useNodeActions({
     const layout = latest.current.page.layout ?? startingLayout();
     const node = recipeNode(id, latest.current.design, layout);
     if (!node) return;
-    place(layout, withFreshIds(layout, node), `${node.label ?? "Section"} section`, true);
+    place(
+      layout,
+      withFreshIds(layout, node),
+      translate("{name} section", {
+        name: node.label ? translate(node.label) : translate("Section"),
+      }),
+      true,
+    );
   };
 
   return {

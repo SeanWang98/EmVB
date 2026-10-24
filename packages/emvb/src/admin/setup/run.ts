@@ -1,3 +1,9 @@
+/**
+ * [INPUT]: 依赖公开 schema API 与纯初始化计划。
+ * [OUTPUT]: 提供集合探测和顺序初始化操作。
+ * [POS]: 以已登录管理员身份写入稳定英文集合规格。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
 import { PAGES_COLLECTION, THEME_PARTS_COLLECTION } from "../../constants.ts";
 import { ApiError, requestJson, type Fetcher } from "../api.ts";
 import { planSetup, type CollectionState, type SetupStep } from "./plan.ts";

@@ -1,3 +1,9 @@
+/**
+ * [INPUT]: 依赖 EmDash apiFetch 的 CSRF 标记与公开响应信封。
+ * [OUTPUT]: 提供统一请求、分页、Fetcher 和 ApiError。
+ * [POS]: 后台 HTTP 边界；保留服务端错误码与诊断原文。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
 import { apiFetch } from "emdash/plugin-utils";
 
 export type Fetcher = (path: string, init?: RequestInit) => Promise<Response>;

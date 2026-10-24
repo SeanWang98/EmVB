@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖布局分享编码、剪贴板与后台语言上下文。
+ * [OUTPUT]: 提供分享弹窗与站点内部媒体计数。
+ * [POS]: 编辑器布局分享入口；用户标题原样编码。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { useI18n } from "../i18n/index.ts";
 import { Button, Dialog, Input, Switch } from "@cloudflare/kumo";
 import * as React from "react";
 import {
@@ -79,6 +86,7 @@ export function ShareLinkDialog({
   /** Playground address; emvb.dev's by default. */
   base?: string;
 }) {
+  const t = useI18n();
   const [withStyles, setWithStyles] = React.useState(true);
   const [link, setLink] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
@@ -126,57 +134,63 @@ export function ShareLinkDialog({
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog size="base" className="p-6 emvb-share" data-emvb-share="">
         <div className="emvb-dialog" data-emvb-dialog="share">
-          <Dialog.Title>Share as a playground link</Dialog.Title>
+          <Dialog.Title>{t("Share as a playground link")}</Dialog.Title>
           <Dialog.Description>
-            Anyone with the link can open a copy of this page in the EmVB playground and edit it in
-            their own browser. The page travels inside the link; nothing is uploaded.
+            {t(
+              "Anyone with the link can open a copy of this page in the EmVB playground and edit it in their own browser. The page travels inside the link; nothing is uploaded.",
+            )}
           </Dialog.Description>
           <Switch
-            label="Include Site styles (colours, fonts, sizes, classes)"
+            label={t("Include Site styles (colours, fonts, sizes, classes)")}
             checked={withStyles}
             onCheckedChange={(checked) => setWithStyles(checked === true)}
           />
           {error ? (
             <p className="emvb-helper" role="alert">
-              Couldn't build the link: {error}
+              {t("Couldn't build the link: {error}", { error })}
             </p>
           ) : (
             <Input
-              label="Link"
+              label={t("Link")}
               className={FIELD}
               readOnly
-              value={link ?? "Building the link…"}
+              value={link ?? t("Building the link…")}
               data-emvb-share-link=""
               onFocus={(event) => event.currentTarget.select()}
             />
           )}
           {link && (
             <p className="emvb-helper" data-emvb-share-size="">
-              {link.length.toLocaleString("en")} characters
+              {t("{count} characters", { count: link.length.toLocaleString("en") })}
               {link.length > LONG_LINK_CHARS
-                ? ". That's long: some chat apps cut links this size, so paste it somewhere that keeps it whole."
+                ? t(
+                    ". That's long: some chat apps cut links this size, so paste it somewhere that keeps it whole.",
+                  )
                 : "."}
             </p>
           )}
           {siteMedia > 0 && (
             <p className="emvb-helper" data-emvb-share-media="">
-              {siteMedia === 1 ? "1 image or video uses" : `${siteMedia} images or videos use`} an
-              address on this site only, so the playground shows {siteMedia === 1 ? "it" : "them"}{" "}
-              empty.
+              {t(
+                siteMedia === 1
+                  ? "{count} image or video uses an address on this site only, so the playground shows it empty."
+                  : "{count} images or videos use an address on this site only, so the playground shows them empty.",
+                { count: siteMedia },
+              )}
             </p>
           )}
           <p className="emvb-helper">
-            Unsaved changes are included. Posts, forms and uploads stay on this site.
+            {t("Unsaved changes are included. Posts, forms and uploads stay on this site.")}
           </p>
           <div className="emvb-dialog-actions">
             {copied && (
               <span role="status" className="emvb-helper">
                 {copied === "yes"
-                  ? "Copied."
-                  : "Copy didn't work here: select the link and copy it."}
+                  ? t("Copied.")
+                  : t("Copy didn't work here: select the link and copy it.")}
               </span>
             )}
-            <DialogCloseButton>Close</DialogCloseButton>
+            <DialogCloseButton>{t("Close")}</DialogCloseButton>
             <Button
               variant="primary"
               className={BUTTON}
@@ -184,7 +198,7 @@ export function ShareLinkDialog({
               onClick={copy}
               data-emvb-share-copy=""
             >
-              Copy link
+              {t("Copy link")}
             </Button>
           </div>
         </div>

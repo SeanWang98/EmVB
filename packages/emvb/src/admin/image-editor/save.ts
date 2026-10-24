@@ -1,4 +1,10 @@
 /**
+ * [INPUT]: 依赖图片配方 schema、导出格式与媒体命名规则。
+ * [OUTPUT]: 提供副本构造、配方导入导出与尺寸计算函数。
+ * [POS]: 保存数据模型，保持文件名、配方及格式标识稳定。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+/**
  * Saving an edited picture (W-485): export settings, the output file and the `edit` record.
  * No photocn import here, so this stays testable without WebGL.
  */

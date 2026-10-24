@@ -1,13 +1,21 @@
 /**
+ * [INPUT]: 依赖图片引擎编辑状态、工具标识与后台语言。
+ * [OUTPUT]: 提供Announcer、useEditSummary 与英文摘要函数。
+ * [POS]: 延迟播报编辑结果，不把显示语言写入配方。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+/**
  * Screen reader announcements and the plain-text summary of edits (W-487). A polite live region
  * says which tool opened and, after a pause, what the picture's edits now are (so undo, redo and
  * Reset all are heard too). Slider drags are not announced on every step.
  */
+import { useI18n } from "../i18n/index.ts";
 import * as React from "react";
 import { summarizeImageEdit } from "../../core/image-edit/summary.ts";
 import type { ImageEditRecipe } from "../../core/image-edit/schema.ts";
 import { useImageEditor } from "./engine.ts";
 import { IMAGE_EDITOR_TOOLS } from "./tools.ts";
+import { localizeImageEditSummary } from "./edit-summary.ts";
 
 /** How long the edits must stay unchanged before they are announced. */
 export const ANNOUNCE_DELAY_MS = 700;
@@ -28,10 +36,12 @@ export function toolLabel(tool: string): string {
 
 /** The current edits as text, for the Metadata panel. */
 export function useEditSummary(): string {
-  return editSummary(useImageEditor().recipes.current);
+  const t = useI18n();
+  return localizeImageEditSummary(editSummary(useImageEditor().recipes.current), t);
 }
 
 export function Announcer() {
+  const t = useI18n();
   const editor = useImageEditor();
   const summary = editSummary(editor.recipes.current);
   const tool = editor.tool;
@@ -59,7 +69,11 @@ export function Announcer() {
   }, [summary, editor.isReady]);
   return (
     <div className="emvb-ie-sr" role="status" aria-live="polite" data-emvb-image-live="">
-      {text}
+      {text.startsWith("Edits: ")
+        ? t("Edits: {summary}", { summary: localizeImageEditSummary(text.slice(7), t) })
+        : text.endsWith(" tool")
+          ? t("{tool} tool", { tool: t(text.slice(0, -5)) })
+          : text}
     </div>
   );
 }

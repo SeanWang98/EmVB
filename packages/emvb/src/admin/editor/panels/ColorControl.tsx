@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖设计变量、颜色转换与本地化上下文。
+ * [OUTPUT]: 导出颜色选择、创建与即时保存控件。
+ * [POS]: 元素颜色与站点变量的桥接；命令错误保留源消息。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { useI18n } from "../../i18n/index.ts";
 import { Button, Input, Loader, Select } from "@cloudflare/kumo";
 import { PlusIcon } from "@phosphor-icons/react";
 import * as React from "react";
@@ -25,6 +32,7 @@ import { InlineError } from "./inline-error.tsx";
 import { pickerHex, withPreviousAlpha } from "./variable-values.ts";
 import { isCommitEnter } from "../ime.ts";
 import { useMediaQuery } from "../useMediaQuery.ts";
+import { errorMessage, type LocalizedMessage } from "../localized-message.ts";
 
 /**
  * W-673: Kumo's Input `variant="error"` is deprecated (and warns), and its `error` prop would print
@@ -37,9 +45,6 @@ const CUSTOM = "__custom__";
 /** Swatch buttons shown under the Select; the rest stay in its list (W-136). */
 const SWATCH_LIMIT = 16;
 const BAD_HEX = "Enter a hex color such as #1a2b3c.";
-
-const errorText = (error: unknown) =>
-  error instanceof Error ? error.message : "Couldn't save site styles. Try again.";
 
 function Swatch({ color }: { color: string }) {
   return <span className="emvb-swatch" style={{ background: color }} aria-hidden="true" />;
@@ -75,6 +80,7 @@ export function ColorControl({
   onChange: (value: ColorValue) => void;
   onDesignChange: (design: DesignSystem) => Promise<void>;
 }) {
+  const t = useI18n();
   const colors = design.variables.colors;
   const bound = value && typeof value === "object" ? colors.find((c) => c.id === value.var) : null;
   const [creating, setCreating] = React.useState(false);
@@ -108,12 +114,12 @@ export function ColorControl({
   return (
     <div className="emvb-field-group" data-emvb-control="color">
       <Select
-        label={label}
+        label={t(label)}
         className={FIELD}
         value={selectValue}
         onValueChange={pick}
         renderValue={(current: unknown) => {
-          if (current === NONE) return placeholder ?? "Default";
+          if (current === NONE) return placeholder ?? t("Default");
           if (current === CUSTOM)
             return custom ? (
               <>
@@ -121,7 +127,7 @@ export function ColorControl({
                 {custom}
               </>
             ) : (
-              "Custom color"
+              t("Custom color")
             );
           const color = colors.find((c) => c.id === current);
           return color ? (
@@ -134,20 +140,20 @@ export function ColorControl({
           );
         }}
       >
-        <Select.Option value={NONE}>Default</Select.Option>
+        <Select.Option value={NONE}>{t("Default")}</Select.Option>
         {colors.map((color) => (
           <Select.Option key={color.id} value={color.id}>
             <Swatch color={color.value} />
             {color.name}
           </Select.Option>
         ))}
-        <Select.Option value={CUSTOM}>Custom color</Select.Option>
+        <Select.Option value={CUSTOM}>{t("Custom color")}</Select.Option>
       </Select>
       {colors.length > 0 && (
         <div
           className="emvb-swatches"
           role="group"
-          aria-label={`${label}: colour variables`}
+          aria-label={t("{label}: colour variables", { label: t(label) })}
           data-emvb-swatches=""
         >
           {colors.slice(0, SWATCH_LIMIT).map((color) => (
@@ -164,7 +170,9 @@ export function ColorControl({
             </button>
           ))}
           {colors.length > SWATCH_LIMIT && (
-            <span className="emvb-helper">+{colors.length - SWATCH_LIMIT} more in the list</span>
+            <span className="emvb-helper">
+              {t("+{count} more in the list", { count: colors.length - SWATCH_LIMIT })}
+            </span>
           )}
         </div>
       )}
@@ -172,7 +180,7 @@ export function ColorControl({
         <CustomColor
           key={custom ?? "new"}
           value={custom ?? ""}
-          label={label}
+          label={t(label)}
           clipped={clipped}
           onClipped={setClipped}
           onCommit={onChange}
@@ -219,7 +227,7 @@ export function ColorControl({
           onClick={() => setCreating(true)}
           disabled={variableListFull(design, "color")}
         >
-          New variable
+          {t("New variable")}
         </Button>
       )}
     </div>
@@ -240,6 +248,7 @@ function CustomColor({
   onClipped: (hex: string | null) => void;
   onCommit: (hex: string) => void;
 }) {
+  const t = useI18n();
   const [draft, setDraft] = React.useState(value);
   // The field that refused its entry is the one marked, not always the hex (W-174).
   const [error, setError] = React.useState<{ field: Notation; message: string } | null>(null);
@@ -280,7 +289,7 @@ function CustomColor({
     <div className="emvb-custom-color" data-emvb-custom-color="">
       <div className="emvb-custom-color-row">
         <Input
-          label="Custom color"
+          label={t("Custom color")}
           className={`${FIELD} emvb-mono${error?.field === "hex" ? INVALID : ""}`}
           placeholder="#1a2b3c"
           value={draft}
@@ -294,7 +303,7 @@ function CustomColor({
         <input
           type="color"
           className="emvb-color-picker"
-          aria-label={`Pick ${label.toLowerCase()}`}
+          aria-label={t("Pick {name}", { name: t(label).toLowerCase() })}
           ref={picker}
           value={pickerHex(HEX.test(draft) ? draft : value || "#000000")}
           onChange={(event) => setDraft(withPreviousAlpha(event.target.value, value))}
@@ -302,7 +311,7 @@ function CustomColor({
       </div>
       {error?.field === "hex" && <InlineError>{error.message}</InlineError>}
       <NotationRow
-        label="RGB"
+        label={t("RGB")}
         text={formatRgb(parseHex(HEX.test(draft) ? draft : value) ?? { r: 0, g: 0, b: 0, a: 1 })}
         placeholder="255, 128, 0"
         error={error?.field === "rgb" ? error.message : undefined}
@@ -319,7 +328,7 @@ function CustomColor({
         }}
       />
       <NotationRow
-        label="OKLCH"
+        label={t("OKLCH")}
         text={formatOklch(parseHex(HEX.test(draft) ? draft : value) ?? { r: 0, g: 0, b: 0, a: 1 })}
         placeholder="62.8, 0.150, 29"
         error={error?.field === "oklch" ? error.message : undefined}
@@ -338,8 +347,10 @@ function CustomColor({
       />
       {clipped !== null && clipped === draft && !error && (
         <p className="emvb-helper" role="status" data-emvb-clipped="">
-          Clipped to {clipped}: that OKLCH colour is outside sRGB, so its out-of-range channels were
-          cut to fit.
+          {t(
+            "Clipped to {color}: that OKLCH colour is outside sRGB, so its out-of-range channels were cut to fit.",
+            { color: clipped },
+          )}
         </p>
       )}
     </div>
@@ -368,6 +379,7 @@ function NotationRow({
   error: string | undefined;
   onCommit: (text: string) => void;
 }) {
+  const t = useI18n();
   const [draft, setDraft] = React.useState(text);
   React.useEffect(() => {
     setDraft(text);
@@ -375,7 +387,7 @@ function NotationRow({
   return (
     <>
       <Input
-        label={label}
+        label={t(label)}
         className={`${FIELD} emvb-mono${error ? INVALID : ""}`}
         placeholder={placeholder}
         value={draft}
@@ -402,8 +414,9 @@ function VariableValue({
   value: string;
   onCommit: (hex: string) => Promise<void>;
 }) {
+  const t = useI18n();
   const [draft, setDraft] = React.useState(value);
-  const [error, setError] = React.useState<string | null>(null);
+  const [error, setError] = React.useState<LocalizedMessage | null>(null);
   const [phase, setPhase] = React.useState<"idle" | "saving" | "saved">("idle");
   const pending = React.useRef(false);
   const commit = async () => {
@@ -422,7 +435,7 @@ function VariableValue({
       await onCommit(hex);
       setPhase("saved");
     } catch (failure) {
-      setError(errorText(failure));
+      setError(errorMessage(failure, "Couldn't save site styles. Try again."));
       setPhase("idle");
     } finally {
       pending.current = false;
@@ -431,7 +444,7 @@ function VariableValue({
   return (
     <>
       <Input
-        label={`${name} value`}
+        label={t("{name} value", { name })}
         className={`${FIELD} emvb-mono${error ? INVALID : ""}`}
         value={draft}
         readOnly={phase === "saving"}
@@ -450,16 +463,16 @@ function VariableValue({
         <p
           className="emvb-helper"
           role="status"
-          aria-label="Color variable status"
+          aria-label={t("Color variable status")}
           aria-live="polite"
         >
           {error
             ? ""
             : phase === "saving"
-              ? "Saving color variable…"
+              ? t("Saving color variable…")
               : phase === "saved"
-                ? "Color variable saved. Publish styles to make it live."
-                : "Style changes stay unpublished until you publish styles."}
+                ? t("Color variable saved. Publish styles to make it live.")
+                : t("Style changes stay unpublished until you publish styles.")}
         </p>
         {error && <InlineError>{error}</InlineError>}
       </div>
@@ -474,9 +487,10 @@ function NewVariable({
   onCancel: () => void;
   onCreate: (name: string, hex: string) => Promise<void>;
 }) {
+  const t = useI18n();
   const [name, setName] = React.useState("");
   const [hex, setHex] = React.useState("");
-  const [error, setError] = React.useState<string | null>(null);
+  const [error, setError] = React.useState<LocalizedMessage | null>(null);
   // W-820: a refused name or value focuses that field and marks it invalid, like W-813.
   const [invalid, setInvalid] = React.useState<"name" | "value" | null>(null);
   const nameRef = React.useRef<HTMLInputElement>(null);
@@ -501,7 +515,7 @@ function NewVariable({
     try {
       await onCreate(name.trim(), typed);
     } catch (failure) {
-      setError(errorText(failure));
+      setError(errorMessage(failure, "Couldn't save site styles. Try again."));
     } finally {
       pending.current = false;
       setBusy(false);
@@ -521,7 +535,7 @@ function NewVariable({
       }}
     >
       <Input
-        label="Variable name"
+        label={t("Variable name")}
         ref={nameRef}
         aria-invalid={invalid === "name" || undefined}
         readOnly={busy}
@@ -532,7 +546,7 @@ function NewVariable({
         onChange={(event) => setName(event.target.value)}
       />
       <Input
-        label="Value"
+        label={t("Value")}
         ref={valueRef}
         aria-invalid={invalid === "value" || undefined}
         readOnly={busy}
@@ -549,10 +563,10 @@ function NewVariable({
       <p
         className="emvb-helper emvb-new-variable-status"
         role="status"
-        aria-label="Color variable status"
+        aria-label={t("Color variable status")}
         aria-live="polite"
       >
-        {busy ? "Creating color variable…" : ""}
+        {busy ? t("Creating color variable…") : ""}
       </p>
       <div className="emvb-row-actions">
         {/* W-822: locked, not disabled, while creating, so keyboard focus stays in the form. */}
@@ -564,7 +578,7 @@ function NewVariable({
             if (!pending.current) onCancel();
           }}
         >
-          Cancel
+          {t("Cancel")}
         </Button>
         <Button
           variant="secondary"
@@ -580,7 +594,7 @@ function NewVariable({
           aria-busy={busy}
           onClick={() => void create()}
         >
-          Create variable
+          {t("Create variable")}
         </Button>
       </div>
     </div>

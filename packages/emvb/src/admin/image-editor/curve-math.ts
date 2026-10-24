@@ -1,4 +1,10 @@
 /**
+ * [INPUT]: 依赖photocn 曲线类型与归一化控制点。
+ * [OUTPUT]: 提供曲线插值、增删控制点与键盘步进函数。
+ * [POS]: CurvesPanel 的纯曲线模型，约束点数与相邻间距。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+/**
  * Tone-curve maths for the Curves panel (W-484): the smooth path, point insertion, moves and
  * removal, plus the keyboard nudges EmVB adds.
  *

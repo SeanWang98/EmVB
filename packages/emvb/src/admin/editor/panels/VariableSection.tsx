@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖站点设计、变量校验与本地化上下文。
+ * [OUTPUT]: 导出共享变量列表和数值编辑区。
+ * [POS]: 站点样式的变量读写边界；切语言保留输入与校验状态。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { useI18n, type Translate } from "../../i18n/index.ts";
 import { Input } from "@cloudflare/kumo";
 import {
   CaretDownIcon,
@@ -20,7 +27,6 @@ import {
   findVariableUsagesInDesign,
   renameVariable,
   variableNameTaken,
-  variableNameTakenMessage,
   type DesignSystem,
   type Layout,
   type VariableKind,
@@ -138,6 +144,7 @@ function ValueEditor({
   token: string;
   onCommit: (value: string | Length) => void;
 }) {
+  const t = useI18n();
   const current = valueText(item.value);
   const [text, setText] = React.useState(current);
   const [error, setError] = React.useState<string | null>(null);
@@ -181,13 +188,13 @@ function ValueEditor({
             ref={picker}
             type="color"
             className="emvb-site-picker"
-            aria-label={`Pick ${item.name}`}
+            aria-label={t("Pick {name}", { name: item.name })}
             value={pickerHex(error ? current : text)}
             onChange={(event) => setText(withPreviousAlpha(event.target.value, committed.current))}
           />
         )}
         <Input
-          aria-label={`Value of ${item.name}`}
+          aria-label={t("Value of {name}", { name: item.name })}
           className={`${FIELD} emvb-site-value-input`}
           value={text}
           aria-invalid={error ? true : undefined}
@@ -209,7 +216,7 @@ function ValueEditor({
       {error && <InlineError>{error}</InlineError>}
       {kind === "font" && typeof item.value === "string" && (
         <p className="emvb-site-font-sample" style={{ fontFamily: item.value }}>
-          The quick brown fox jumps · 0123
+          {t("The quick brown fox jumps · 0123")}
         </p>
       )}
       <p className="emvb-mono emvb-site-token">var({token})</p>
@@ -218,10 +225,15 @@ function ValueEditor({
 }
 
 /** "2 on page", and the classes that use it too: "2 on page · 1 class" (W-150). */
-const usageText = (onPage: number, inClasses: number) =>
+const usageText = (t: Translate, onPage: number, inClasses: number) =>
   inClasses
-    ? `${onPage} on page · ${inClasses} ${inClasses === 1 ? "class" : "classes"}`
-    : `${onPage} on page`;
+    ? t(
+        inClasses === 1
+          ? "{count} on page · {classes} class"
+          : "{count} on page · {classes} classes",
+        { count: onPage, classes: inClasses },
+      )
+    : t("{count} on page", { count: onPage });
 
 export function VariableSection({
   title,
@@ -238,6 +250,7 @@ export function VariableSection({
   onSave: (design: DesignSystem) => Promise<boolean | void>;
   onAskDelete: (id: string, name: string) => void;
 }) {
+  const t = useI18n();
   const noun = useEditedNoun();
   const listKey = LIST_KEY[kind];
   const items: readonly Item[] = design.variables[listKey] ?? [];
@@ -249,8 +262,9 @@ export function VariableSection({
   const [createError, setCreateError] = React.useState<{
     field: "name" | "value";
     message: string;
+    values?: Readonly<Record<string, string | number>>;
   } | null>(null);
-  const [nameError, setNameError] = React.useState<string | null>(null);
+  const [duplicateName, setDuplicateName] = React.useState<string | null>(null);
   const [open, setOpen] = React.useState<string | null>(null);
   const [renaming, setRenaming] = React.useState<string | null>(null);
   // W-616: what was typed in a rename whose save failed, so the reopened field keeps it.
@@ -288,7 +302,11 @@ export function VariableSection({
     const trimmed = cleanClassName(name);
     if (!trimmed || variableListFull(design, kind)) return;
     if (variableNameTaken(design, kind, trimmed)) {
-      setCreateError({ field: "name", message: variableNameTakenMessage(trimmed) });
+      setCreateError({
+        field: "name",
+        message: 'A variable named "{name}" already exists. Pick another name.',
+        values: { name: trimmed },
+      });
       return;
     }
     const parsed = parseValue(kind, value);
@@ -316,10 +334,10 @@ export function VariableSection({
     setRenameDraft(null);
     requestAnimationFrame(() => rows.current.get(id)?.focus());
     if (next && variableNameTaken(design, kind, next, id)) {
-      setNameError(variableNameTakenMessage(next));
+      setDuplicateName(next);
       return;
     }
-    setNameError(null);
+    setDuplicateName(null);
     if (!next) return;
     const renamed = renameVariable(design, id, kind, next);
     if (renamed !== design && (await onSave(renamed)) === false) {
@@ -345,7 +363,7 @@ export function VariableSection({
   return (
     <section ref={section} className="emvb-site-section" data-emvb-var-kind={kind}>
       <SectionHead
-        title={title}
+        title={t(title)}
         count={items.length}
         countProps={{ "data-emvb-var-count": "" }}
         onNew={() => setCreating(true)}
@@ -353,7 +371,7 @@ export function VariableSection({
       />
       {(items.length > 3 || filter.length > 0) && (
         <SiteSearch
-          label={`Search ${title.toLowerCase()}`}
+          label={t("Search {name}", { name: t(title).toLowerCase() })}
           value={filter}
           onChange={setFilter}
           data-emvb-var-filter={kind}
@@ -362,12 +380,12 @@ export function VariableSection({
       {items.length === 0 && !creating && (
         <p className="emvb-site-empty" data-emvb-var-empty={kind}>
           <EmptyIcon size={16} aria-hidden="true" />
-          {EMPTY[kind].text}
+          {t(EMPTY[kind].text)}
         </p>
       )}
       {items.length > 0 && visible.length === 0 && (
         <p className="emvb-helper" data-emvb-var-nomatch="">
-          No {title.toLowerCase()} match "{filter.trim()}".
+          {t('No {name} match "{query}".', { name: t(title).toLowerCase(), query: filter.trim() })}
         </p>
       )}
       <ul className="emvb-site-items">
@@ -381,7 +399,9 @@ export function VariableSection({
           ).size;
           // W-316: a fluid token reads "14 → 18 px".
           const fluid = (item as { fluid?: { min: number; max: number } }).fluid;
-          const text = fluid ? `${fluid.min} → ${fluid.max} px fluid` : valueText(item.value);
+          const text = fluid
+            ? t("{min} → {max} px fluid", { min: fluid.min, max: fluid.max })
+            : valueText(item.value);
           return (
             <li
               key={item.id}
@@ -396,7 +416,7 @@ export function VariableSection({
                     <RenameInput
                       name={item.name}
                       initial={renameDraft ?? undefined}
-                      label={`Rename ${item.name}`}
+                      label={t("Rename {name}", { name: item.name })}
                       onDone={(next) => void rename(item.id, next)}
                     />
                   </span>
@@ -452,34 +472,44 @@ export function VariableSection({
                 )}
                 <span
                   className="emvb-site-usage"
-                  title={`Used ${onPage} ${onPage === 1 ? "time" : "times"} on this ${noun}${
-                    inClasses ? ` and in ${inClasses} ${inClasses === 1 ? "class" : "classes"}` : ""
-                  }`}
+                  title={
+                    t(
+                      onPage === 1
+                        ? "Used {count} time on this {noun}"
+                        : "Used {count} times on this {noun}",
+                      { count: onPage, noun: t(noun) },
+                    ) +
+                    (inClasses
+                      ? t(inClasses === 1 ? " and in {count} class" : " and in {count} classes", {
+                          count: inClasses,
+                        })
+                      : "")
+                  }
                   data-emvb-usage=""
                   aria-live="polite"
                 >
                   {copied?.id === item.id
                     ? copied.ok
-                      ? "Copied"
-                      : "Couldn't copy"
-                    : usageText(onPage, inClasses)}
+                      ? t("Copied")
+                      : t("Couldn't copy")
+                    : usageText(t, onPage, inClasses)}
                 </span>
                 <RowMenu
-                  label={`Actions for ${item.name}`}
+                  label={t("Actions for {name}", { name: item.name })}
                   actions={[
                     {
-                      label: isOpen ? "Hide value" : "Edit value",
+                      label: t(isOpen ? "Hide value" : "Edit value"),
                       icon: PencilSimpleLineIcon,
                       onSelect: toggle,
                     },
                     {
-                      label: "Rename",
+                      label: t("Rename"),
                       icon: TextTIcon,
                       afterClose: true,
                       onSelect: () => setRenaming(item.id),
                     },
                     {
-                      label: "Duplicate",
+                      label: t("Duplicate"),
                       icon: CopySimpleIcon,
                       onSelect: () => {
                         const next = duplicateVariable(design, item.id, kind);
@@ -487,12 +517,12 @@ export function VariableSection({
                       },
                     },
                     {
-                      label: "Copy CSS variable",
+                      label: t("Copy CSS variable"),
                       icon: CopySimpleIcon,
                       onSelect: () => copy(item.id, token),
                     },
                     {
-                      label: "Delete",
+                      label: t("Delete"),
                       icon: TrashIcon,
                       danger: true,
                       onSelect: () => onAskDelete(item.id, item.name),
@@ -502,7 +532,7 @@ export function VariableSection({
               </div>
               {isOpen && (
                 <ValueEditor
-                  key={text}
+                  key={`${valueText(item.value)}:${fluid?.min}:${fluid?.max}`}
                   kind={kind}
                   item={item}
                   token={token}
@@ -513,15 +543,19 @@ export function VariableSection({
           );
         })}
       </ul>
-      {nameError && (
+      {duplicateName && (
         <div data-emvb-var-name-error="">
-          <InlineError>{nameError}</InlineError>
+          <InlineError>
+            {t('A variable named "{name}" already exists. Pick another name.', {
+              name: duplicateName,
+            })}
+          </InlineError>
         </div>
       )}
       {creating && (
         <CreateRow
           rowProps={{ "data-emvb-var-create": kind }}
-          submitLabel="Create"
+          submitLabel={t("Create")}
           onCancel={() => {
             setCreating(false);
             setCreateError(null);
@@ -530,7 +564,7 @@ export function VariableSection({
           onCreate={() => void create()}
         >
           <Input
-            label="Name"
+            label={t("Name")}
             className={FIELD}
             value={name}
             aria-invalid={createError?.field === "name" ? true : undefined}
@@ -539,9 +573,11 @@ export function VariableSection({
               setCreateError(null);
             }}
           />
-          {createError?.field === "name" && <InlineError>{createError.message}</InlineError>}
+          {createError?.field === "name" && (
+            <InlineError>{t(createError.message, createError.values)}</InlineError>
+          )}
           <Input
-            label={isLengthKind(kind) ? "Value (px, rem, em or %)" : "Value"}
+            label={t(isLengthKind(kind) ? "Value (px, rem, em or %)" : "Value")}
             className={FIELD}
             value={value}
             aria-invalid={createError?.field === "value" ? true : undefined}

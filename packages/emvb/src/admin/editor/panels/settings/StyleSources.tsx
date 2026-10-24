@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖 traceStyle、设计变量与后台翻译。
+ * [OUTPUT]: 导出 StyleSources 与 sourceValue。
+ * [POS]: 元素设置面板的样式继承检查器，翻译展示文案并保留存储值。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { useI18n, type Translate } from "../../../i18n/index.ts";
 import { CaretRightIcon } from "@phosphor-icons/react";
 import {
   traceStyle,
@@ -34,7 +41,15 @@ export function sourceValue(value: unknown, design?: DesignSystem): string {
   return json.length > 32 ? `${json.slice(0, 31)}…` : json;
 }
 
-const where = (s: StyleSource) => (s.layer === "Desktop" ? s.label : `${s.label} · ${s.layer}`);
+const where = (source: StyleSource, t: Translate) => {
+  const label =
+    source.kind === "default"
+      ? t("Site default ({tag})", { tag: source.label.slice("Site default (".length, -1) })
+      : source.kind === "local"
+        ? t("This element")
+        : source.label;
+  return source.layer === "Desktop" ? label : `${label} · ${t(source.layer)}`;
+};
 
 /**
  * Style inheritance inspector (W-318): every property that applies to this element here, the
@@ -52,38 +67,44 @@ export function StyleSources({
   device: TraceDevice;
   state: "normal" | "hover" | "focus" | "active";
 }) {
+  const t = useI18n();
   const trace = traceStyle(node, design, device, state);
   const keys = Object.keys(trace).toSorted();
   const fromElsewhere = keys.filter((key) => trace[key]?.winner.kind !== "local").length;
   return (
     <details className="emvb-sources" data-emvb-style-sources="">
       <summary>
-        <span className="emvb-sources-label">Where styles come from</span>
+        <span className="emvb-sources-label">{t("Where styles come from")}</span>
         <span className="emvb-sources-count">
           {keys.length === 0
-            ? "nothing set"
-            : `${keys.length} set${fromElsewhere > 0 ? `, ${fromElsewhere} inherited` : ""}`}
+            ? t("nothing set")
+            : t(fromElsewhere > 0 ? "{count} set, {inherited} inherited" : "{count} set", {
+                count: keys.length,
+                inherited: fromElsewhere,
+              })}
           {/* UX-037: the flex summary drops the native marker, so draw the section caret. */}
           <CaretRightIcon size={16} aria-hidden="true" className="emvb-sources-caret" />
         </span>
       </summary>
       {keys.length === 0 ? (
-        <p className="emvb-helper">No styles apply yet beyond the element's defaults.</p>
+        <p className="emvb-helper">{t("No styles apply yet beyond the element's defaults.")}</p>
       ) : (
         <ul>
           {keys.map((key) => {
-            const t = trace[key];
-            if (!t) return null;
+            const source = trace[key];
+            if (!source) return null;
             return (
-              <li key={key} data-emvb-source={key} data-kind={t.winner.kind}>
-                <span className="emvb-sources-prop">{propertyName(key)}</span>
-                <span className="emvb-sources-value">{sourceValue(t.winner.value, design)}</span>
-                <span className="emvb-sources-from">{where(t.winner)}</span>
-                {t.overridden.length > 0 && (
+              <li key={key} data-emvb-source={key} data-kind={source.winner.kind}>
+                <span className="emvb-sources-prop">{t(propertyName(key))}</span>
+                <span className="emvb-sources-value">
+                  {sourceValue(source.winner.value, design)}
+                </span>
+                <span className="emvb-sources-from">{where(source.winner, t)}</span>
+                {source.overridden.length > 0 && (
                   <span className="emvb-sources-over">
-                    overrides{" "}
-                    {t.overridden
-                      .map((o) => `${where(o)} (${sourceValue(o.value, design)})`)
+                    {t("overrides")}{" "}
+                    {source.overridden
+                      .map((o) => `${where(o, t)} (${sourceValue(o.value, design)})`)
                       .join(", ")}
                   </span>
                 )}

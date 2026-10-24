@@ -1,4 +1,10 @@
 /**
+ * [INPUT]: 依赖EmDash 主题变量与图片编辑器 DOM 结构。
+ * [OUTPUT]: 提供IMAGE_EDITOR_CSS。
+ * [POS]: 图片编辑器的局部样式，不输出站点 CSS。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+/**
  * Styles for the full-screen image editor (W-482, photocn layout in W-483). Kumo tokens only, so
  * dark mode follows. Spacing and sizes follow photocn's shadcn editor (MIT, Copyright (c) 2026
  * rbbydotdev): a 48 px toolbar, a 338 px resizable sidebar, 16 px panel padding, 44 px touch

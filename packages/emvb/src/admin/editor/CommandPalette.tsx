@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖稳定检索分组、命令项与后台语言。
+ * [OUTPUT]: 提供可键盘操作的本地化命令检索弹窗。
+ * [POS]: 命令界面；分组标识保持原值，标题只在展示时翻译。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { useI18n } from "../i18n/index.ts";
 import { Dialog } from "@cloudflare/kumo";
 import * as React from "react";
 import { filterPalette, type PaletteItem } from "./palette.ts";
@@ -16,6 +23,7 @@ export function CommandPalette({
   onOpenChange: (open: boolean) => void;
   items: PaletteItem[];
 }) {
+  const t = useI18n();
   const [query, setQuery] = React.useState("");
   const [active, setActive] = React.useState(0);
   // W-399: opened from a shortcut there is no trigger to return to, so focus fell to <body> on
@@ -103,7 +111,7 @@ export function CommandPalette({
     <Dialog.Root open={open} onOpenChange={close}>
       <Dialog size="base" className="emvb-palette" data-emvb-palette="">
         <Dialog.Title className="sr-only" data-emvb-dialog="palette">
-          Command palette
+          {t("Command palette")}
         </Dialog.Title>
         <input
           className="emvb-palette-input"
@@ -111,8 +119,8 @@ export function CommandPalette({
           aria-expanded="true"
           aria-controls="emvb-palette-list"
           aria-activedescendant={shown[current] ? `emvb-palette-${current}` : undefined}
-          aria-label="Type a command, an element, a layer or a class"
-          placeholder="Insert, jump to a layer, apply a class, or run an action…"
+          aria-label={t("Type a command, an element, a layer or a class")}
+          placeholder={t("Insert, jump to a layer, apply a class, or run an action…")}
           autoFocus
           value={query}
           data-emvb-palette-input=""
@@ -130,7 +138,7 @@ export function CommandPalette({
         >
           {shown.length === 0 && (
             <li className="emvb-palette-empty" role="presentation">
-              Nothing matches “{query}”.
+              {t("Nothing matches “{query}”.", { query })}
             </li>
           )}
           {shown.map((item, index) => {
@@ -140,7 +148,7 @@ export function CommandPalette({
               <React.Fragment key={item.id}>
                 {heading && (
                   <li className="emvb-palette-group" role="presentation">
-                    {heading}
+                    {t(heading)}
                   </li>
                 )}
                 <li
@@ -156,7 +164,9 @@ export function CommandPalette({
                 >
                   <span className="emvb-palette-label">{item.label}</span>
                   <span className="emvb-palette-hint">
-                    {query.trim() ? <span className="emvb-palette-kind">{item.group}</span> : null}
+                    {query.trim() ? (
+                      <span className="emvb-palette-kind">{t(item.group)}</span>
+                    ) : null}
                     {query.trim() && item.hint ? " " : null}
                     {item.hint ? <span className="emvb-palette-detail">{item.hint}</span> : null}
                   </span>
@@ -166,8 +176,7 @@ export function CommandPalette({
           })}
         </ul>
         <p className="emvb-palette-tips">
-          ↑↓ choose · Enter run · Esc close · <kbd>&gt;</kbd> actions · <kbd>+</kbd> insert ·{" "}
-          <kbd>@</kbd> layers · <kbd>.</kbd> classes
+          {t("↑↓ choose · Enter run · Esc close · > actions · + insert · @ layers · . classes")}
         </p>
       </Dialog>
     </Dialog.Root>

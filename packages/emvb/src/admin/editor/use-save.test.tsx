@@ -1,8 +1,14 @@
+/**
+ * [INPUT]: 依赖保存会话、顶部状态与后台语言订阅。
+ * [OUTPUT]: 验证持久化顺序、语言热切换和 API 原文保护。
+ * [POS]: 保存边界回归；语言切换不重试请求或覆写输入。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
 import { afterEach, describe, expect, test } from "bun:test";
 import * as React from "react";
 import { act } from "react";
 import { layoutOfBytes } from "../../../test/fixtures/layouts.ts";
-import { cleanup, mount } from "../../../test/dom/mount.ts";
+import { cleanup, mount, settle } from "../../../test/dom/mount.ts";
 import {
   byteLength,
   emptyDesign,
@@ -13,9 +19,14 @@ import {
 } from "../../core/index.ts";
 import type { Fetcher } from "../api.ts";
 import { editorReducer, type EditorState } from "./store.ts";
-import { tooLargeMessage, useSave } from "./useSave.ts";
+import { tooLargeMessage, useSave, type FieldSession } from "./useSave.ts";
+import { TopBar } from "./TopBar.tsx";
 
-afterEach(cleanup);
+const initialLanguage = document.documentElement.lang;
+afterEach(async () => {
+  await cleanup();
+  document.documentElement.lang = initialLanguage;
+});
 
 const layout: Layout = {
   schemaVersion: 17,
@@ -289,4 +300,143 @@ test("W-836: a save asked for during Overwrite waits for it and uses its new rev
   });
   expect(revs).toEqual(["r9", "r10"]);
   expect(live.state?.rev).toBe("r11");
+});
+
+/** 真实 hook 与顶部状态共挂载，验证失败状态不缓存已翻译文案。 */
+function StatusProbe({
+  fetcher,
+  initial,
+  fieldSession,
+}: {
+  fetcher: Fetcher;
+  initial: EditorState;
+  fieldSession?: FieldSession;
+}) {
+  const [current, dispatch] = React.useReducer(editorReducer, initial);
+  const saver = useSave(fetcher, current, dispatch, undefined, fieldSession);
+  live.hook = saver;
+  live.state = current;
+  const noop = () => undefined;
+  return (
+    <>
+      <TopBar
+        page={{ title: current.page.title, status: current.status }}
+        dirty={current.version !== current.savedVersion}
+        status={saver.status}
+        busy={null}
+        onExit={noop}
+        onShortcuts={noop}
+        onPreview={noop}
+        onSave={() => void saver.save()}
+        onPublish={() => void saver.publish()}
+        fieldMode={!!fieldSession}
+      />
+      <output data-save-slug-error="">{saver.slugError}</output>
+      <output data-save-rejection="">{saver.rejection}</output>
+    </>
+  );
+}
+
+async function switchLanguage(language: string) {
+  await act(async () => {
+    document.documentElement.lang = language;
+    await settle();
+  });
+}
+
+describe("save messages keep source values until display", () => {
+  test("a saved error switches language without retrying or changing the page", async () => {
+    document.documentElement.lang = "en";
+    const { fetcher, calls } = server({});
+    const host = await mount(<StatusProbe fetcher={fetcher} initial={state()} />);
+    await run(() => hook().save());
+    const status = () => host.querySelector(".emvb-save-status")?.textContent;
+    const originalPage = live.state?.page;
+    expect(status()).toContain("Couldn't save. Check your connection and try again.");
+    await switchLanguage("zh-CN");
+    expect(status()).toContain("保存失败：请检查网络连接后重试。");
+    expect(live.state?.page).toBe(originalPage);
+    await switchLanguage("en");
+    expect(status()).toContain("Couldn't save. Check your connection and try again.");
+    expect(calls.length).toBe(1);
+  });
+
+  test("a slug rejection follows language and keeps the failed slug snapshot", async () => {
+    document.documentElement.lang = "en";
+    const slug = "Save-品牌A";
+    const { fetcher, calls } = server({
+      [`PUT ${PAGE}`]: {
+        status: 409,
+        body: { error: { code: "SLUG_CONFLICT", message: "Save" } },
+      },
+    });
+    const host = await mount(<StatusProbe fetcher={fetcher} initial={state({ slug })} />);
+    await run(() => hook().save());
+    const error = () => host.querySelector("[data-save-slug-error]")?.textContent;
+    expect(error()).toContain(`slug "${slug}" already exists`);
+    await switchLanguage("zh-CN");
+    expect(error()).toContain(slug);
+    expect(error()).toContain("已存在");
+    expect(host.querySelector(".emvb-save-status")?.textContent).toContain("请修正高亮的设置");
+    await switchLanguage("en");
+    expect(error()).toContain(`slug "${slug}" already exists`);
+    expect(calls.length).toBe(1);
+  });
+
+  test("unknown API messages matching UI keys stay literal in status and rejection", async () => {
+    document.documentElement.lang = "en";
+    const { fetcher } = server({
+      [`PUT ${PAGE}`]: {
+        status: 422,
+        body: { error: { code: "EXTERNAL_RULE", message: "Save" } },
+      },
+    });
+    const host = await mount(<StatusProbe fetcher={fetcher} initial={state()} />);
+    await run(() => hook().save());
+    await switchLanguage("zh-CN");
+    expect(host.querySelector(".emvb-save-status")?.textContent).toBe("保存失败：Save");
+    expect(host.querySelector("[data-save-rejection]")?.textContent).toBe("Save");
+    await switchLanguage("en");
+    expect(host.querySelector(".emvb-save-status")?.textContent).toBe("Couldn't save. Save");
+  });
+
+  test("a local field validation failure translates at display without applying the canvas", async () => {
+    document.documentElement.lang = "en";
+    let applied = 0;
+    let requests = 0;
+    const fetcher: Fetcher = async () => {
+      requests += 1;
+      throw new Error("no request expected");
+    };
+    // ---- 故意越过类型约束，验证运行时拒绝损坏布局。----
+    const invalid = { ...layout, schemaVersion: -1 } as unknown as Layout;
+    const host = await mount(
+      <StatusProbe
+        fetcher={fetcher}
+        initial={state({ layout: invalid })}
+        fieldSession={{
+          onApply: () => {
+            applied += 1;
+          },
+        }}
+      />,
+    );
+    expect(await run(() => hook().save())).toBeNull();
+    expect(host.querySelector("[data-save-rejection]")?.textContent).toBe(
+      "The canvas layout is invalid. Fix it before applying.",
+    );
+    await switchLanguage("zh-CN");
+    expect(host.querySelector(".emvb-save-status")?.textContent).toBe(
+      "保存失败：画布布局无效。请修正后再应用。",
+    );
+    expect(host.querySelector("[data-save-rejection]")?.textContent).toBe(
+      "画布布局无效。请修正后再应用。",
+    );
+    await switchLanguage("en");
+    expect(host.querySelector("[data-save-rejection]")?.textContent).toBe(
+      "The canvas layout is invalid. Fix it before applying.",
+    );
+    expect(applied).toBe(0);
+    expect(requests).toBe(0);
+  });
 });

@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖图片节点属性、保存回调与后台语言。
+ * [OUTPUT]: 提供ImageEditButton、ImageEditorLauncher 与预加载函数。
+ * [POS]: 主编辑器的轻量入口，按需加载图片编辑器。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { useI18n } from "../i18n/index.ts";
 import { Button } from "@cloudflare/kumo";
 import { MagicWandIcon } from "@phosphor-icons/react";
 import * as React from "react";
@@ -54,6 +61,7 @@ export function ImageEditButton({
   /** Upload the edited copy and apply it to the element (W-485). */
   onSave?: ImageEditSave;
 }) {
+  const t = useI18n();
   const [open, setOpen] = React.useState(false);
   const buttonRef = React.useRef<HTMLButtonElement>(null);
   return (
@@ -69,7 +77,7 @@ export function ImageEditButton({
         onFocus={prefetchImageEditor}
         onClick={() => setOpen(true)}
       >
-        Edit image
+        {t("Edit image")}
       </Button>
       <ImageEditorLauncher
         open={open}

@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖共享设计变量、样式类型与后台翻译。
+ * [OUTPUT]: 导出变量类型判定与 VariableButton、VariableChip。
+ * [POS]: 元素设置面板的设计变量绑定控件，翻译展示文案并保留存储值。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { useI18n } from "../../../i18n/index.ts";
 import { DropdownMenu } from "@cloudflare/kumo";
 import { BracketsCurlyIcon, RulerIcon, TextAaIcon, TextTIcon, XIcon } from "@phosphor-icons/react";
 import type { DesignSystem, StyleProps } from "../../../../core/index.ts";
@@ -79,6 +86,7 @@ export function VariableButton({
   current: string | null;
   onBind: (ref: NonNullable<StyleProps["gap"]>) => void;
 }) {
+  const t = useI18n();
   const list = variablesOf(design, kind);
   return (
     <DropdownMenu>
@@ -86,8 +94,8 @@ export function VariableButton({
         <button
           type="button"
           className="emvb-var-btn"
-          aria-label={`Use a variable for ${label}`}
-          title="Use a variable"
+          aria-label={t("Use a variable for {label}", { label: t(label) })}
+          title={t("Use a variable")}
           data-active={current ? "true" : undefined}
         >
           <BracketsCurlyIcon size={16} aria-hidden="true" />
@@ -96,7 +104,7 @@ export function VariableButton({
       <DropdownMenu.Content data-emvb-var-menu={kind}>
         {list.length === 0 ? (
           <DropdownMenu.Item disabled>
-            No {NOUN[kind]} variables yet. Add them in Site styles.
+            {t("No {kind} variables yet. Add them in Site styles.", { kind: t(NOUN[kind]) })}
           </DropdownMenu.Item>
         ) : (
           list.map((variable) => (
@@ -142,25 +150,29 @@ export function VariableChip({
   id: string;
   onDetach: (literal: Variable["value"] | undefined) => void;
 }) {
+  const t = useI18n();
   const variable = variablesOf(design, kind).find((v) => v.id === id);
   const Icon = KIND_ICON[kind];
   return (
     <div className="emvb-var-field" data-emvb-var-bound={id}>
-      <span className="emvb-var-field-label">{label}</span>
+      <span className="emvb-var-field-label">{t(label)}</span>
       <span
         className="emvb-var-chip"
         data-missing={variable ? undefined : "true"}
         title={
-          variable ? `${variable.name} · ${shown(variable.value)}` : "This variable was deleted"
+          variable ? `${variable.name} · ${shown(variable.value)}` : t("This variable was deleted")
         }
       >
         <Icon size={14} aria-hidden="true" />
-        <span className="emvb-var-chip-name">{variable?.name ?? `Missing (${id})`}</span>
+        <span className="emvb-var-chip-name">{variable?.name ?? t("Missing ({id})", { id })}</span>
         {variable && <span className="emvb-var-chip-value">{shown(variable.value)}</span>}
         <button
           type="button"
           className="emvb-var-chip-x"
-          aria-label={`Detach ${variable?.name ?? id} from ${label}`}
+          aria-label={t("Detach {name} from {label}", {
+            name: variable?.name ?? id,
+            label: t(label),
+          })}
           onClick={() => onDetach(variable?.value)}
         >
           <XIcon size={12} aria-hidden="true" />

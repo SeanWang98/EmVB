@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖修订接口、布局差异与后台语言上下文。
+ * [OUTPUT]: 提供版本比较、恢复及修订布局解析。
+ * [POS]: 独立条目修订界面；错误保留源文案，用户标签原样显示。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { useI18n, translate, type Translate } from "../i18n/index.ts";
 import { Button, Dialog } from "@cloudflare/kumo";
 import { RobotIcon, SquaresFourIcon, UserIcon, type Icon } from "@phosphor-icons/react";
 import * as React from "react";
@@ -71,10 +78,13 @@ export function revisionLayout(data: Record<string, unknown> | undefined): Layou
 }
 
 /** A host without EmDash revisions for this collection answers 404. */
-export const noRevisions = (noun: EditedNoun) =>
-  `This site doesn't keep saved versions of this ${noun}, so there's no timeline to show.`;
+export const noRevisions = (noun: EditedNoun, t: Translate = translate) =>
+  t("This site doesn't keep saved versions of this {noun}, so there's no timeline to show.", {
+    noun: t(noun),
+  });
 
 function useRevisions(fetcher: Fetcher, collection: string, entryId: string, open: boolean) {
+  const t = useI18n();
   const [state, setState] = React.useState<
     | { kind: "loading" }
     | { kind: "error"; message: string; retry?: () => void }
@@ -111,19 +121,21 @@ function useRevisions(fetcher: Fetcher, collection: string, entryId: string, ope
         if (cancelled) return;
         // UX-014: a host without revisions won't change on a retry; a failed request might.
         if (error instanceof ApiError && error.status === 404) {
-          setState({ kind: "error", message: noRevisions(editedNounOf(collection)) });
+          setState({ kind: "error", message: noRevisions(editedNounOf(collection), t) });
           return;
         }
         setState({
           kind: "error",
-          message: `Couldn't load versions: ${error instanceof Error ? error.message : String(error)}`,
+          message: t("Couldn't load versions: {error}", {
+            error: error instanceof Error ? error.message : String(error),
+          }),
           retry: () => setAttempt((n) => n + 1),
         });
       });
     return () => {
       cancelled = true;
     };
-  }, [fetcher, collection, entryId, open, attempt]);
+  }, [fetcher, collection, entryId, open, attempt, t]);
   return state;
 }
 
@@ -141,18 +153,18 @@ const DIFF_CSS = {
   changed: "outline:3px solid #d97706;outline-offset:-3px",
 };
 
-const when = (iso: string) => {
+const when = (iso: string, locale: string) => {
   const date = new Date(iso);
-  return Number.isNaN(date.getTime()) ? iso : date.toLocaleString();
+  return Number.isNaN(date.getTime()) ? iso : date.toLocaleString(locale);
 };
 
 /** A version's day and time on two short lines, so the list doesn't wrap mid-time (W-477). */
-const whenParts = (iso: string) => {
+const whenParts = (iso: string, locale: string) => {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return { day: iso, time: "" };
   return {
-    day: date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }),
-    time: date.toLocaleTimeString(undefined, {
+    day: date.toLocaleDateString(locale, { month: "short", day: "numeric", year: "numeric" }),
+    time: date.toLocaleTimeString(locale, {
       hour: "numeric",
       minute: "2-digit",
       second: "2-digit",
@@ -233,6 +245,7 @@ export function TimelineDialog({
   /** Host stylesheets the canvas already loads (W-351). */
   canvasStyles?: readonly string[];
 }) {
+  const t = useI18n();
   const revisions = useRevisions(fetcher, collection, entryId, open);
   const actionsRef = React.useRef<HTMLDivElement>(null);
   const [pickedId, setPickedId] = React.useState<string | null>(null);
@@ -275,15 +288,15 @@ export function TimelineDialog({
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog size="xl" className="p-6 emvb-timeline" data-emvb-timeline="">
         <div className="emvb-dialog" data-emvb-dialog="timeline">
-          <Dialog.Title>Version timeline</Dialog.Title>
+          <Dialog.Title>{t("Version timeline")}</Dialog.Title>
           {revisions.kind === "loading" && (
             <p
               className="emvb-helper"
               role="status"
-              aria-label="Version timeline status"
+              aria-label={t("Version timeline status")}
               aria-live="polite"
             >
-              Loading versions…
+              {t("Loading versions…")}
             </p>
           )}
           {revisions.kind === "error" && (
@@ -302,7 +315,7 @@ export function TimelineDialog({
                     revisions.retry?.();
                   }}
                 >
-                  Retry
+                  {t("Retry")}
                 </Button>
               )}
             </div>
@@ -310,12 +323,12 @@ export function TimelineDialog({
           {revisions.kind === "ready" && versions.length === 0 && (
             <p className="emvb-helper" role="status" data-emvb-timeline-empty="">
               {all.length === 0
-                ? "No saved versions yet. Each save adds one."
-                : "No saved versions match this filter. Choose All to see every version."}
+                ? t("No saved versions yet. Each save adds one.")
+                : t("No saved versions match this filter. Choose All to see every version.")}
             </p>
           )}
           {hasAgents && (
-            <div className="emvb-timeline-who" role="group" aria-label="Show versions by">
+            <div className="emvb-timeline-who" role="group" aria-label={t("Show versions by")}>
               {(Object.keys(WHO_LABELS) as Who[]).map((key) => {
                 const WhoIcon = WHO_ICONS[key];
                 const count =
@@ -336,7 +349,7 @@ export function TimelineDialog({
                     }}
                   >
                     <WhoIcon aria-hidden="true" size={14} />
-                    {WHO_LABELS[key]}
+                    {t(WHO_LABELS[key])}
                     <span className="emvb-timeline-count" aria-label={`, ${count}`}>
                       {count}
                     </span>
@@ -347,7 +360,7 @@ export function TimelineDialog({
           )}
           {picked && current && (
             <div className="emvb-timeline-body">
-              <ol className="emvb-timeline-list" aria-label="Saved versions">
+              <ol className="emvb-timeline-list" aria-label={t("Saved versions")}>
                 {versions.map((v) => (
                   <li key={v.id}>
                     <button
@@ -362,10 +375,10 @@ export function TimelineDialog({
                       }}
                     >
                       <span className="emvb-timeline-when">
-                        <span>{whenParts(v.at).day}</span>
+                        <span>{whenParts(v.at, t.locale).day}</span>
                         <span className="emvb-timeline-time">
-                          {whenParts(v.at).time}
-                          {!v.layout && " (no layout)"}
+                          {whenParts(v.at, t.locale).time}
+                          {!v.layout && t(" (no layout)")}
                         </span>
                       </span>
                       {v.agent && (
@@ -375,7 +388,7 @@ export function TimelineDialog({
                           title={v.agent.summary}
                         >
                           <RobotIcon aria-hidden="true" size={12} />
-                          Agent
+                          {t("Agent")}
                         </span>
                       )}
                     </button>
@@ -387,22 +400,22 @@ export function TimelineDialog({
                   <>
                     <div className="emvb-timeline-frames">
                       <figure>
-                        <figcaption>{when(picked.at)}</figcaption>
+                        <figcaption>{when(picked.at, t.locale)}</figcaption>
                         <Snapshot
                           layout={picked.layout}
                           design={design}
                           ids={{ removed: ids.removed, changed: ids.changed }}
-                          title="Saved version"
+                          title={t("Saved version")}
                           canvasStyles={canvasStyles}
                         />
                       </figure>
                       <figure>
-                        <figcaption>Now</figcaption>
+                        <figcaption>{t("Now")}</figcaption>
                         <Snapshot
                           layout={current}
                           design={design}
                           ids={{ added: ids.added, changed: ids.changed }}
-                          title="Current page"
+                          title={t("Current page")}
                           canvasStyles={canvasStyles}
                         />
                       </figure>
@@ -414,10 +427,12 @@ export function TimelineDialog({
                     >
                       {changes.map((change) => (
                         <li key={`${change.kind}:${change.id}`} data-kind={change.kind}>
-                          <span className="emvb-timeline-kind">{KIND_LABELS[change.kind]}</span>{" "}
-                          {change.label || ELEMENT_NAMES[change.type] || change.type}
+                          <span className="emvb-timeline-kind">{t(KIND_LABELS[change.kind])}</span>{" "}
+                          {change.label || t(ELEMENT_NAMES[change.type] || change.type)}
                           {change.kind === "changed" &&
-                            ` · ${change.edits} element${change.edits === 1 ? "" : "s"}`}
+                            t(change.edits === 1 ? " · {count} element" : " · {count} elements", {
+                              count: change.edits,
+                            })}
                           {(change.kind === "changed" || change.kind === "removed") && (
                             <button
                               type="button"
@@ -432,10 +447,10 @@ export function TimelineDialog({
                                 }
                                 setError(null);
                                 refocusAfterRestore.current = true;
-                                onApply(result.layout, "Section restored");
+                                onApply(result.layout, t("Section restored"));
                               }}
                             >
-                              Restore this section
+                              {t("Restore this section")}
                             </button>
                           )}
                         </li>
@@ -443,12 +458,13 @@ export function TimelineDialog({
                     </ul>
                     {error && (
                       <p className="emvb-helper" role="alert">
-                        {error}
+                        {t(error)}
                       </p>
                     )}
                     <p className="emvb-helper">
-                      Restoring changes the page here; undo takes it back, and nothing is saved
-                      until you save.
+                      {t(
+                        "Restoring changes the page here; undo takes it back, and nothing is saved until you save.",
+                      )}
                     </p>
                     <Button
                       ref={restoreVersionRef}
@@ -456,21 +472,21 @@ export function TimelineDialog({
                       data-emvb-restore-version=""
                       onClick={() => {
                         if (!picked.layout) return;
-                        onApply(picked.layout, "Version restored");
+                        onApply(picked.layout, t("Version restored"));
                         onOpenChange(false);
                       }}
                     >
-                      Restore this whole version
+                      {t("Restore this whole version")}
                     </Button>
                   </>
                 ) : (
-                  <p className="emvb-helper">This version has no page layout to compare.</p>
+                  <p className="emvb-helper">{t("This version has no page layout to compare.")}</p>
                 )}
               </div>
             </div>
           )}
           <div className="emvb-dialog-actions" ref={actionsRef}>
-            <DialogCloseButton>Close</DialogCloseButton>
+            <DialogCloseButton>{t("Close")}</DialogCloseButton>
           </div>
         </div>
       </Dialog>

@@ -1,4 +1,10 @@
 /**
+ * [INPUT]: 依赖图片引擎曲线状态与 curve-math 点运算。
+ * [OUTPUT]: 提供CurvesPanel 色调曲线工具。
+ * [POS]: 曲线工具的交互边界，保留 RGB 通道标识。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+/**
  * The Curves panel (W-484): RGB, red, green and blue tone curves drawn over the live histogram.
  *
  * Follows photocn's `curves-panel.tsx` (https://github.com/rbbydotdev/photocn,
@@ -6,6 +12,7 @@
  * Kumo and EmVB tokens. EmVB adds keyboard control: every point is a focusable slider (arrows move
  * it, + adds a point after it, Delete removes it) with Input and Output number fields.
  */
+import { useI18n } from "../i18n/index.ts";
 import * as React from "react";
 import {
   buildSmoothPath,
@@ -38,6 +45,7 @@ const STROKE: Record<CurvesChannel, string> = {
 };
 
 export function CurvesPanel() {
+  const t = useI18n();
   const editor = useImageEditor();
   const disabled = editor.disabled || !editor.hasImage;
   const value = editor.curves.value;
@@ -138,10 +146,10 @@ export function CurvesPanel() {
   const full = points.length >= MAX_CURVE_POINTS;
 
   return (
-    <section aria-label="Curves" className="emvb-ie-panel" data-emvb-image-panel="curves">
+    <section aria-label={t("Curves")} className="emvb-ie-panel" data-emvb-image-panel="curves">
       <PanelHeader
-        title="Curves"
-        description="RGB and per-channel tone curves"
+        title={t("Curves")}
+        description={t("RGB and per-channel tone curves")}
         onReset={() => editor.curves.reset()}
         resetDisabled={disabled || !hasAnyEdits(value)}
       />
@@ -149,14 +157,18 @@ export function CurvesPanel() {
         <SectionTabs
           name="curves"
           variant="segmented"
-          label="Channel"
+          label={t("Channel")}
           value={channel}
           items={CHANNEL_ORDER.map((c) => ({
             value: c,
             label: (
               <span
                 className="emvb-ie-tab-label"
-                title={c === "rgb" ? "Composite (applied first)" : `${NAME[c]} channel`}
+                title={
+                  c === "rgb"
+                    ? t("Composite (applied first)")
+                    : t("{channel} channel", { channel: t(NAME[c]) })
+                }
               >
                 <span
                   aria-hidden="true"
@@ -165,7 +177,7 @@ export function CurvesPanel() {
                   data-channel={c}
                 />
                 {LABEL[c]}
-                <span className="emvb-ie-sr"> channel</span>
+                <span className="emvb-ie-sr">{" " + t("channel")}</span>
               </span>
             ),
           }))}
@@ -177,7 +189,7 @@ export function CurvesPanel() {
             <svg
               ref={svgRef}
               role="group"
-              aria-label={`${NAME[channel]} curve editor`}
+              aria-label={t("{channel} curve editor", { channel: t(NAME[channel]) })}
               aria-describedby={hintId}
               data-emvb-image-curve={channel}
               data-disabled={disabled || undefined}
@@ -256,11 +268,18 @@ export function CurvesPanel() {
                     strokeWidth={2}
                     tabIndex={disabled ? -1 : 0}
                     role="slider"
-                    aria-label={`Point ${i + 1} of ${points.length}${end ? (i === 0 ? ", shadows end" : ", highlights end") : ""}`}
+                    aria-label={t("Point {point} of {count}{end}", {
+                      point: i + 1,
+                      count: points.length,
+                      end: end ? t(i === 0 ? ", shadows end" : ", highlights end") : "",
+                    })}
                     aria-valuemin={0}
                     aria-valuemax={255}
                     aria-valuenow={toLevel(p[1])}
-                    aria-valuetext={`input ${toLevel(p[0])}, output ${toLevel(p[1])}`}
+                    aria-valuetext={t("input {input}, output {output}", {
+                      input: toLevel(p[0]),
+                      output: toLevel(p[1]),
+                    })}
                     aria-disabled={disabled || undefined}
                     style={{ cursor: disabled ? "not-allowed" : end ? "ns-resize" : "grab" }}
                     onFocus={() => setSelected(i)}
@@ -305,18 +324,26 @@ export function CurvesPanel() {
             </svg>
           </div>
           <p className="emvb-ie-hint" id={hintId}>
-            Click to add. Drag to move. Double-click or right-click to remove.
+            {t("Click to add. Drag to move. Double-click or right-click to remove.")}
             <span className="emvb-ie-hint-keys">
-              Tab to a point: arrows move it (⇧ ×10), <kbd>+</kbd> adds one, <kbd>Delete</kbd>{" "}
-              removes it.
+              {t("Tab to a point: arrows move it (⇧ ×10), ")}
+              <kbd>+</kbd>
+              {t(" adds one,")}
+              <kbd>Delete</kbd> {t("removes it.")}
             </span>
           </p>
           {full ? (
-            <p className="emvb-ie-hint">A curve can have up to {MAX_CURVE_POINTS} points.</p>
+            <p className="emvb-ie-hint">
+              {t("A curve can have up to {count} points.", { count: MAX_CURVE_POINTS })}
+            </p>
           ) : null}
         </div>
         {selectedPoint && selected !== null ? (
-          <div className="emvb-ie-point-fields" role="group" aria-label={`Point ${selected + 1}`}>
+          <div
+            className="emvb-ie-point-fields"
+            role="group"
+            aria-label={t("Point {point}", { point: selected + 1 })}
+          >
             <LevelField
               label="Input"
               value={toLevel(selectedPoint[0])}
@@ -354,6 +381,7 @@ function LevelField({
   disabled?: boolean;
   onChange: (level: number) => void;
 }) {
+  const t = useI18n();
   const id = React.useId();
   const [draft, setDraft] = React.useState<string | null>(null);
   const apply = (raw: string) => {
@@ -364,7 +392,7 @@ function LevelField({
   };
   return (
     <label className="emvb-ie-level" htmlFor={id}>
-      <span>{label}</span>
+      <span>{t(label)}</span>
       <input
         id={id}
         type="number"

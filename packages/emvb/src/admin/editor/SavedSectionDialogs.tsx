@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖共享区块保存接口、延迟错误与后台语言。
+ * [OUTPUT]: 提供区块保存与删除确认弹窗。
+ * [POS]: 共享区块入口；语言切换刷新错误，保留名称与类型。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { useI18n } from "../i18n/index.ts";
 import { Button, Dialog, Input, Radio } from "@cloudflare/kumo";
 import * as React from "react";
 import { SAVED_SECTION_NAME_MAX } from "../../core/index.ts";
@@ -5,6 +12,7 @@ import { BUTTON, FIELD, SOLID_DESTRUCTIVE, SOLID_PRIMARY, UI_CSS } from "../ui.t
 import { DialogCloseButton } from "./DialogCloseButton.tsx";
 import { focusWhenLost } from "./focus-when-lost.ts";
 import type { SaveMode } from "./useSavedSections.ts";
+import { formatMessage, type LocalizedMessage } from "./localized-message.ts";
 
 /**
  * Save as section… (W-876, D-060): a name, and Copy (My sections, independent copies) or Synced
@@ -19,11 +27,12 @@ export function SaveSectionDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
   defaultName: string;
-  onSave: (name: string, mode: SaveMode) => Promise<string | null>;
+  onSave: (name: string, mode: SaveMode) => Promise<LocalizedMessage | null>;
 }) {
+  const t = useI18n();
   const [name, setName] = React.useState(defaultName);
   const [mode, setMode] = React.useState<SaveMode>("copy");
-  const [error, setError] = React.useState<string | null>(null);
+  const [error, setError] = React.useState<LocalizedMessage | null>(null);
   const [busy, setBusy] = React.useState(false);
   // W-883: opened from a Layers row menu or the palette, the dialog has no opener left to give
   // focus back to, so Escape or Cancel dropped it on the page body.
@@ -33,8 +42,12 @@ export function SaveSectionDialog({
     wasOpen.current = open;
     return was && !open ? focusWhenLost() : undefined;
   }, [open]);
+  const initializedOpen = React.useRef(false);
   React.useEffect(() => {
-    if (!open) return;
+    const opening = open && !initializedOpen.current;
+    initializedOpen.current = open;
+    if (!opening) return;
+    // 默认名称随语言更新；已打开的表单仍属于用户当前会话。
     setName(defaultName);
     setMode("copy");
     setError(null);
@@ -63,26 +76,26 @@ export function SaveSectionDialog({
             void submit();
           }}
         >
-          <Dialog.Title>Save as section</Dialog.Title>
+          <Dialog.Title>{t("Save as section")}</Dialog.Title>
           <Dialog.Description>
-            Reuse this element and everything inside it on any page.
+            {t("Reuse this element and everything inside it on any page.")}
           </Dialog.Description>
           <Input
-            label="Name"
+            label={t("Name")}
             className={FIELD}
             autoFocus
             readOnly={busy}
             maxLength={SAVED_SECTION_NAME_MAX}
             value={name}
             aria-invalid={error ? true : undefined}
-            error={error ?? undefined}
+            error={error ? formatMessage(error, t) : undefined}
             onChange={(event) => {
               setName(event.target.value);
               setError(null);
             }}
           />
           <Radio.Group
-            legend="Kind"
+            legend={t("Kind")}
             appearance="card"
             value={mode}
             onValueChange={(value) => setMode(value as SaveMode)}
@@ -91,20 +104,24 @@ export function SaveSectionDialog({
           >
             <Radio.Item
               value="copy"
-              label="Copy"
-              description="Adds to My sections. Each insert is its own copy you edit on that page."
+              label={t("Copy")}
+              description={t(
+                "Adds to My sections. Each insert is its own copy you edit on that page.",
+              )}
             />
             <Radio.Item
               value="synced"
-              label="Synced"
-              description="Makes a Section theme part. Edit it once in Theme Builder and every page that uses it changes."
+              label={t("Synced")}
+              description={t(
+                "Makes a Section theme part. Edit it once in Theme Builder and every page that uses it changes.",
+              )}
             />
           </Radio.Group>
           <p className="emvb-sr-only" role="status" aria-live="polite">
-            {busy ? "Saving section…" : ""}
+            {busy ? t("Saving section…") : ""}
           </p>
           <div className="emvb-dialog-actions">
-            <DialogCloseButton>Cancel</DialogCloseButton>
+            <DialogCloseButton>{t("Cancel")}</DialogCloseButton>
             <Button
               type="submit"
               variant="primary"
@@ -113,7 +130,7 @@ export function SaveSectionDialog({
               aria-disabled={busy || undefined}
               data-emvb-save-section-submit=""
             >
-              {mode === "synced" ? "Make synced section" : "Save section"}
+              {t(mode === "synced" ? "Make synced section" : "Save section")}
             </Button>
           </div>
         </form>
@@ -136,6 +153,7 @@ export function DeleteSavedSectionDialog({
   /** Runs after the close animation, so the caller can move focus once the dialog has gone. */
   onClosed: () => void;
 }) {
+  const t = useI18n();
   return (
     <Dialog.Root
       open={name !== null}
@@ -147,19 +165,19 @@ export function DeleteSavedSectionDialog({
       <Dialog size="base" className="p-6">
         <style>{UI_CSS}</style>
         <div data-emvb-dialog="delete-saved-section" className="emvb-dialog">
-          <Dialog.Title>Delete “{name}”?</Dialog.Title>
+          <Dialog.Title>{t("Delete “{name}”?", { name: name ?? "" })}</Dialog.Title>
           <Dialog.Description>
-            It leaves My sections. Pages that already use a copy keep it.
+            {t("It leaves My sections. Pages that already use a copy keep it.")}
           </Dialog.Description>
           <div className="emvb-dialog-actions">
-            <DialogCloseButton>Cancel</DialogCloseButton>
+            <DialogCloseButton>{t("Cancel")}</DialogCloseButton>
             <Button
               variant="destructive"
               className={BUTTON}
               style={SOLID_DESTRUCTIVE}
               onClick={onDelete}
             >
-              Delete section
+              {t("Delete section")}
             </Button>
           </div>
         </div>

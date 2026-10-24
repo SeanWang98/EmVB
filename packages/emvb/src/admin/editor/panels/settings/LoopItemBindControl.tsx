@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖布局节点、后台界面翻译与同目录字段控件。
+ * [OUTPUT]: 主题部件绑定；选择循环项或区块并保存部件 id。
+ * [POS]: 元素设置面板的 LoopItemBindControl；不拥有页面保存与发布。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { useI18n, type Translate } from "../../../i18n/index.ts";
 import { Input, Select } from "@cloudflare/kumo";
 import * as React from "react";
 import type { ThemePartType } from "../../../../core/index.ts";
@@ -31,6 +38,7 @@ export function LoopItemBindControl({
   /** `data-emvb-${marker}-bind` keeps the loop-item tests stable. */
   marker?: string;
 }) {
+  const t = useI18n();
   const [parts, setParts] = React.useState<ThemePartSummary[] | null>(null);
   const [failed, setFailed] = React.useState(false);
   const adminLinks = useAdminLinks();
@@ -60,7 +68,7 @@ export function LoopItemBindControl({
     return (
       <div {...{ [`data-emvb-${marker}-bind`]: "list" }}>
         <Select
-          label={label}
+          label={t(label)}
           className={FIELD}
           value={selectValue}
           onValueChange={(next) => {
@@ -72,31 +80,33 @@ export function LoopItemBindControl({
             onChange(next);
           }}
           renderValue={(current: unknown) => {
-            if (current === NONE || current === "") return emptyLabel;
-            if (current === MANUAL) return "Current id (not in list)";
+            if (current === NONE || current === "") return t(emptyLabel);
+            if (current === MANUAL) return t("Current id (not in list)");
             const match = parts.find((part) => part.id === String(current));
-            return match ? labelFor(match) : String(current);
+            return match ? labelFor(match, t) : String(current);
           }}
         >
-          <Select.Option value={NONE}>{emptyLabel}</Select.Option>
+          <Select.Option value={NONE}>{t(emptyLabel)}</Select.Option>
           {!known && value ? (
-            <Select.Option value={MANUAL}>Current id (not in list)</Select.Option>
+            <Select.Option value={MANUAL}>{t("Current id (not in list)")}</Select.Option>
           ) : null}
           {parts.map((part) => (
             <Select.Option key={part.id} value={part.id}>
-              {labelFor(part)}
+              {labelFor(part, t)}
             </Select.Option>
           ))}
         </Select>
         <Input
-          label={`${label} part id`}
+          label={t("{name} part id", { name: t(label) })}
           className={`${FIELD} emvb-mono`}
           value={value}
           onChange={(event) => onChange(event.target.value.trim())}
         />
         <p className="emvb-helper">
-          Optional published {label} theme part. Leave blank to use nested elements.
-          {adminLinks && <a href="/_emdash/admin/plugins/emvb/theme"> Open Theme Builder</a>}
+          {t("Optional published {name} theme part. Leave blank to use nested elements.", {
+            name: t(label),
+          })}
+          {adminLinks && <a href="/_emdash/admin/plugins/emvb/theme"> {t("Open Theme Builder")}</a>}
         </p>
       </div>
     );
@@ -105,18 +115,20 @@ export function LoopItemBindControl({
   return (
     <div {...{ [`data-emvb-${marker}-bind`]: "manual" }}>
       <Input
-        label={`${label} part id`}
+        label={t("{name} part id", { name: t(label) })}
         className={`${FIELD} emvb-mono`}
         value={value}
         onChange={(event) => onChange(event.target.value.trim())}
       />
       <p className="emvb-helper">
         {failed
-          ? `Could not load ${label} parts. Paste a theme-part id${adminLinks ? ", or " : "."}`
-          : `No ${label} theme parts yet. Paste an id${adminLinks ? ", or " : "."}`}
+          ? t("Could not load {name} parts. Paste a theme-part id", { name: t(label) }) +
+            (adminLinks ? t(", or ") : ".")
+          : t("No {name} theme parts yet. Paste an id", { name: t(label) }) +
+            (adminLinks ? t(", or ") : ".")}
         {adminLinks && (
           <>
-            <a href="/_emdash/admin/plugins/emvb/theme">create one in Theme Builder</a>.
+            <a href="/_emdash/admin/plugins/emvb/theme">{t("create one in Theme Builder")}</a>.
           </>
         )}
       </p>
@@ -124,7 +136,7 @@ export function LoopItemBindControl({
   );
 }
 
-function labelFor(part: ThemePartSummary): string {
-  const status = part.status === "published" ? "" : ` (${part.status})`;
+function labelFor(part: ThemePartSummary, t: Translate): string {
+  const status = part.status === "published" ? "" : ` (${t(part.status)})`;
   return `${part.title}${status}`;
 }

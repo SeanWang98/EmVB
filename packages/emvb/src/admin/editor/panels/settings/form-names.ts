@@ -1,3 +1,9 @@
+/**
+ * [INPUT]: 依赖布局字段与设置面板的调用参数。
+ * [OUTPUT]: 统计同一表单内的字段名冲突。
+ * [POS]: 元素设置面板的 form-names 边界。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
 import { isFormNode, type Layout, type LayoutNode } from "../../../../core/index.ts";
 import { indexLayout } from "../../../../core/tree-ops.ts";
 

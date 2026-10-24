@@ -1,3 +1,9 @@
+/**
+ * [INPUT]: 依赖布局字段与设置面板的调用参数。
+ * [OUTPUT]: 说明循环元素在归档模板之外的渲染限制。
+ * [POS]: 元素设置面板的 loop-context 边界。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
 import type { LayoutNode } from "../../../../core/index.ts";
 import type { ThemePartType } from "../../../../core/theme/part-types.ts";
 

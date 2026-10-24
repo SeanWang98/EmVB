@@ -1,9 +1,11 @@
 /**
- * [INPUT]: 依赖布局状态、画布面板与持久化适配。
- * [OUTPUT]: 提供条目编辑器及受控字段复用的 EditorApp。
- * [POS]: 编辑器编排层；页面模式写 API，字段模式回传布局。
+ * [INPUT]: 依赖布局状态、画布面板与延迟翻译消息。
+ * [OUTPUT]: 提供独立条目及字段复用的 EditorApp。
+ * [POS]: 编排界面与命令；用户标题不进入翻译词表。
  * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
  */
+import { useI18n, translate } from "../i18n/index.ts";
+import { formatMessage } from "./localized-message.ts";
 import { Button, createKumoToastManager, Empty } from "@cloudflare/kumo";
 import {
   ArrowsClockwiseIcon,
@@ -44,6 +46,7 @@ import {
 } from "./editor-chrome.tsx";
 import { EditorOverlay } from "./EditorOverlay.tsx";
 import { EditorToasts } from "./EditorToasts.tsx";
+import { errorMessage, LocalizedMessageText } from "./localized-message.ts";
 import { useCanvasStyles, useEditorHost } from "./host.ts";
 import { LiveDataProvider, siteOrigin, useLiveData } from "./live-data.tsx";
 import { newElement } from "./dnd/new-element.ts";
@@ -113,6 +116,7 @@ function EditorBody({
   wideEnough: boolean;
   collection: string;
 }) {
+  const t = useI18n();
   if (data.state === "ready") {
     return (
       <LiveDataProvider fetcher={fetcher}>
@@ -128,7 +132,7 @@ function EditorBody({
     );
   }
   return (
-    <EditorOverlay label="EmVB editor">
+    <EditorOverlay label={t("EmVB editor")}>
       {wideEnough ? <LoadState data={data} /> : <SmallScreenNotice />}
     </EditorOverlay>
   );
@@ -152,6 +156,7 @@ export function EditorApp({
   collection: string;
   fieldSession?: FieldSession;
 }) {
+  const t = useI18n();
   const [history, dispatch] = React.useReducer(historyReducer, undefined, () =>
     emptyHistory(initialState(entry, design)),
   );
@@ -202,7 +207,11 @@ export function EditorApp({
     if (!restored) return;
     changeDesignRef.current(restored).catch((error: unknown) => {
       toasts.add({
-        title: error instanceof Error ? error.message : "Couldn't restore the deleted site style.",
+        title: (
+          <LocalizedMessageText
+            message={errorMessage(error, "Couldn't restore the deleted site style.")}
+          />
+        ),
       });
     });
   }, [pageLayout, toasts]);
@@ -338,7 +347,7 @@ export function EditorApp({
     selectedId: selectedNode ? state.selectedId : null,
     labelFor: (id) => {
       const node = layoutIndex?.byId.get(id);
-      return node ? (node.label ?? ELEMENT_NAMES[node.type] ?? node.type) : "Element";
+      return node ? (node.label ?? t(ELEMENT_NAMES[node.type] ?? node.type)) : t("Element");
     },
     canDelete,
     canMove,
@@ -389,7 +398,7 @@ export function EditorApp({
     runners: commandRunners,
   }).filter((command) => !fieldSession || !["publish", "preview", "timeline"].includes(command.id));
   const saveCommand = fieldSession && paletteActions.find((command) => command.id === "save");
-  if (saveCommand) saveCommand.label = "Apply changes";
+  if (saveCommand) saveCommand.label = t("Apply changes");
   const hideOnDevice = editorCommands({
     surface: "device",
     targetId: state.selectedId,
@@ -403,7 +412,7 @@ export function EditorApp({
 
   return (
     <EditorOverlay
-      label={`EmVB editor: ${state.page.title || "Untitled page"}`}
+      label={t("EmVB editor: {title}", { title: state.page.title || t("Untitled page") })}
       dirty={dirty && !chrome.leaving}
       onPalette={() => chrome.open("palette")}
       onFieldSave={fieldSession ? () => void save() : undefined}
@@ -421,13 +430,15 @@ export function EditorApp({
             <span className="emvb-remote-change-text">
               <strong>
                 {remoteChange === "agent"
-                  ? `An AI agent changed this ${noun}.`
-                  : `This ${noun} was changed somewhere else.`}
+                  ? t("An AI agent changed this {noun}.", { noun: t(noun) })
+                  : t("This {noun} was changed somewhere else.", { noun: t(noun) })}
               </strong>{" "}
-              <span>Reload to see the latest draft. Its changes are in the version timeline.</span>
+              <span>
+                {t("Reload to see the latest draft. Its changes are in the version timeline.")}
+              </span>
             </span>
             <Button size="sm" variant="primary" onClick={() => window.location.reload()}>
-              Reload
+              {t("Reload")}
             </Button>
           </div>
         )}
@@ -455,8 +466,8 @@ export function EditorApp({
                     variant="ghost"
                     shape="square"
                     className="emvb-icon-btn"
-                    aria-label="Undo"
-                    title="Undo (Ctrl/Cmd+Z)"
+                    aria-label={t("Undo")}
+                    title={t("Undo (Ctrl/Cmd+Z)")}
                     data-emvb-undo=""
                     disabled={history.past.length === 0}
                     icon={<ArrowUUpLeftIcon aria-hidden="true" />}
@@ -466,8 +477,8 @@ export function EditorApp({
                     variant="ghost"
                     shape="square"
                     className="emvb-icon-btn"
-                    aria-label="Redo"
-                    title="Redo (Ctrl/Cmd+Shift+Z)"
+                    aria-label={t("Redo")}
+                    title={t("Redo (Ctrl/Cmd+Shift+Z)")}
                     data-emvb-redo=""
                     disabled={history.future.length === 0}
                     icon={<ArrowUUpRightIcon aria-hidden="true" />}
@@ -478,8 +489,8 @@ export function EditorApp({
                     variant="ghost"
                     shape="square"
                     className="emvb-icon-btn"
-                    aria-label="Page weight"
-                    title="Page weight"
+                    aria-label={t("Page weight")}
+                    title={t("Page weight")}
                     data-emvb-perf-open=""
                     icon={<GaugeIcon aria-hidden="true" />}
                     onClick={() => chrome.open("perf")}
@@ -489,8 +500,8 @@ export function EditorApp({
                       variant="ghost"
                       shape="square"
                       className="emvb-icon-btn"
-                      aria-label="Version timeline"
-                      title="Version timeline"
+                      aria-label={t("Version timeline")}
+                      title={t("Version timeline")}
                       data-emvb-timeline-open=""
                       icon={<ClockCounterClockwiseIcon aria-hidden="true" />}
                       onClick={() => chrome.open("timeline")}
@@ -500,8 +511,8 @@ export function EditorApp({
                     variant="ghost"
                     shape="square"
                     className="emvb-icon-btn"
-                    aria-label="Share as a playground link"
-                    title="Share as a playground link"
+                    aria-label={t("Share as a playground link")}
+                    title={t("Share as a playground link")}
                     data-emvb-share-open=""
                     icon={<ShareNetworkIcon aria-hidden="true" />}
                     onClick={() => chrome.open("share")}
@@ -510,7 +521,7 @@ export function EditorApp({
               }
             />
             <div className="emvb-frame">
-              <aside className="emvb-panel emvb-panel-left" aria-label="Add and Layers">
+              <aside className="emvb-panel emvb-panel-left" aria-label={t("Add and Layers")}>
                 <LeftPanel
                   layout={state.page.layout}
                   selectedId={state.selectedId}
@@ -542,7 +553,7 @@ export function EditorApp({
                   device={device}
                   hidden={!!selectedNode?.hiddenOn?.includes(device)}
                   canHide={!!hideOnDevice && !hideOnDevice.disabled}
-                  hideLabel={hideOnDevice?.label ?? `Hide on ${device}`}
+                  hideLabel={hideOnDevice?.label ?? t("Hide on {device}", { device: t(device) })}
                   onDevice={setDevice}
                   zoom={zoom}
                   scale={scale}
@@ -671,6 +682,7 @@ function LoadState({ data }: { data: EditorData }) {
 }
 
 function LoadBody({ data }: { data: EditorData }) {
+  const t = useI18n();
   const { back } = useEditorHost();
   const noun = useEditedNoun();
   const Noun = noun === "page" ? "Page" : "Theme part";
@@ -678,15 +690,22 @@ function LoadBody({ data }: { data: EditorData }) {
     return (
       <div className="emvb-state" data-emvb-editor-state={data.state}>
         <Empty
-          title={data.state === "not-found" ? `${Noun} not found` : `You can't open this ${noun}`}
+          title={
+            data.state === "not-found"
+              ? t("{noun} not found", { noun: t(Noun) })
+              : t("You can't open this {noun}", { noun: t(noun) })
+          }
           description={
             data.state === "not-found"
-              ? `It may have been deleted. Choose another ${noun} from ${back.label}.`
-              : `Your role doesn't allow editing this ${noun}.`
+              ? t("It may have been deleted. Choose another {noun} from {list}.", {
+                  noun: t(noun),
+                  list: t(back.label),
+                })
+              : t("Your role doesn't allow editing this {noun}.", { noun: t(noun) })
           }
           contents={
             <Button variant="secondary" onClick={back.go}>
-              Go to {back.label}
+              {t("Go to {list}", { list: t(back.label) })}
             </Button>
           }
         />
@@ -697,8 +716,8 @@ function LoadBody({ data }: { data: EditorData }) {
     return (
       <div className="emvb-state" data-emvb-editor-state="error">
         <ListError
-          title={`Couldn't open this ${noun}`}
-          message={data.message}
+          title={t("Couldn't open this {noun}", { noun: t(noun) })}
+          message={formatMessage(data.message, t)}
           onRetry={data.retry}
         />
       </div>
@@ -706,7 +725,7 @@ function LoadBody({ data }: { data: EditorData }) {
   }
   return (
     <div className="emvb-state" data-emvb-editor-state="loading">
-      <LoadingStatus label={`Opening the ${noun}…`} />
+      <LoadingStatus label={t("Opening the {noun}…", { noun: t(noun) })} />
     </div>
   );
 }
@@ -715,5 +734,5 @@ function LoadBody({ data }: { data: EditorData }) {
 function sectionNameFor(layout: Layout | null, id: string | null): string {
   const node = layout && id ? findNode(layout, id) : undefined;
   if (!node) return "";
-  return node.label || (ELEMENT_NAMES[node.type] ?? "Section");
+  return node.label || translate(ELEMENT_NAMES[node.type] ?? "Section");
 }

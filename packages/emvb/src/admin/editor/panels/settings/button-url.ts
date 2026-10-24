@@ -1,3 +1,9 @@
+/**
+ * [INPUT]: 依赖布局字段与设置面板的调用参数。
+ * [OUTPUT]: 说明按钮或链接无有效 URL 的线上行为。
+ * [POS]: 元素设置面板的 button-url 边界。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
 import { sanitizeHref, type LayoutNode } from "../../../../core/index.ts";
 
 /**

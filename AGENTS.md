@@ -2,7 +2,7 @@
 
 Bun workspace + TypeScript 7.0.2 + React 19 + Astro 7 + EmDash 1.3.1。
 代码基线为上游 v0.8.0。
-此 fork 为 `@perkyzz/emvb@0.8.0-dev.1`。
+此 fork 为 `@perkyzz/emvb@0.8.0-dev.2`。
 包版本与 `PLUGIN_VERSION` 须保持一致。
 MCP 桥接器同步版本，但本次未安装或发布桥接器。
 
@@ -61,8 +61,19 @@ Site styles 继续使用独立草稿与发布流程。
 旧 `emvb_pages` 与 Theme Builder 保持兼容。
 完整契约见 [Page canvas 指南](docs/guides/page-canvas-field.md)。
 
+## 后台语言边界
+
+后台语言通过根 lang 驱动 React 词典。
+简体中文界面与英文界面共享同一编辑状态。
+未知语言和缺少词条回退英文。
+静态插件入口使用中英双语标签。
+用户内容、存储枚举与 CSS 值不进入翻译器。
+内容翻译不属于界面适配。
+扩展约定见 [后台语言指南](docs/guides/admin-localization.md)。
+
 ## 修改约束
 
+分支与版本标识使用功能名或中性名称，不含个人姓名。
 保留插件 ID、存储键与既有 schema 迁移。
 发布前同步包版本与 `PLUGIN_VERSION`。
 保留上游许可证与第三方声明。

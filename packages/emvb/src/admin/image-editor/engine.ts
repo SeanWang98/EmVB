@@ -1,4 +1,10 @@
 /**
+ * [INPUT]: 依赖photocn 引擎及 worker 渲染探测。
+ * [OUTPUT]: 提供引擎 React API、几何类型与 planEngine。
+ * [POS]: 图片编辑器唯一引擎入口，随对话框懒加载。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+/**
  * EmVB's only door into photocn (D-062): the image editor reaches photocn through this file, so a
  * photocn update touches one place and tests can swap the engine out. Lazily loaded with the
  * dialog; never in the main chunk.

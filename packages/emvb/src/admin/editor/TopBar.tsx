@@ -1,9 +1,10 @@
 /**
- * [INPUT]: 依赖编辑状态、命令与字段模式标记。
+ * [INPUT]: 依赖编辑状态、延迟翻译消息与后台语言订阅。
  * [OUTPUT]: 提供页面操作栏或字段应用操作栏。
- * [POS]: 编辑器顶部入口；字段模式不展示页面发布动作。
+ * [POS]: 顶部入口按后台语言显示；字段模式隐藏发布。
  * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
  */
+import { useI18n } from "../i18n/index.ts";
 import { Button, DropdownMenu, Loader } from "@cloudflare/kumo";
 import * as React from "react";
 import {
@@ -22,6 +23,7 @@ import {
 import { BUTTON, SOLID_PRIMARY } from "../ui.ts";
 import { statusLabel } from "../entry-status.ts";
 import type { SaveStatus } from "./useSave.ts";
+import { formatMessage } from "./localized-message.ts";
 import type { PopupDevice } from "../../core/index.ts";
 import { useMediaQuery } from "./useMediaQuery.ts";
 
@@ -45,23 +47,24 @@ function SaveStatusText({
   busy: "save" | "publish" | null;
   onRetry: () => void;
 }) {
+  const t = useI18n();
   let content: React.ReactNode = null;
-  if (busy === "publish") content = "Publishing…";
-  else if (busy === "save" || status.kind === "saving") content = "Saving…";
+  if (busy === "publish") content = t("Publishing…");
+  else if (busy === "save" || status.kind === "saving") content = t("Saving…");
   else if (status.kind === "error") {
     content = (
       <>
         <WarningCircleIcon size={16} aria-hidden="true" className="emvb-danger-icon" />
-        {status.message}
+        {formatMessage(status.message, t)}
         {status.retry && (
           <button type="button" className="emvb-link-button" onClick={onRetry}>
-            Retry
+            {t("Retry")}
           </button>
         )}
       </>
     );
-  } else if (dirty) content = "Unsaved changes";
-  else if (status.kind === "saved") content = "Saved";
+  } else if (dirty) content = t("Unsaved changes");
+  else if (status.kind === "saved") content = t("Saved");
   return (
     <div className="emvb-save-status" role="status" aria-live="polite" data-emvb-save={status.kind}>
       {content}
@@ -108,6 +111,7 @@ export function TopBar({
   tools?: React.ReactNode;
   fieldMode?: boolean;
 }) {
+  const t = useI18n();
   const reducedMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
   // W-769: a disabled button drops focus to the page body, so the button that was focused when
   // the work began gets it back once it is done. W-816: Save draft and Publish no longer disable
@@ -133,18 +137,21 @@ export function TopBar({
           icon={<SignOutIcon aria-hidden="true" />}
           onClick={onExit}
         >
-          {fieldMode ? "Cancel" : "Exit"}
+          {fieldMode ? t("Cancel") : t("Exit")}
         </Button>
         {page && (
           <>
             {/* UX-031: a long title ellipsizes; the tooltip keeps the whole name (DESIGN.md). */}
-            <span className="emvb-topbar-title" title={page.title ? page.title : "Untitled page"}>
-              {page.title || "Untitled page"}
+            <span
+              className="emvb-topbar-title"
+              title={page.title ? page.title : t("Untitled page")}
+            >
+              {page.title || t("Untitled page")}
             </span>
             {!fieldMode && (
               <span className="emvb-status" data-status={page.status}>
                 <span className="emvb-status-dot" aria-hidden="true" />
-                {statusLabel(page.status)}
+                {t(statusLabel(page.status))}
               </span>
             )}
           </>
@@ -179,8 +186,8 @@ export function TopBar({
             variant="ghost"
             shape="square"
             className="emvb-icon-btn"
-            aria-label="Keyboard shortcuts"
-            title="Keyboard shortcuts"
+            aria-label={t("Keyboard shortcuts")}
+            title={t("Keyboard shortcuts")}
             icon={<KeyboardIcon aria-hidden="true" />}
             onClick={onShortcuts}
           />
@@ -189,8 +196,8 @@ export function TopBar({
               variant="ghost"
               shape="square"
               className="emvb-icon-btn"
-              aria-label="Site styles"
-              title="Site styles"
+              aria-label={t("Site styles")}
+              title={t("Site styles")}
               icon={<PaintBrushIcon aria-hidden="true" />}
               onClick={onSiteStyles}
             />
@@ -216,9 +223,9 @@ export function TopBar({
                   icon={<ArrowSquareOutIcon aria-hidden="true" />}
                   onClick={() => onPreview()}
                 >
-                  Preview
+                  {t("Preview")}
                   {/* UX-082: the icon shows a new tab opens; screen readers hear it. */}
-                  <span className="emvb-sr-only"> (opens in a new tab)</span>
+                  <span className="emvb-sr-only">{t(" (opens in a new tab)")}</span>
                 </Button>
                 <DropdownMenu>
                   <DropdownMenu.Trigger>
@@ -226,15 +233,15 @@ export function TopBar({
                       variant="secondary"
                       shape="square"
                       className={`${BUTTON} emvb-preview-sizes`}
-                      aria-label="Preview size"
-                      title="Preview size"
+                      aria-label={t("Preview size")}
+                      title={t("Preview size")}
                       icon={<CaretDownIcon aria-hidden="true" />}
                     />
                   </DropdownMenu.Trigger>
                   <DropdownMenu.Content data-emvb-preview-sizes="">
                     {PREVIEW_SIZES.map(({ device, label, icon }) => (
                       <DropdownMenu.Item key={device} icon={icon} onClick={() => onPreview(device)}>
-                        {label}
+                        {t(label)}
                       </DropdownMenu.Item>
                     ))}
                   </DropdownMenu.Content>
@@ -249,14 +256,16 @@ export function TopBar({
                 // body on Ctrl+S); it stays focusable and ignores presses while busy.
                 disabled={!canRevert}
                 aria-disabled={busy !== null}
-                title={canRevert ? "Revert to published" : "No changes since the last publish"}
-                aria-label="Revert to published"
+                title={
+                  canRevert ? t("Revert to published") : t("No changes since the last publish")
+                }
+                aria-label={t("Revert to published")}
                 onClick={() => {
                   if (busy !== null) return;
                   onRevert();
                 }}
               >
-                Revert
+                {t("Revert")}
               </Button>
             )}
             <Button
@@ -273,7 +282,11 @@ export function TopBar({
               aria-disabled={busy !== null}
               aria-busy={busy === "save"}
               aria-label={
-                fieldMode ? "Apply changes" : dirty ? "Save draft (unsaved changes)" : "Save draft"
+                fieldMode
+                  ? t("Apply changes")
+                  : dirty
+                    ? t("Save draft (unsaved changes)")
+                    : t("Save draft")
               }
               onClick={(event) => {
                 if (busy !== null) return;
@@ -281,7 +294,7 @@ export function TopBar({
                 onSave();
               }}
             >
-              {fieldMode ? "Apply changes" : "Save draft"}
+              {fieldMode ? t("Apply changes") : t("Save draft")}
               {dirty && <span className="emvb-unsaved-dot" aria-hidden="true" />}
             </Button>
             {!fieldMode && (
@@ -298,10 +311,12 @@ export function TopBar({
                 }
                 aria-disabled={busy !== null}
                 aria-busy={busy === "publish"}
-                aria-label={stylesUnpublished ? "Publish (site styles unpublished)" : undefined}
+                aria-label={stylesUnpublished ? t("Publish (site styles unpublished)") : undefined}
                 title={
                   stylesUnpublished
-                    ? "Site styles have unpublished changes. After publishing the page, you can publish them too."
+                    ? t(
+                        "Site styles have unpublished changes. After publishing the page, you can publish them too.",
+                      )
                     : undefined
                 }
                 data-emvb-styles-pending={stylesUnpublished ? "true" : undefined}
@@ -311,7 +326,7 @@ export function TopBar({
                   onPublish();
                 }}
               >
-                Publish
+                {t("Publish")}
               </Button>
             )}
           </div>

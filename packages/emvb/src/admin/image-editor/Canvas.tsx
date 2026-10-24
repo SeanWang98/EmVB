@@ -1,4 +1,10 @@
 /**
+ * [INPUT]: 依赖图片引擎、裁剪坐标与减少动态效果偏好。
+ * [OUTPUT]: 提供EditorCanvas 预览、缩放与比较视图。
+ * [POS]: 图片工具的预览舞台，叠加裁剪与透视手柄。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+/**
  * The image stage (W-483). In the crop tool it shows the whole image dimmed around the crop frame;
  * in every other tool it shows the result, with pinch or Ctrl/⌘-scroll zoom and press-and-hold to
  * compare.
@@ -7,6 +13,7 @@
  * apps/www/src/registry/image-editor), MIT License, Copyright (c) 2026 rbbydotdev. Dropping and
  * opening files are left out: the editor opens the Image element's picture.
  */
+import { useI18n } from "../i18n/index.ts";
 import {
   CircleNotchIcon,
   CornersOutIcon,
@@ -56,6 +63,7 @@ function usePrefersReducedMotion() {
 }
 
 export function EditorCanvas({ alt, padding = 24 }: { alt: string; padding?: number }) {
+  const t = useI18n();
   const editor = useImageEditor();
   const { geometry } = editor;
   const [stage, setStage] = React.useState<StageSize | null>(null);
@@ -125,8 +133,8 @@ export function EditorCanvas({ alt, padding = 24 }: { alt: string; padding?: num
       // the image move and zoom under it.
       view = fitView(isCorners ? geometry.bounds : geometry.crop, oriented, stage, padding * 1.5);
       if (settle) {
-        const t = Math.min(1, (performance.now() - settle.start) / SETTLE_MS);
-        view = blendViews(settle.from, view, stage, easeOutCubic(t));
+        const progress = Math.min(1, (performance.now() - settle.start) / SETTLE_MS);
+        view = blendViews(settle.from, view, stage, easeOutCubic(progress));
       }
     } else {
       const fit = fitView(geometry.displayRect, oriented, stage, padding);
@@ -215,7 +223,7 @@ export function EditorCanvas({ alt, padding = 24 }: { alt: string; padding?: num
         {!editor.isReady && editor.status !== "error" ? (
           <div className="emvb-ie-loading" aria-busy="true">
             <CircleNotchIcon aria-hidden="true" />
-            <span className="emvb-ie-sr">Opening the picture…</span>
+            <span className="emvb-ie-sr">{t("Opening the picture…")}</span>
           </div>
         ) : null}
         {view && stage && isCropView && !isCorners ? (
@@ -261,12 +269,12 @@ export function EditorCanvas({ alt, padding = 24 }: { alt: string; padding?: num
           <div
             className="emvb-ie-zoom"
             role="group"
-            aria-label="Zoom"
+            aria-label={t("Zoom")}
             data-emvb-image-zoom={Math.round(userView.scale * 100)}
             onPointerDown={(event) => event.stopPropagation()}
           >
             <IconButton
-              label="Zoom out"
+              label={t("Zoom out")}
               variant="outline"
               icon={<MagnifyingGlassMinusIcon aria-hidden="true" />}
               disabled={editor.disabled || userView.scale <= 1}
@@ -278,7 +286,7 @@ export function EditorCanvas({ alt, padding = 24 }: { alt: string; padding?: num
               data-emvb-image-zoom-out=""
             />
             <IconButton
-              label="Zoom in"
+              label={t("Zoom in")}
               variant="outline"
               icon={<MagnifyingGlassPlusIcon aria-hidden="true" />}
               disabled={editor.disabled || !editor.isReady || userView.scale >= MAX_ZOOM}
@@ -291,7 +299,7 @@ export function EditorCanvas({ alt, padding = 24 }: { alt: string; padding?: num
             />
             {userView !== IDENTITY_VIEW ? (
               <IconButton
-                label="Fit to screen"
+                label={t("Fit to screen")}
                 variant="outline"
                 icon={<CornersOutIcon aria-hidden="true" />}
                 onClick={() => setUserView(IDENTITY_VIEW)}

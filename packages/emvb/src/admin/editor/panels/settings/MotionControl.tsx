@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖滚动效果约束、数值字段与语义上下文翻译
+ * [OUTPUT]: 提供滚动动效预设和效果编辑控件
+ * [POS]: 动效设置入口；保留预设 ID 与存储值
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { useI18n } from "../../../i18n/index.ts";
 import { Button, DropdownMenu } from "@cloudflare/kumo";
 import { PlusIcon, XIcon } from "@phosphor-icons/react";
 import type * as React from "react";
@@ -117,14 +124,22 @@ export function MotionControl({
   onChange: (next: Motion | undefined) => void;
   reset: React.ReactNode;
 }) {
+  const t = useI18n();
+  const effectLabel = (type: MotionEffect) =>
+    t(t.locale === "zh-CN" && type === "scale" ? "Scale transform" : EFFECT_LABELS[type].label);
   const playing = value && "effects" in value ? value : undefined;
   const setEffects = (effects: Effect[]) => {
     if (!playing) return;
     onChange(effects.length > 0 ? { ...playing, effects } : undefined);
   };
-  const unused = MOTION_EFFECTS.filter((t) => !playing?.effects.some((e) => e.type === t));
+  const unused = MOTION_EFFECTS.filter(
+    (type) => !playing?.effects.some((effect) => effect.type === type),
+  );
   const presetOptions = [
-    ...MOTION_PRESETS.map((p) => ({ value: p.id, label: p.label })),
+    ...MOTION_PRESETS.map((p) => ({
+      value: p.id,
+      label: t.locale === "zh-CN" && p.id === "zoom" ? t("Zoom in entrance") : p.label,
+    })),
     ...(playing && presetOf(playing) === "custom" ? [{ value: "custom", label: "Custom" }] : []),
   ];
   return (
@@ -134,16 +149,16 @@ export function MotionControl({
       data-set={value ? "true" : undefined}
     >
       <div className="emvb-field-group emvb-transition emvb-motion">
-        <span className="emvb-var-field-label">Scroll motion</span>
+        <span className="emvb-var-field-label">{t("Scroll motion")}</span>
         {value && !playing && (
           <p className="emvb-helper" data-emvb-motion-off="">
-            Off on this screen.
+            {t("Off on this screen.")}
           </p>
         )}
         {playing && (
           <>
             <TransitionSelect
-              label="Motion"
+              label={t("Motion")}
               value={presetOf(playing)}
               options={presetOptions}
               onChange={(id) => {
@@ -152,17 +167,17 @@ export function MotionControl({
               }}
             />
             <TransitionSelect
-              label="Plays"
+              label={t("Plays")}
               value={playing.range}
               options={RANGES}
               onChange={(range) => onChange({ ...playing, range })}
             />
             {playing.effects.map((effect, index) => (
               <div className="emvb-motion-effect" key={effect.type} data-emvb-motion={effect.type}>
-                <span className="emvb-motion-name">{EFFECT_LABELS[effect.type].label}</span>
+                <span className="emvb-motion-name">{effectLabel(effect.type)}</span>
                 <NumberField
                   fieldKey={`scrollMotion.${effect.type}.from`}
-                  label="From"
+                  label={t("From")}
                   value={effect.from}
                   spec={specFor(effect.type)}
                   onCommit={(n) =>
@@ -176,7 +191,7 @@ export function MotionControl({
                 />
                 <NumberField
                   fieldKey={`scrollMotion.${effect.type}.to`}
-                  label="To"
+                  label={t("To")}
                   value={effect.to}
                   spec={specFor(effect.type)}
                   onCommit={(n) =>
@@ -193,7 +208,7 @@ export function MotionControl({
                   variant="ghost"
                   shape="square"
                   className={BUTTON}
-                  aria-label={`Remove ${EFFECT_LABELS[effect.type].label}`}
+                  aria-label={t("Remove {name}", { name: effectLabel(effect.type) })}
                   icon={<XIcon aria-hidden="true" />}
                   onClick={() => setEffects(playing.effects.filter((_, i) => i !== index))}
                 />
@@ -209,7 +224,7 @@ export function MotionControl({
                     className={`${BUTTON} emvb-add-effect`}
                     icon={<PlusIcon aria-hidden="true" />}
                   >
-                    Add effect
+                    {t("Add effect")}
                   </Button>
                 </DropdownMenu.Trigger>
                 <DropdownMenu.Content data-emvb-add-effect="">
@@ -221,15 +236,16 @@ export function MotionControl({
                         setEffects([...playing.effects, { type, from: n, to: n }]);
                       }}
                     >
-                      {EFFECT_LABELS[type].label}
+                      {effectLabel(type)}
                     </DropdownMenu.Item>
                   ))}
                 </DropdownMenu.Content>
               </DropdownMenu>
             )}
             <p className="emvb-helper">
-              Plays as visitors scroll, in browsers that support scroll-driven animations. Visitors
-              who ask for reduced motion see it still.
+              {t(
+                "Plays as visitors scroll, in browsers that support scroll-driven animations. Visitors who ask for reduced motion see it still.",
+              )}
             </p>
           </>
         )}
@@ -245,7 +261,7 @@ export function MotionControl({
               )
             }
           >
-            Add scroll motion
+            {t("Add scroll motion")}
           </Button>
         )}
         {playing && (
@@ -255,7 +271,7 @@ export function MotionControl({
             className={BUTTON}
             onClick={() => onChange({ type: "none" })}
           >
-            Turn off scroll motion
+            {t("Turn off scroll motion")}
           </Button>
         )}
       </div>

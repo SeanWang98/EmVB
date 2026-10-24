@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖布局节点、延迟错误翻译与同目录字段控件。
+ * [OUTPUT]: 文本字段草稿；按类型校验，并在提交时修改节点属性。
+ * [POS]: 元素设置面板的 DraftTextField；不拥有页面保存与发布。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { useI18n } from "../../../i18n/index.ts";
 import { Input } from "@cloudflare/kumo";
 import { hrefError } from "./link-rules.ts";
 import { fieldNumber } from "./number-input.ts";
@@ -14,6 +21,7 @@ import {
 import { FIELD } from "../../../ui.ts";
 import { propsOf, withProp } from "./node-props.ts";
 import { isCommitEnter } from "../../ime.ts";
+import { formatError, type LocalizedError } from "./localized-error.ts";
 
 const MAX_FIELD_NUMBER = 10_000;
 
@@ -35,18 +43,19 @@ function CommitInput({
   inputMode?: "numeric";
   fieldKey: string;
   draft: string;
-  error: string | null;
+  error: LocalizedError | null;
   setDraft: (draft: string) => void;
   commit: () => void;
 }) {
+  const t = useI18n();
   return (
     <Input
-      label={label}
+      label={t(label)}
       className={className}
       inputMode={inputMode}
       value={draft}
-      description={error ? undefined : description}
-      error={error ?? undefined}
+      description={error ? undefined : description ? t(description) : undefined}
+      error={formatError(error, t) ?? undefined}
       data-emvb-field={fieldKey}
       onChange={(event) => setDraft(event.target.value)}
       onBlur={commit}
@@ -70,10 +79,11 @@ export function DraftTextField({
   node: LayoutNode;
   onChange: (node: LayoutNode) => void;
 }) {
+  const t = useI18n();
   const props = propsOf(node);
   const raw = props[field.key];
   const [draft, setDraft] = React.useState(String(raw ?? ""));
-  const [error, setError] = React.useState<string | null>(null);
+  const [error, setError] = React.useState<LocalizedError | null>(null);
   // The textarea's label must name it, for screen readers and click-to-focus (W-124).
   const areaId = React.useId();
 
@@ -130,7 +140,7 @@ export function DraftTextField({
     return (
       <div className="emvb-field-group" data-emvb-field={field.key}>
         <label className="emvb-field-label" htmlFor={areaId}>
-          {field.label}
+          {t(field.label)}
         </label>
         <textarea
           id={areaId}
@@ -157,17 +167,17 @@ export function DraftTextField({
         />
         {hint && (
           <span className="emvb-helper" id={`${areaId}-hint`} data-emvb-field-hint="">
-            {hint}
+            {t(hint)}
           </span>
         )}
         {error && (
           <span className="emvb-helper" id={`${areaId}-error`} data-emvb-field-error="">
-            {error}
+            {formatError(error, t)}
           </span>
         )}
         {svgNote && (
           <p className="emvb-inline-error" id={`${areaId}-svg`} data-emvb-svg-refused="">
-            {svgNote}
+            {t(svgNote)}
           </p>
         )}
       </div>
@@ -187,7 +197,13 @@ export function DraftTextField({
       const min = integer ? (field.min ?? 1) : 0;
       const range =
         integer && field.max !== undefined
-          ? `Enter a whole number from ${min} to ${field.max}.`
+          ? {
+              format: (currentT: Parameters<typeof formatError>[1]) =>
+                currentT("Enter a whole number from {min} to {max}.", {
+                  min,
+                  max: field.max ?? MAX_FIELD_NUMBER,
+                }),
+            }
           : undefined;
       if (
         draft.trim() === "" ||
@@ -208,11 +224,23 @@ export function DraftTextField({
       }
       // A whole-number field past its schema's maximum would fail the save (W-223).
       if (integer && field.max !== undefined && value > field.max) {
-        setError(field.message ?? range ?? `Enter a whole number from ${min} to ${field.max}.`);
+        setError(
+          field.message ??
+            range ?? {
+              format: (currentT) =>
+                currentT("Enter a whole number from {min} to {max}.", {
+                  min,
+                  max: field.max ?? MAX_FIELD_NUMBER,
+                }),
+            },
+        );
         return;
       }
       if (value > MAX_FIELD_NUMBER) {
-        setError(`Enter a number up to ${MAX_FIELD_NUMBER}.`);
+        setError({
+          format: (currentT) =>
+            currentT("Enter a number up to {count}.", { count: MAX_FIELD_NUMBER }),
+        });
         return;
       }
       setError(null);
@@ -220,7 +248,7 @@ export function DraftTextField({
     };
     return (
       <CommitInput
-        label={integer ? field.label : `${field.label} (${unit})`}
+        label={integer ? t(field.label) : `${t(field.label)} (${unit})`}
         className={`${FIELD} emvb-mono`}
         inputMode="numeric"
         fieldKey={field.key}
@@ -249,7 +277,7 @@ export function DraftTextField({
     };
     return (
       <CommitInput
-        label={field.label}
+        label={t(field.label)}
         className={FIELD}
         fieldKey={field.key}
         draft={draft}
@@ -266,17 +294,17 @@ export function DraftTextField({
   const tooLong = draft.length > MAX_TEXT_LENGTH;
   return (
     <Input
-      label={field.label}
+      label={t(field.label)}
       className={FIELD}
       // W-272: the field follows its text's direction, so RTL text reads from the right.
       dir="auto"
       value={draft}
       // UX-045: a text field's message explains it (never an error), so show it up front.
-      description={field.message}
+      description={field.message ? t(field.message) : undefined}
       error={
         tooLong
-          ? `Text can be up to ${MAX_TEXT_LENGTH} characters. Shorten it.`
-          : (error ?? undefined)
+          ? t("Text can be up to {count} characters. Shorten it.", { count: MAX_TEXT_LENGTH })
+          : (formatError(error, t) ?? undefined)
       }
       data-emvb-field={field.key}
       onChange={(event) => {
@@ -293,7 +321,12 @@ export function DraftTextField({
         if (next.length > MAX_TEXT_LENGTH) return;
         if (savableNode(node) && !savableNode(candidate)) {
           setError(
-            next.trim() === "" ? `${field.label} can't be empty.` : "This value can't be saved.",
+            next.trim() === ""
+              ? {
+                  format: (currentT) =>
+                    currentT("{name} can't be empty.", { name: currentT(field.label) }),
+                }
+              : "This value can't be saved.",
           );
           return;
         }

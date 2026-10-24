@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖样式节点、数值字段与语言上下文
+ * [OUTPUT]: 提供图标旋转、翻转、阴影和动画控件
+ * [POS]: 图标样式入口；标签与存储值分离
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { useI18n } from "../../../i18n/index.ts";
 import { Button, Select } from "@cloudflare/kumo";
 import {
   FlipHorizontalIcon,
@@ -46,6 +53,7 @@ export function IconRotateRow({
   inherited?: number;
   onChange: (next: number | undefined) => void;
 }) {
+  const t = useI18n();
   const set = value !== undefined;
   return (
     <div
@@ -57,7 +65,7 @@ export function IconRotateRow({
       <div className="emvb-length-stack">
         <NumberField
           fieldKey="iconRotate"
-          label="Rotate"
+          label={t("Rotate")}
           value={value}
           spec={ICON_ROTATE}
           inherited={inherited}
@@ -69,12 +77,12 @@ export function IconRotateRow({
           min={-360}
           max={360}
           step={1}
-          aria-label="Rotate slider"
+          aria-label={t("Rotate slider")}
           value={value ?? inherited ?? 0}
           onChange={(event) => onChange(Number(event.target.value))}
         />
       </div>
-      <ResetButton label="Rotate" set={set} onReset={() => onChange(undefined)} />
+      <ResetButton label={t("Rotate")} set={set} onReset={() => onChange(undefined)} />
     </div>
   );
 }
@@ -94,6 +102,7 @@ export function IconFlipRow({
   inherited?: Flip;
   onChange: (next: Flip | undefined) => void;
 }) {
+  const t = useI18n();
   const set = value !== undefined;
   const { h, v } = flipParts(value ?? inherited);
   const pick = (nextH: boolean, nextV: boolean) =>
@@ -106,13 +115,13 @@ export function IconFlipRow({
       data-inherited={!set && inherited !== undefined ? "true" : undefined}
     >
       <div className="emvb-choice">
-        <span className="emvb-choice-label">Flip</span>
-        <div className="emvb-choice-group" role="group" aria-label="Flip">
+        <span className="emvb-choice-label">{t("Flip")}</span>
+        <div className="emvb-choice-group" role="group" aria-label={t("Flip")}>
           <button
             type="button"
             aria-pressed={h}
-            aria-label="Flip horizontal"
-            title="Flip horizontal"
+            aria-label={t("Flip horizontal")}
+            title={t("Flip horizontal")}
             data-emvb-flip="horizontal"
             onClick={() => pick(!h, v)}
           >
@@ -121,8 +130,8 @@ export function IconFlipRow({
           <button
             type="button"
             aria-pressed={v}
-            aria-label="Flip vertical"
-            title="Flip vertical"
+            aria-label={t("Flip vertical")}
+            title={t("Flip vertical")}
             data-emvb-flip="vertical"
             onClick={() => pick(h, !v)}
           >
@@ -130,7 +139,7 @@ export function IconFlipRow({
           </button>
         </div>
       </div>
-      <ResetButton label="Flip" set={set} onReset={() => onChange(undefined)} />
+      <ResetButton label={t("Flip")} set={set} onReset={() => onChange(undefined)} />
     </div>
   );
 }
@@ -155,6 +164,7 @@ export function IconShadowControl({
   onChange: (next: IconShadow | undefined) => void;
   onDesignChange: (design: DesignSystem) => Promise<void>;
 }) {
+  const t = useI18n();
   const patch = (part: Partial<IconShadow>) => {
     if (!value) return;
     const next: Record<string, unknown> = { ...value, ...part };
@@ -168,11 +178,11 @@ export function IconShadowControl({
       data-set={value ? "true" : undefined}
     >
       <div className="emvb-field-group emvb-shadow">
-        <span className="emvb-var-field-label">Drop shadow</span>
+        <span className="emvb-var-field-label">{t("Drop shadow")}</span>
         {value ? (
           <>
             <ColorControl
-              label="Drop shadow color"
+              label={t("Drop shadow color")}
               value={value.color}
               design={design}
               onChange={(color) => patch({ color })}
@@ -183,7 +193,7 @@ export function IconShadowControl({
                 <NumberField
                   key={key}
                   fieldKey={`iconShadow.${key}`}
-                  label={label}
+                  label={t(label)}
                   value={value[key]}
                   spec={spec}
                   onCommit={(n) => patch({ [key]: n ?? 0 })}
@@ -199,12 +209,12 @@ export function IconShadowControl({
             icon={<PlusIcon aria-hidden="true" />}
             onClick={() => onChange(NEW_ICON_SHADOW)}
           >
-            Add drop shadow
+            {t("Add drop shadow")}
           </Button>
         )}
       </div>
       <ResetButton
-        label="Drop shadow"
+        label={t("Drop shadow")}
         set={value !== undefined}
         onReset={() => onChange(undefined)}
       />
@@ -241,6 +251,7 @@ export function IconAnimationControl({
   inherited?: IconAnimation;
   onChange: (next: IconAnimation | undefined) => void;
 }) {
+  const t = useI18n();
   const own = looping(value);
   const from = looping(inherited);
   const shown = value?.type ?? inherited?.type ?? "none";
@@ -255,10 +266,10 @@ export function IconAnimationControl({
     >
       <div className="emvb-field-group">
         <Select
-          label="Animation"
+          label={t("Animation")}
           className={FIELD}
           value={type}
-          renderValue={(v: unknown) => ANIMATION_LABELS[String(v)] ?? "None"}
+          renderValue={(v: unknown) => t(ANIMATION_LABELS[String(v)] ?? "None")}
           onValueChange={(next) => {
             const picked = String(next);
             setType(picked);
@@ -269,14 +280,14 @@ export function IconAnimationControl({
             } else onChange(from ? { type: "none" } : undefined);
           }}
         >
-          <Select.Option value="none">None</Select.Option>
-          <Select.Option value="spin">Spin</Select.Option>
-          <Select.Option value="pulse">Pulse</Select.Option>
+          <Select.Option value="none">{t("None")}</Select.Option>
+          <Select.Option value="spin">{t("Spin")}</Select.Option>
+          <Select.Option value="pulse">{t("Pulse")}</Select.Option>
         </Select>
         {own && (
           <NumberField
             fieldKey="iconAnimation.duration"
-            label="Duration"
+            label={t("Duration")}
             value={own.duration}
             spec={DURATION}
             onCommit={(n) => onChange({ ...own, duration: n ?? DEFAULT_DURATION[own.type] })}
@@ -284,7 +295,7 @@ export function IconAnimationControl({
         )}
         {own && (
           <HintedSwitch
-            label="Loop forever"
+            label={t("Loop forever")}
             checked={own.loop === true}
             onCheckedChange={(loop) => {
               const { loop: _old, ...rest } = own;
@@ -293,23 +304,33 @@ export function IconAnimationControl({
             data={{ "data-emvb-icon-loop": "" }}
             hint={
               own.loop
-                ? "Keeps going, for a loading spinner. Off for visitors who prefer reduced motion."
-                : "Stops on its own after about 5 seconds. Off for visitors who prefer reduced motion."
+                ? t(
+                    "Keeps going, for a loading spinner. Off for visitors who prefer reduced motion.",
+                  )
+                : t(
+                    "Stops on its own after about 5 seconds. Off for visitors who prefer reduced motion.",
+                  )
             }
           />
         )}
         {!value && from && (
           <p className="emvb-helper">
-            Inherited from a wider device ({ANIMATION_LABELS[from.type]}, {from.duration} ms
-            {from.loop ? ", loops forever" : ""}). Pick None to stop it on this one.
+            {t(
+              "Inherited from a wider device ({animation}, {duration} ms{loop}). Pick None to stop it on this one.",
+              {
+                animation: t(ANIMATION_LABELS[from.type] ?? from.type),
+                duration: from.duration,
+                loop: from.loop ? t(", loops forever") : "",
+              },
+            )}
           </p>
         )}
         {value?.type === "none" && from && (
-          <p className="emvb-helper">Stopped on this device. Reset to inherit it again.</p>
+          <p className="emvb-helper">{t("Stopped on this device. Reset to inherit it again.")}</p>
         )}
       </div>
       <ResetButton
-        label="Animation"
+        label={t("Animation")}
         set={value !== undefined}
         onReset={() => onChange(undefined)}
       />
@@ -325,16 +346,19 @@ export function IconSingleColorRow({
   checked: boolean;
   onChange: (next: boolean) => void;
 }) {
+  const t = useI18n();
   return (
     <HintedSwitch
-      label="Force single color"
+      label={t("Force single color")}
       checked={checked}
       onCheckedChange={onChange}
       data={{ "data-emvb-icon-single-color": "" }}
       hint={
         checked
-          ? "Every part of this SVG uses the icon color, so details drawn over filled shapes can disappear."
-          : "This SVG keeps its own colors. Turn on to paint it in the icon color."
+          ? t(
+              "Every part of this SVG uses the icon color, so details drawn over filled shapes can disappear.",
+            )
+          : t("This SVG keeps its own colors. Turn on to paint it in the icon color.")
       }
     />
   );
@@ -410,6 +434,7 @@ export function IconShapeRow({
   inherited?: StyleProps;
   onPatch: (patch: Partial<StyleProps>) => void;
 }) {
+  const t = useI18n();
   const effective = { ...inherited, ...style };
   const current = iconShapeOf(effective);
   const keys = radioGroupKeys(
@@ -421,7 +446,7 @@ export function IconShapeRow({
     <div className="emvb-style-row" data-emvb-icon-shape={current}>
       <div className="emvb-choice">
         <span className="emvb-choice-label" id="emvb-icon-shape-label">
-          Shape
+          {t("Shape")}
         </span>
         <div
           className="emvb-choice-group"
@@ -435,8 +460,8 @@ export function IconShapeRow({
               type="button"
               role="radio"
               aria-checked={current === shape.value}
-              aria-label={shape.label}
-              title={shape.label}
+              aria-label={t(shape.label)}
+              title={t(shape.label)}
               data-emvb-choice={shape.value}
               tabIndex={keys.tabIndexOf(shape.value)}
               onClick={() => onPatch(iconShapePatch(shape.value, effective))}
@@ -450,7 +475,7 @@ export function IconShapeRow({
           ))}
         </div>
         <p className="emvb-helper">
-          Color, padding and border: Background, Spacing and Border below.
+          {t("Color, padding and border: Background, Spacing and Border below.")}
         </p>
       </div>
     </div>

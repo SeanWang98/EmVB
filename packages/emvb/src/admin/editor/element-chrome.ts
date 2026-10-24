@@ -1,3 +1,9 @@
+/**
+ * [INPUT]: 依赖核心元素描述符与 Phosphor 图标。
+ * [OUTPUT]: 提供元素源名称和图标映射。
+ * [POS]: 编辑器显示元数据；调用方翻译名称，类型标识保持原值。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
 import {
   ArrowsLeftRightIcon,
   ArrowsVerticalIcon,

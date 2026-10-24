@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖公开内容 API、主题条件契约与可选界面翻译。
+ * [OUTPUT]: 提供部件查询、写入和结构化条件标签。
+ * [POS]: 主题后台客户端；翻译系统标签，保留内容与用户参数。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { createTranslator, type Translate } from "./i18n/index.ts";
 import {
   CONTENT_THEME_PART_TYPES,
   defaultConditionsFor,
@@ -28,6 +35,8 @@ export type ThemePartSummary = {
   status: string;
   updatedAt: string;
   conditionsSummary: string;
+  /** 英文条件检索别名；只含系统标签及原始参数。 */
+  conditionsSearch?: string;
 };
 
 export type ThemePartDraft = {
@@ -66,57 +75,71 @@ const TAXONOMY_NAMES: Record<string, { one: string; all: string }> = {
   tag: { one: "Tag", all: "All tags" },
 };
 
-const collectionName = (args: RuleArgs) => {
+const collectionName = (args: RuleArgs, t: Translate) => {
   const slug = arg(args, "collection");
-  return Object.hasOwn(COLLECTION_NAMES, slug) ? (COLLECTION_NAMES[slug] as string) : slug;
+  return Object.hasOwn(COLLECTION_NAMES, slug) ? t(COLLECTION_NAMES[slug] as string) : slug;
 };
 
-function taxonomyLabel(args: RuleArgs): string {
+function taxonomyLabel(args: RuleArgs, t: Translate): string {
   const slug = arg(args, "taxonomy");
   const names = Object.hasOwn(TAXONOMY_NAMES, slug) ? TAXONOMY_NAMES[slug] : undefined;
-  if (args?.["slug"]) return `${names?.one ?? slug}: ${String(args["slug"])}`;
-  return names?.all ?? `All ${slug}`;
+  if (args?.["slug"])
+    return t("{taxonomy}: {slug}", {
+      taxonomy: names ? t(names.one) : slug,
+      slug: String(args["slug"]),
+    });
+  return names ? t(names.all) : t("All {taxonomy}", { taxonomy: slug });
 }
 
-/** Short labels for the Theme Builder list, keyed by `group/name`. */
-const RULE_LABELS: Record<string, (args: RuleArgs) => string> = {
-  "general/entire_site": () => "Entire site",
-  "singular/front": () => "Front page",
-  "singular/not_found": () => "404 page",
-  "singular/collection": (args) => `${collectionName(args)} (all)`,
-  "singular/entry": (args) => `One entry in ${collectionName(args)}`,
-  "singular/all": () => "All singular",
-  "archive/collection": (args) => `${collectionName(args)} archive`,
-  "archive/search": () => "Search results",
+/** 内置条件标签接受翻译函数，用户集合与分类路径名保持原值。 */
+const RULE_LABELS: Record<string, (args: RuleArgs, t: Translate) => string> = {
+  "general/entire_site": (_args, t) => t("Entire site"),
+  "singular/front": (_args, t) => t("Front page"),
+  "singular/not_found": (_args, t) => t("404 page"),
+  "singular/collection": (args, t) =>
+    t("{collection} (all)", { collection: collectionName(args, t) }),
+  "singular/entry": (args, t) =>
+    t("One entry in {collection}", { collection: collectionName(args, t) }),
+  "singular/all": (_args, t) => t("All singular"),
+  "archive/collection": (args, t) =>
+    t("{collection} archive", { collection: collectionName(args, t) }),
+  "archive/search": (_args, t) => t("Search results"),
   "archive/taxonomy": taxonomyLabel,
-  "archive/all": () => "All archives",
+  "archive/all": (_args, t) => t("All archives"),
 };
 
+const english = createTranslator("en");
+
 /** A rule's short label, e.g. "Tag: news" (also the Display conditions menu, W-694). */
-export function conditionRuleLabel(r: unknown): string {
+export function conditionRuleLabel(r: unknown, t: Translate = english): string {
   const rule = r as { group?: string; name?: string; args?: RuleArgs };
   const key = `${rule.group ?? "?"}/${rule.name ?? "?"}`;
   const label = Object.hasOwn(RULE_LABELS, key) ? RULE_LABELS[key] : undefined;
-  return label ? label(rule.args) : key;
+  return label ? label(rule.args, t) : key;
 }
 
-export function summarizeConditions(raw: unknown): string {
+export function summarizeConditions(raw: unknown, t: Translate = english): string {
   let value = raw;
   if (typeof raw === "string") {
     try {
       value = JSON.parse(raw) as unknown;
     } catch {
-      return "Invalid conditions";
+      return t("Invalid conditions");
     }
   }
   const rules = (value as { rules?: unknown } | null)?.rules;
-  if (!Array.isArray(rules) || rules.length === 0) return "No conditions";
+  if (!Array.isArray(rules) || rules.length === 0) return t("No conditions");
   const includes = rules.filter((r) => (r as { op?: string }).op === "include");
   const excludes = rules.filter((r) => (r as { op?: string }).op === "exclude");
   const parts: string[] = [];
-  if (includes.length) parts.push(includes.map(conditionRuleLabel).join(" · "));
-  if (excludes.length) parts.push(`Exclude: ${excludes.map(conditionRuleLabel).join(" · ")}`);
-  return parts.join(" · ") || "No conditions";
+  if (includes.length) parts.push(includes.map((rule) => conditionRuleLabel(rule, t)).join(" · "));
+  if (excludes.length)
+    parts.push(
+      t("Exclude: {conditions}", {
+        conditions: excludes.map((rule) => conditionRuleLabel(rule, t)).join(" · "),
+      }),
+    );
+  return parts.join(" · ") || t("No conditions");
 }
 
 const ITEM_PART_USE_SHORT: Partial<Record<ThemePartType, string>> = {
@@ -125,18 +148,27 @@ const ITEM_PART_USE_SHORT: Partial<Record<ThemePartType, string>> = {
   page_template: "Offered in New page",
 };
 
-export async function listThemeParts(fetcher: Fetcher): Promise<ThemePartSummary[]> {
+export async function listThemeParts(
+  fetcher: Fetcher,
+  t: Translate = english,
+): Promise<ThemePartSummary[]> {
   const items = await listAllItems<ContentItem>(fetcher, CONTENT);
-  return items.map((item) => ({
-    id: item.id,
-    title: titleOf(item, "Untitled theme part"),
-    partType: partTypeOf(item),
-    status: entryStatus(item),
-    updatedAt: item.updatedAt ?? "",
-    // UX-061: reusable parts never match a location, so say where they're used instead.
-    conditionsSummary:
-      ITEM_PART_USE_SHORT[partTypeOf(item)] ?? summarizeConditions(item.data?.["conditions"]),
-  }));
+  return items.map((item) => {
+    const partType = partTypeOf(item);
+    const usage = ITEM_PART_USE_SHORT[partType];
+    const summary: ThemePartSummary = {
+      id: item.id,
+      title: titleOf(item, "Untitled theme part"),
+      partType,
+      status: entryStatus(item),
+      updatedAt: item.updatedAt ?? "",
+      // UX-061: reusable parts explain their use instead of matching a page location.
+      conditionsSummary: usage ? t(usage) : summarizeConditions(item.data?.["conditions"], t),
+    };
+    if (t !== english)
+      summary.conditionsSearch = usage ?? summarizeConditions(item.data?.["conditions"]);
+    return summary;
+  });
 }
 
 /** Parts that are the page's main content (or become a page) keep the page's H1. */

@@ -1,3 +1,9 @@
+/**
+ * [INPUT]: 依赖弹窗触发 schema、TriggerSettings 与后台翻译上下文
+ * [OUTPUT]: 导出本地化 TriggersEditor；只回传触发 schema
+ * [POS]: 主题部件触发面板；本地化说明不改变存储枚举
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
 import { Button, Input, Select } from "@cloudflare/kumo";
 import { PlusIcon, TrashIcon } from "@phosphor-icons/react";
 import * as React from "react";
@@ -7,6 +13,7 @@ import {
   type PopupOpenTrigger,
   type TriggersDoc,
 } from "../../../core/index.ts";
+import { useI18n } from "../../i18n/index.ts";
 import { BUTTON, FIELD } from "../../ui.ts";
 import { TriggerSettings } from "./TriggerSettings.tsx";
 import { isCommitEnter } from "../ime.ts";
@@ -52,6 +59,7 @@ function ShowTimesField({
   value: number | null;
   onCommit: (value: number | null) => void;
 }) {
+  const t = useI18n();
   const [draft, setDraft] = React.useState(value === null ? "" : String(value));
   const commit = () => {
     const raw = draft.trim();
@@ -61,12 +69,14 @@ function ShowTimesField({
   };
   return (
     <Input
-      label="Show at most (times)"
+      label={t("Show at most (times)")}
       className={FIELD}
       type="number"
       min={1}
       max={100}
-      description="Leave empty for no limit. Counted per visitor's browser, up to 100. A click trigger always opens."
+      description={t(
+        "Leave empty for no limit. Counted per visitor's browser, up to 100. A click trigger always opens.",
+      )}
       value={draft}
       onChange={(event) => setDraft(event.target.value)}
       onBlur={commit}
@@ -82,12 +92,13 @@ function ShowTimesField({
  * Gaps vs Elementor (deferred): URL rules, scheduling, A/B.
  */
 export function TriggersEditor({ triggers, onChange }: Props) {
+  const t = useI18n();
   const doc = triggers ?? defaultTriggers();
   const setOpen = (open: PopupOpenTrigger[]) =>
     onChange({ schemaVersion: 1, open, advanced: doc.advanced ?? {} });
 
   const updateAt = (index: number, next: PopupOpenTrigger) => {
-    setOpen(doc.open.map((t, i) => (i === index ? next : t)));
+    setOpen(doc.open.map((trigger, i) => (i === index ? next : trigger)));
   };
 
   const removeAt = (index: number) => {
@@ -100,20 +111,23 @@ export function TriggersEditor({ triggers, onChange }: Props) {
   const onlyDefault = doc.open.length === 1 && doc.open[0]?.type === "page_load";
   /** W-280: a popup saves with at most this many triggers; one more would make the save fail. */
   const full = doc.open.length >= MAX_POPUP_TRIGGERS;
-  const fullReason = `${MAX_POPUP_TRIGGERS} triggers is the most one popup can have. Remove one to add another.`;
+  const fullReason = t(
+    "{count} triggers is the most one popup can have. Remove one to add another.",
+    { count: MAX_POPUP_TRIGGERS },
+  );
 
   return (
     <div className="emvb-triggers" data-emvb-panel="triggers">
-      <h3 className="emvb-section-label">Triggers</h3>
+      <h3 className="emvb-section-label">{t("Triggers")}</h3>
       <p className="emvb-helper">
-        When this popup opens. Display conditions still decide which pages include it.
+        {t("When this popup opens. Display conditions still decide which pages include it.")}
       </p>
       <ul className="emvb-trigger-list">
         {doc.open.map((trigger, index) => (
           <li key={index} className="emvb-trigger-row" data-emvb-trigger={trigger.type}>
             <div className="emvb-trigger-head">
               <Select
-                label={index === 0 ? "Open when" : "Or when"}
+                label={t(index === 0 ? "Open when" : "Or when")}
                 className={FIELD}
                 value={trigger.type}
                 onValueChange={(value) => {
@@ -122,12 +136,12 @@ export function TriggersEditor({ triggers, onChange }: Props) {
                   updateAt(index, blankTrigger(type));
                 }}
                 renderValue={(value: unknown) =>
-                  TRIGGER_TYPES.find((o) => o.value === value)?.label ?? String(value)
+                  t(TRIGGER_TYPES.find((o) => o.value === value)?.label ?? String(value))
                 }
               >
                 {TRIGGER_TYPES.map((option) => (
                   <Select.Option key={option.value} value={option.value}>
-                    {option.label}
+                    {t(option.label)}
                   </Select.Option>
                 ))}
               </Select>
@@ -135,8 +149,8 @@ export function TriggersEditor({ triggers, onChange }: Props) {
                 type="button"
                 variant="ghost"
                 className={BUTTON}
-                aria-label="Remove trigger"
-                title={onlyDefault ? "The popup needs at least one trigger" : "Remove trigger"}
+                aria-label={t("Remove trigger")}
+                title={t(onlyDefault ? "The popup needs at least one trigger" : "Remove trigger")}
                 disabled={onlyDefault}
                 icon={<TrashIcon aria-hidden="true" />}
                 onClick={() => removeAt(index)}
@@ -157,7 +171,7 @@ export function TriggersEditor({ triggers, onChange }: Props) {
           if (!full) setOpen([...doc.open, blankTrigger("page_load")]);
         }}
       >
-        Add trigger
+        {t("Add trigger")}
       </Button>
       {full && (
         <p className="emvb-helper" data-emvb-triggers-full="">
@@ -165,8 +179,8 @@ export function TriggersEditor({ triggers, onChange }: Props) {
         </p>
       )}
 
-      <h3 className="emvb-section-label">Advanced</h3>
-      <p className="emvb-helper">Limit how often the popup shows, and on which devices.</p>
+      <h3 className="emvb-section-label">{t("Advanced")}</h3>
+      <p className="emvb-helper">{t("Limit how often the popup shows, and on which devices.")}</p>
       <ShowTimesField
         key={String(advanced.showTimes ?? "")}
         value={advanced.showTimes ?? null}
@@ -175,8 +189,8 @@ export function TriggersEditor({ triggers, onChange }: Props) {
         }
       />
       <fieldset className="emvb-device-fieldset">
-        <legend className="emvb-field-label">Devices</legend>
-        <p className="emvb-helper">All devices when none are checked.</p>
+        <legend className="emvb-field-label">{t("Devices")}</legend>
+        <p className="emvb-helper">{t("All devices when none are checked.")}</p>
         {(
           [
             ["desktop", "Desktop"],
@@ -205,7 +219,7 @@ export function TriggersEditor({ triggers, onChange }: Props) {
                   });
                 }}
               />{" "}
-              {label}
+              {t(label)}
             </label>
           );
         })}

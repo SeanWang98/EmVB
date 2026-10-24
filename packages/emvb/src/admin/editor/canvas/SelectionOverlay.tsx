@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖画布选区、命令描述与拖放几何状态。
+ * [OUTPUT]: 提供SelectionOverlay、位置计算与选区类型。
+ * [POS]: 选区工具条及拖放反馈层，元素名称由选择器提供。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { useI18n } from "../../i18n/index.ts";
 import { DropdownMenu } from "@cloudflare/kumo";
 import {
   ClipboardTextIcon,
@@ -85,6 +92,7 @@ export function SelectionOverlay({
   /** The selected element's text is being edited on the canvas (W-131). */
   editing?: boolean;
 }) {
+  const t = useI18n();
   const show = selected || dropLine || invalid || dropTarget;
   const commands = selectedId ? overlayCommands(selection, selectedId) : [];
   const clip = selection.clipboard;
@@ -122,7 +130,7 @@ export function SelectionOverlay({
             style={{ top: invalid.label.y + 12, left: invalid.label.x + 12 }}
           >
             <ProhibitIcon size={14} aria-hidden="true" />
-            <span>{invalid.label.reason}</span>
+            <span>{t(invalid.label.reason)}</span>
           </div>
         </>
       )}
@@ -143,8 +151,8 @@ export function SelectionOverlay({
               <button
                 type="button"
                 className="emvb-overlay-action emvb-overlay-move"
-                aria-label="Move element"
-                title="Move element"
+                aria-label={t("Move element")}
+                title={t("Move element")}
                 draggable
                 onDragStart={(event) => {
                   event.dataTransfer.setData(EXISTING_ELEMENT_MIME, selectedId);
@@ -164,8 +172,8 @@ export function SelectionOverlay({
                     key={command.id}
                     type="button"
                     className="emvb-overlay-action"
-                    aria-label={command.label}
-                    title={command.label}
+                    aria-label={t(command.label)}
+                    title={t(command.label)}
                     onClick={() => command.run()}
                   >
                     <Icon size={16} aria-hidden="true" />
@@ -237,6 +245,7 @@ function ClipboardMenu({
   commands: readonly EditorCommand[];
   selectedId: string;
 }) {
+  const t = useI18n();
   const hint = clipboard.pasteStyleBlocked ?? clipboard.pasteBlocked;
   const items = commands.filter((command) => CLIP_MENU_IDS.has(command.id));
   return (
@@ -245,8 +254,8 @@ function ClipboardMenu({
         <button
           type="button"
           className="emvb-overlay-action"
-          aria-label="Copy and paste"
-          title="Copy and paste"
+          aria-label={t("Copy and paste")}
+          title={t("Copy and paste")}
         >
           <ClipboardTextIcon size={16} aria-hidden="true" />
         </button>
@@ -261,7 +270,7 @@ function ClipboardMenu({
               disabled={!!command.disabled}
               onClick={() => command.run()}
             >
-              {command.label}
+              {t(command.label)}
             </DropdownMenu.Item>
           );
           return command.id === "copy-style"
@@ -270,7 +279,7 @@ function ClipboardMenu({
         })}
         {hint && (
           <p className="emvb-menu-hint" data-emvb-paste-hint="">
-            {hint}
+            {t(hint)}
           </p>
         )}
       </DropdownMenu.Content>

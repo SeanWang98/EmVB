@@ -1,3 +1,9 @@
+/**
+ * [INPUT]: 依赖持久化适配、样式 API 与延迟翻译消息。
+ * [OUTPUT]: 提供保存、发布、预览及共享样式串行命令。
+ * [POS]: 命令编排层；异常保留源文，并发冲突用类型识别。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
 import * as React from "react";
 import type { createKumoToastManager } from "@cloudflare/kumo";
 import { ArrowSquareOutIcon } from "@phosphor-icons/react";
@@ -14,6 +20,16 @@ import { readCollection } from "../setup/run.ts";
 import { isDirty, type EditorAction, type EditorState } from "./store.ts";
 import { loadDesign } from "./useEditorData.ts";
 import type { useSave } from "./useSave.ts";
+import {
+  errorMessage,
+  literalMessage,
+  LocalizedMessageError,
+  LocalizedMessageText,
+  type LocalizedMessage,
+} from "./localized-message.ts";
+
+const messageText = (message: LocalizedMessage) =>
+  React.createElement(LocalizedMessageText, { message });
 
 const publicPath = (pattern: string | null | undefined, slug: string) =>
   (pattern || "/{slug}").replace("{slug}", encodeURIComponent(slug));
@@ -50,6 +66,8 @@ export async function openInNewTab(
   tab.opener = null;
   tab.location.href = target;
 }
+
+class SiteStylesConflict extends LocalizedMessageError {}
 
 const STYLES_PENDING =
   "Site styles have unpublished changes, so the public page may look unstyled until you publish styles.";
@@ -89,7 +107,7 @@ export function useEditorCommands({
       setBusy(null);
     }
     if (collection === THEME_PARTS_COLLECTION) {
-      toasts.add({ title: "Published" });
+      toasts.add({ title: messageText("Published") });
       return;
     }
     const pattern = await readCollection(fetcher, PAGES_COLLECTION).then(
@@ -101,21 +119,23 @@ export function useEditorCommands({
     // page yet, so it can look unstyled. Say so and offer to publish them.
     const stylesPending = latest.current.designUnpublished === true;
     toasts.add({
-      title: "Published",
-      ...(stylesPending ? { description: STYLES_PENDING } : {}),
+      title: messageText("Published"),
+      ...(stylesPending ? { description: messageText(STYLES_PENDING) } : {}),
       actions: [
         ...(stylesPending
           ? [
               {
-                children: "Publish site styles",
+                children: messageText("Publish site styles"),
                 variant: "primary" as const,
                 onClick: () =>
                   void publishStyles().then(
-                    () => toasts.add({ title: "Site styles published" }),
+                    () => toasts.add({ title: messageText("Site styles published") }),
                     (error: unknown) =>
                       toasts.add({
-                        title: "Couldn't publish site styles",
-                        description: error instanceof Error ? error.message : String(error),
+                        title: messageText("Couldn't publish site styles"),
+                        description: messageText(
+                          errorMessage(error, literalMessage(String(error))),
+                        ),
                       }),
                   ),
               },
@@ -126,9 +146,13 @@ export function useEditorCommands({
           children: React.createElement(
             React.Fragment,
             null,
-            "View page",
+            messageText("View page"),
             React.createElement(ArrowSquareOutIcon, { "aria-hidden": true, size: 14 }),
-            React.createElement("span", { className: "emvb-sr-only" }, " (opens in a new tab)"),
+            React.createElement(
+              "span",
+              { className: "emvb-sr-only" },
+              messageText(" (opens in a new tab)"),
+            ),
           ),
           variant: "secondary",
           onClick: () => window.open(path, "_blank", "noopener"),
@@ -145,8 +169,8 @@ export function useEditorCommands({
       },
       (error) =>
         toasts.add({
-          title: "Couldn't open the preview",
-          description: error instanceof Error ? error.message : String(error),
+          title: messageText("Couldn't open the preview"),
+          description: messageText(errorMessage(error, literalMessage(String(error)))),
         }),
       previewWindowFeatures(device),
     );
@@ -221,8 +245,14 @@ export function useEditorCommands({
           if (merged.conflicts.length > 0) {
             shownDesign.current = null;
             dispatch({ type: "load-design", ...fresh });
-            throw new Error(
-              `Site styles were changed in another tab or window (${names}). The latest styles are loaded now: make your change again.`,
+            throw new SiteStylesConflict(
+              {
+                format: (t) =>
+                  t(
+                    "Site styles were changed in another tab or window ({names}). The latest styles are loaded now: make your change again.",
+                    { names },
+                  ),
+              },
               { cause: error },
             );
           }
@@ -238,23 +268,23 @@ export function useEditorCommands({
           settled();
           return;
         } catch (retry) {
-          if (
-            retry instanceof Error &&
-            retry.message.includes("The latest styles are loaded now")
-          ) {
+          if (retry instanceof SiteStylesConflict) {
             throw retry;
           }
           takeBack();
-          throw new Error(
+          throw new LocalizedMessageError(
             "Site styles were changed somewhere else. Reload the editor and try again.",
             { cause: retry },
           );
         }
       }
       takeBack();
-      throw new Error(
-        error instanceof ApiError
-          ? `Couldn't save site styles. ${error.message}`
+      const message = error instanceof ApiError ? error.message : null;
+      throw new LocalizedMessageError(
+        message !== null
+          ? {
+              format: (t) => t("Couldn't save site styles. {message}", { message }),
+            }
           : "Couldn't save site styles. Check your connection and try again.",
         { cause: error },
       );
@@ -274,19 +304,22 @@ export function useEditorCommands({
           const fresh = await loadDesign(fetcher);
           dispatch({ type: "load-design", ...fresh });
         } catch {
-          throw new Error(
+          throw new LocalizedMessageError(
             "Site styles were published somewhere else. Reload the editor and try again.",
             { cause: error },
           );
         }
-        throw new Error(
+        throw new LocalizedMessageError(
           "Site styles were published in another tab or window. The latest styles are loaded now: check them, then publish again.",
           { cause: error },
         );
       }
-      throw new Error(
-        error instanceof ApiError
-          ? `Couldn't publish site styles. ${error.message}`
+      const message = error instanceof ApiError ? error.message : null;
+      throw new LocalizedMessageError(
+        message !== null
+          ? {
+              format: (t) => t("Couldn't publish site styles. {message}", { message }),
+            }
           : "Couldn't publish site styles. Check your connection and try again.",
         { cause: error },
       );

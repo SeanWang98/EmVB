@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖Kumo 控件、输入法守卫与本地化上下文。
+ * [OUTPUT]: 导出站点样式列表、搜索和重命名控件。
+ * [POS]: 样式类与变量列表的共享交互层。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { useI18n } from "../../i18n/index.ts";
 import { Button, DropdownMenu, Input } from "@cloudflare/kumo";
 import { DotsThreeIcon, PlusIcon, type Icon } from "@phosphor-icons/react";
 import * as React from "react";
@@ -32,6 +39,7 @@ export function SectionHead({
   onNew: () => void;
   newDisabled?: boolean;
 }) {
+  const t = useI18n();
   return (
     <div className="emvb-site-section-head">
       <h3 className="emvb-field-label">
@@ -49,7 +57,7 @@ export function SectionHead({
         onClick={onNew}
         disabled={newDisabled}
       >
-        New
+        {t("New")}
       </Button>
     </div>
   );
@@ -69,6 +77,7 @@ export function CreateRow({
   onCreate: () => void;
   children: React.ReactNode;
 }) {
+  const t = useI18n();
   return (
     <div
       className="emvb-site-create emvb-site-elevated"
@@ -84,7 +93,7 @@ export function CreateRow({
       {children}
       <div className="emvb-dialog-actions">
         <Button type="button" variant="secondary" className={BUTTON} onClick={onCancel}>
-          Cancel
+          {t("Cancel")}
         </Button>
         <Button
           type="button"

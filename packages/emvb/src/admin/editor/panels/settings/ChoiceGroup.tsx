@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖固定布局选项、图标与界面翻译。
+ * [OUTPUT]: 提供可键盘选择的布局单选组。
+ * [POS]: 样式面板的布局控件；仅翻译标签，保留 CSS 值。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { useI18n } from "../../../i18n/index.ts";
 import type * as React from "react";
 import {
   AlignBottomIcon,
@@ -96,6 +103,7 @@ export function ChoiceGroup({
   options: Choice[];
   onChange: (value: string) => void;
 }) {
+  const t = useI18n();
   const labelId = `emvb-choice-${label.replace(/\s+/g, "-").toLowerCase()}`;
   const keys = radioGroupKeys(
     options.map((option) => option.value),
@@ -105,7 +113,7 @@ export function ChoiceGroup({
   return (
     <div className="emvb-choice">
       <span className="emvb-choice-label" id={labelId}>
-        {label}
+        {t(label)}
       </span>
       <div
         className="emvb-choice-group"
@@ -122,8 +130,8 @@ export function ChoiceGroup({
               type="button"
               role="radio"
               aria-checked={checked}
-              aria-label={option.label}
-              title={option.label}
+              aria-label={t(option.label)}
+              title={t(option.label)}
               data-emvb-choice={option.value}
               tabIndex={keys.tabIndexOf(option.value)}
               onClick={() => onChange(option.value)}

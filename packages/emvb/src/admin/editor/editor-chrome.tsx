@@ -1,9 +1,10 @@
 /**
- * [INPUT]: 依赖编辑状态、面板命令与字段模式。
- * [OUTPUT]: 提供初始状态、弹窗开关与编辑弹窗。
- * [POS]: 编辑器交互编排；字段模式阻断条目历史及回退。
+ * [INPUT]: 依赖编辑会话、弹窗动作与延迟翻译消息。
+ * [OUTPUT]: 提供编辑器弹窗编排与初始状态转换。
+ * [POS]: 界面组合层；元素类型按当前语言显示，用户标签保持原值。
  * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
  */
+import { useI18n, translate } from "../i18n/index.ts";
 import type { createKumoToastManager } from "@cloudflare/kumo";
 import { focusWhenLost } from "./focus-when-lost.ts";
 import type { SavedSectionActions } from "./useSavedSections.ts";
@@ -33,6 +34,9 @@ import type { EditorAction, EditorState } from "./store.ts";
 import { TimelineDialog } from "./Timeline.tsx";
 import { loadEntry, type EditorEntry, type LoadedDesign } from "./useEditorData.ts";
 import type { useSave } from "./useSave.ts";
+import type { DeleteAsk } from "./useNodeActions.ts";
+import { ELEMENT_NAMES } from "./element-chrome.ts";
+import { errorMessage, literalMessage, LocalizedMessageText } from "./localized-message.ts";
 
 /** The editor state for an entry that just loaded, with the design already on screen. */
 export const initialState = (entry: EditorEntry, design: LoadedDesign): EditorState => ({
@@ -161,11 +165,13 @@ async function revertToPublished({
       await discardDraft(fetcher, collection, latest.current.id, latest.current.rev);
     }
     await reloadEntry({ fetcher, collection, state: latest.current, dispatch, saver });
-    toasts.add({ title: "Reverted to the published version" });
+    toasts.add({ title: <LocalizedMessageText message="Reverted to the published version" /> });
   } catch (error) {
     toasts.add({
-      title: "Couldn't revert",
-      description: error instanceof Error ? error.message : String(error),
+      title: <LocalizedMessageText message="Couldn't revert" />,
+      description: (
+        <LocalizedMessageText message={errorMessage(error, literalMessage(String(error)))} />
+      ),
     });
   }
 }
@@ -234,8 +240,8 @@ export function EditorDialogs({
   paletteActions: readonly EditorCommand[];
   addFromPanel: (type: ElementType) => void;
   addRecipe: (id: string) => void;
-  deleteAsk: { id: string; label: string; count: number } | null;
-  setDeleteAsk: (ask: { id: string; label: string; count: number } | null) => void;
+  deleteAsk: DeleteAsk | null;
+  setDeleteAsk: (ask: DeleteAsk | null) => void;
   finishDelete: (id: string) => void;
   playgroundUrl?: string;
   setAnnouncement: (message: string) => void;
@@ -245,13 +251,17 @@ export function EditorDialogs({
   saved?: SavedSectionActions;
   fieldMode?: boolean;
 }) {
+  const t = useI18n();
   const [leaveSaving, setLeaveSaving] = React.useState(false);
   return (
     <>
       <DeleteSubtreeDialog
         open={!!deleteAsk}
         onOpenChange={(open) => !open && setDeleteAsk(null)}
-        label={deleteAsk?.label ?? "Element"}
+        label={
+          deleteAsk?.userLabel ??
+          t(deleteAsk ? (ELEMENT_NAMES[deleteAsk.nodeType] ?? "Element") : "Element")
+        }
         count={deleteAsk?.count ?? 0}
         onConfirm={() => {
           if (!deleteAsk) return;
@@ -321,7 +331,7 @@ export function EditorDialogs({
             selected: latest.current.selectedId ?? layout.root.id,
           });
           setAnnouncement(note);
-          toasts.add({ title: note, description: "Undo takes it back." });
+          toasts.add({ title: note, description: translate("Undo takes it back.") });
         }}
       />
       {!fieldMode && (
@@ -341,7 +351,10 @@ export function EditorDialogs({
               selected: latest.current.selectedId ?? layout.root.id,
             });
             setAnnouncement(note);
-            toasts.add({ title: note, description: "Undo takes it back. Save to keep it." });
+            toasts.add({
+              title: note,
+              description: translate("Undo takes it back. Save to keep it."),
+            });
           }}
         />
       )}
@@ -350,7 +363,7 @@ export function EditorDialogs({
         onOpenChange={chrome.setOpen("share")}
         layout={state.page.layout}
         design={state.design}
-        title={state.page.title || "Shared page"}
+        title={state.page.title || translate("Shared page")}
         {...(playgroundUrl ? { base: playgroundUrl } : {})}
       />
       <PerfMeterDialog

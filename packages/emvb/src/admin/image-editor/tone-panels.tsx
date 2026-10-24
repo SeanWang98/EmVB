@@ -1,4 +1,10 @@
 /**
+ * [INPUT]: 依赖图片引擎色调、滤镜及模糊状态与通用控件。
+ * [OUTPUT]: 提供AdjustPanel、FiltersPanel 与 BlurPanel。
+ * [POS]: 色调工具的显示边界，保留滤镜名和配方键。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+/**
  * The Adjust (and Effects), Filters and Blur panels (W-484).
  *
  * Layout, wording and behaviour follow photocn's `adjustments-panel.tsx`, `filters-panel.tsx` and
@@ -6,6 +12,8 @@
  * MIT License, Copyright (c) 2026 rbbydotdev, rebuilt with Kumo components and EmVB tokens. Every
  * slider also takes a typed value.
  */
+import { mediaLabel } from "./media-labels.ts";
+import { useI18n, translate } from "../i18n/index.ts";
 import { Button } from "@cloudflare/kumo";
 import {
   ApertureIcon,
@@ -83,12 +91,13 @@ function formatAdjust(value: number): string {
 const tabLabel = (IconC: Icon, text: string) => (
   <span className="emvb-ie-tab-label">
     <IconC aria-hidden="true" />
-    {text}
+    {translate(text)}
   </span>
 );
 
 /** Light, color and effects sliders. The Effects tool opens it on its Effects tab, as photocn does. */
 export function AdjustPanel({ defaultSection = "lights" }: { defaultSection?: AdjustSection }) {
+  const t = useI18n();
   const editor = useImageEditor();
   const [section, setSection] = React.useState<AdjustSection>(defaultSection);
   React.useEffect(() => setSection(defaultSection), [defaultSection]);
@@ -105,17 +114,21 @@ export function AdjustPanel({ defaultSection = "lights" }: { defaultSection?: Ad
   };
   const sectionDirty = Object.values(values).some((v) => v !== 0);
   return (
-    <section aria-label="Adjustments" className="emvb-ie-panel" data-emvb-image-panel={editor.tool}>
+    <section
+      aria-label={t("Adjustments")}
+      className="emvb-ie-panel"
+      data-emvb-image-panel={editor.tool}
+    >
       <PanelHeader
-        title="Adjustments"
-        description="Light, color, and effects"
+        title={t("Adjustments")}
+        description={t("Light, color, and effects")}
         onReset={() => editor.adjust.reset()}
         resetDisabled={disabled}
       />
       <div className="emvb-ie-tabs-wrap">
         <SectionTabs
           name="adjust"
-          label="Adjustment sections"
+          label={t("Adjustment sections")}
           value={section}
           items={ADJUST_SECTIONS.map((s) => ({ value: s.value, label: tabLabel(s.icon, s.label) }))}
           onChange={setSection}
@@ -123,14 +136,14 @@ export function AdjustPanel({ defaultSection = "lights" }: { defaultSection?: Ad
       </div>
       <hr className="emvb-ie-sep" />
       <fieldset className="emvb-ie-group emvb-ie-group-sliders" data-emvb-image-section={section}>
-        <legend className="emvb-ie-sr">{config.label}</legend>
+        <legend className="emvb-ie-sr">{t(config.label)}</legend>
         <div className="emvb-ie-row emvb-ie-row-between emvb-ie-section-head">
           <div className="emvb-ie-section-titles">
-            <span className="emvb-ie-section-title">{config.label}</span>
-            <span className="emvb-ie-section-desc">{config.description}</span>
+            <span className="emvb-ie-section-title">{t(config.label)}</span>
+            <span className="emvb-ie-section-desc">{t(config.description)}</span>
           </div>
           <IconButton
-            label={`Reset ${config.label.toLowerCase()}`}
+            label={t("Reset {section}", { section: t(config.label).toLowerCase() })}
             icon={<ArrowCounterClockwiseIcon aria-hidden="true" />}
             disabled={disabled || !sectionDirty}
             onClick={() => editor.adjust.resetSection(section)}
@@ -165,6 +178,7 @@ const toPct = (v: number) => Math.round(Math.min(1, Math.max(0, v)) * 100);
 
 /** photocn's 13 looks (9 LUTs, 4 colour matrices) and a strength slider once one is chosen. */
 export function FiltersPanel() {
+  const t = useI18n();
   const editor = useImageEditor();
   const [loading, setLoading] = React.useState<string | null>(null);
   const disabled = editor.disabled || !editor.hasImage;
@@ -196,23 +210,23 @@ export function FiltersPanel() {
       {isLoading ? (
         <>
           <CircleNotchIcon aria-hidden="true" className="emvb-ie-spin" />
-          <span className="emvb-ie-sr">Loading {title(label)}</span>
+          <span className="emvb-ie-sr">{t("Loading {name}", { name: t(title(label)) })}</span>
         </>
       ) : (
-        title(label)
+        t(title(label))
       )}
     </Button>
   );
   return (
-    <section aria-label="Filters" className="emvb-ie-panel" data-emvb-image-panel="filters">
+    <section aria-label={t("Filters")} className="emvb-ie-panel" data-emvb-image-panel="filters">
       <PanelHeader
-        title="Filters"
-        description="Film-style looks"
+        title={t("Filters")}
+        description={t("Film-style looks")}
         onReset={() => editor.filters.reset()}
         resetDisabled={disabled}
       />
       <div className="emvb-ie-group emvb-ie-group-sliders">
-        <div className="emvb-ie-chips" role="group" aria-label="Looks">
+        <div className="emvb-ie-chips" role="group" aria-label={t("Looks")}>
           {chip("None", active === null, () => {
             if (!disabled && !busy) void editor.filters.select(null);
           })}
@@ -228,7 +242,7 @@ export function FiltersPanel() {
         {active !== null ? (
           <ValueSlider
             name="filter-strength"
-            label="Strength"
+            label={t("Strength")}
             min={0}
             max={100}
             step={1}
@@ -282,6 +296,7 @@ const isBlurDefault = (v: BlurValue) =>
 
 /** Bokeh or Gaussian strength and radius, and the sharp spot (also draggable on the image). */
 export function BlurPanel() {
+  const t = useI18n();
   const editor = useImageEditor();
   const [kind, setKind] = React.useState<BlurKind>("bokeh");
   const disabled = editor.disabled || !editor.hasImage;
@@ -294,7 +309,7 @@ export function BlurPanel() {
     <ValueSlider
       key={name}
       name={name}
-      label={label}
+      label={mediaLabel(label, t)}
       min={0}
       max={100}
       step={1}
@@ -306,17 +321,17 @@ export function BlurPanel() {
     />
   );
   return (
-    <section aria-label="Blur" className="emvb-ie-panel" data-emvb-image-panel="blur">
+    <section aria-label={t("Blur")} className="emvb-ie-panel" data-emvb-image-panel="blur">
       <PanelHeader
-        title="Blur"
-        description="Bokeh and gaussian blur"
+        title={t("Blur")}
+        description={t("Bokeh and gaussian blur")}
         onReset={() => editor.blur.reset()}
         resetDisabled={disabled || isBlurDefault(value)}
       />
       <div className="emvb-ie-tabs-wrap">
         <SectionTabs
           name="blur"
-          label="Blur kind"
+          label={t("Blur kind")}
           value={kind}
           items={BLUR_KINDS.map((k) => ({ value: k.value, label: tabLabel(k.icon, k.label) }))}
           onChange={setKind}
@@ -328,7 +343,7 @@ export function BlurPanel() {
         {slider(`${kind}-radius`, "Radius", config.radius)}
         <hr className="emvb-ie-sep" />
         <fieldset className="emvb-ie-subgroup">
-          <legend className="emvb-ie-caps">Center</legend>
+          <legend className="emvb-ie-caps">{mediaLabel("Center", t)}</legend>
           {slider("center-x", "X", "centerX")}
           {slider("center-y", "Y", "centerY")}
         </fieldset>

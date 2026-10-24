@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖页面创建 API、模板布局与界面翻译。
+ * [OUTPUT]: 提供独立画布页面的新建表单。
+ * [POS]: 页面创建入口；模板失败保留英文源文与稳定错误码。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { useI18n } from "../i18n/index.ts";
 import { Select } from "@cloudflare/kumo";
 import * as React from "react";
 import { layoutFromPageTemplate, starterLayout } from "../../core/index.ts";
@@ -20,6 +27,7 @@ export function NewPageDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const t = useI18n();
   const [templateId, setTemplateId] = React.useState("");
   const [templates, setTemplates] = React.useState<ThemePartSummary[]>([]);
 
@@ -43,11 +51,11 @@ export function NewPageDialog({
   return (
     <CreateDialog
       name="new-page"
-      heading="New page"
+      heading={t("New page")}
       noun="page"
       emptyTitle="Enter a title for the page."
-      slugHint="The page's address on your site."
-      submitLabel="Create page"
+      slugHint={t("The page's address on your site.")}
+      submitLabel={t("Create page")}
       open={open}
       onOpenChange={onOpenChange}
       create={async (title, slug) => {
@@ -68,14 +76,14 @@ export function NewPageDialog({
     >
       {templates.length > 0 || hasUnlistedTemplate ? (
         <Select
-          label="Page template"
+          label={t("Page template")}
           className={FIELD}
           value={templateId || NONE}
           renderValue={(value: unknown) =>
             !value || value === NONE
-              ? "Blank page"
+              ? t("Blank page")
               : (templates.find((part) => part.id === value)?.title ??
-                "Previously selected template")
+                t("Previously selected template"))
           }
           onValueChange={(next) => {
             if (!next || next === NONE) {
@@ -85,9 +93,9 @@ export function NewPageDialog({
             setTemplateId(next);
           }}
         >
-          <Select.Option value={NONE}>Blank page</Select.Option>
+          <Select.Option value={NONE}>{t("Blank page")}</Select.Option>
           {hasUnlistedTemplate && (
-            <Select.Option value={templateId}>Previously selected template</Select.Option>
+            <Select.Option value={templateId}>{t("Previously selected template")}</Select.Option>
           )}
           {templates.map((part) => (
             <Select.Option key={part.id} value={part.id}>

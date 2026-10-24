@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖编辑器状态、操作接口与后台语言。
+ * [OUTPUT]: 提供随后台语言更新的面板控件。
+ * [POS]: 编辑器面板；只翻译界面，保留用户内容原值。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { useI18n } from "../../i18n/index.ts";
 import { Button, Input } from "@cloudflare/kumo";
 import * as React from "react";
 import { elementIcon } from "../element-chrome.ts";
@@ -39,6 +46,7 @@ export function AddPanel({
   /** Hide the Form group when the forms plugin is missing (W-036). */
   formsAvailable?: boolean;
 }) {
+  const t = useI18n();
   const [query, setQuery] = React.useState(defaultQuery);
   const searchRef = React.useRef<HTMLInputElement>(null);
   const clear = () => {
@@ -49,16 +57,34 @@ export function AddPanel({
     (d) =>
       d.type !== "tab-panel" &&
       (formsAvailable || d.group !== "form") &&
-      matchesSearch(query, d.name, d.group),
+      matchesSearch(
+        query,
+        d.type,
+        d.name,
+        d.group,
+        t(d.name),
+        t(GROUPS.find((group) => group.id === d.group)?.label ?? d.group),
+      ),
   );
   const recipes = onRecipe
-    ? SECTION_RECIPES.filter((r) => matchesSearch(query, r.name, r.description, "recipe section"))
+    ? SECTION_RECIPES.filter((r) =>
+        matchesSearch(
+          query,
+          r.id,
+          r.name,
+          r.description,
+          t(r.name),
+          t(r.description),
+          "recipe section",
+          t("Section recipes"),
+        ),
+      )
     : [];
   return (
     <div className="emvb-panel-body" data-emvb-panel="add">
       {/* UX-053: named like the other searches; a visible heading only repeated the placeholder. */}
       <Input
-        aria-label="Search elements"
+        aria-label={t("Search elements")}
         type="search"
         className={FIELD}
         ref={searchRef}
@@ -71,17 +97,17 @@ export function AddPanel({
             setQuery("");
           }
         }}
-        placeholder="Search elements…"
+        placeholder={t("Search elements…")}
       />
       {matched.length === 0 &&
       recipes.length === 0 &&
-      (!saved || matchingSections(saved, query).length === 0) ? (
+      (!saved || matchingSections(saved, query, t).length === 0) ? (
         <div className="emvb-add-nomatch" data-emvb-add-nomatch="">
           <p className="emvb-helper" role="status">
-            No elements match &quot;{query.trim()}&quot;.
+            {t('No elements match "{query}".', { query: query.trim() })}
           </p>
           <Button type="button" variant="secondary" className={BUTTON} onClick={clear}>
-            Clear search
+            {t("Clear search")}
           </Button>
         </div>
       ) : (
@@ -90,8 +116,8 @@ export function AddPanel({
           if (tiles.length === 0) return null;
           return (
             <div key={group.id} className="emvb-add-group">
-              <h3 className="emvb-add-group-title">{group.label}</h3>
-              <div className="emvb-add-tiles" aria-label={group.label}>
+              <h3 className="emvb-add-group-title">{t(group.label)}</h3>
+              <div className="emvb-add-tiles" aria-label={t(group.label)}>
                 {tiles.map((tile) => {
                   const Icon = elementIcon(tile.type);
                   return (
@@ -102,7 +128,9 @@ export function AddPanel({
                       data-emvb-add-tile={tile.type}
                       // UX-029: the JS badge is drawn for sighted users; this says the same aloud.
                       aria-description={
-                        typeMayAddScript(tile.type) ? "Adds a small script to the page" : undefined
+                        typeMayAddScript(tile.type)
+                          ? t("Adds a small script to the page")
+                          : undefined
                       }
                       draggable
                       onDragStart={(event) => {
@@ -113,11 +141,11 @@ export function AddPanel({
                       onClick={() => onAdd(tile.type as ElementType)}
                     >
                       <Icon size={20} aria-hidden="true" />
-                      <span>{tile.name}</span>
+                      <span>{t(tile.name)}</span>
                       {typeMayAddScript(tile.type) && (
                         <span
                           className="emvb-js-badge"
-                          title="Adds a small script to the page; everything else is zero-JS"
+                          title={t("Adds a small script to the page; everything else is zero-JS")}
                           aria-hidden="true"
                         >
                           JS
@@ -133,11 +161,11 @@ export function AddPanel({
       )}
       {onRecipe && recipes.length > 0 && (
         <div className="emvb-add-group" data-emvb-recipes="">
-          <h3 className="emvb-add-group-title">Section recipes</h3>
+          <h3 className="emvb-add-group-title">{t("Section recipes")}</h3>
           <p className="emvb-helper">
-            Whole sections that use your Site styles colours, sizes and classes.
+            {t("Whole sections that use your Site styles colours, sizes and classes.")}
           </p>
-          <div className="emvb-recipe-list" aria-label="Section recipes">
+          <div className="emvb-recipe-list" aria-label={t("Section recipes")}>
             {recipes.map((recipe) => (
               <button
                 key={recipe.id}
@@ -146,8 +174,8 @@ export function AddPanel({
                 data-emvb-recipe={recipe.id}
                 onClick={() => onRecipe(recipe.id)}
               >
-                <span className="emvb-recipe-name">{recipe.name}</span>
-                <span className="emvb-recipe-desc">{recipe.description}</span>
+                <span className="emvb-recipe-name">{t(recipe.name)}</span>
+                <span className="emvb-recipe-desc">{t(recipe.description)}</span>
               </button>
             ))}
           </div>

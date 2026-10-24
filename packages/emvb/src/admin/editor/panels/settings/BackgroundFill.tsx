@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖背景模式、媒体控件与语言上下文
+ * [OUTPUT]: 提供背景填充切换与选项字段
+ * [POS]: 背景设置编排；切换时保留临时填充值
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { useI18n } from "../../../i18n/index.ts";
 import { Input, Select } from "@cloudflare/kumo";
 import * as React from "react";
 import type { DesignSystem, StyleProps } from "../../../../core/index.ts";
@@ -52,6 +59,7 @@ export function BackgroundFill({
   /** Keeps remembered fills apart per class, device and state on one element (W-184). */
   memoryScope?: string;
 }) {
+  const t = useI18n();
   const derived = activeFill(style);
   const [mode, setMode] = React.useState<FillMode>(derived);
   const signature = `${style?.backgroundVideo ?? ""}|${style?.backgroundImage ?? ""}|${style?.gradient ? "g" : ""}|${style?.backgroundColor ? "c" : ""}`;
@@ -90,8 +98,8 @@ export function BackgroundFill({
     >
       <div className="emvb-field-group emvb-background-fill">
         {/* UX-033: the section is already "Background"; these rows name their own part. */}
-        <span className="emvb-var-field-label">Fill</span>
-        <div className="emvb-fill-types" role="radiogroup" aria-label="Background type">
+        <span className="emvb-var-field-label">{t("Fill")}</span>
+        <div className="emvb-fill-types" role="radiogroup" aria-label={t("Background type")}>
           {modes.map((option) => (
             <button
               key={option}
@@ -101,18 +109,18 @@ export function BackgroundFill({
               data-emvb-bg-type={option}
               onClick={() => choose(option)}
             >
-              {LABELS[option]}
+              {t(LABELS[option])}
             </button>
           ))}
         </div>
         {fillIsMixed(style) && (
           <p className="emvb-helper">
-            This element has more than one fill. Choosing a type removes the others.
+            {t("This element has more than one fill. Choosing a type removes the others.")}
           </p>
         )}
         {shown === "color" && (
           <ColorControl
-            label="Background color"
+            label={t("Background color")}
             value={style?.backgroundColor}
             design={design}
             onChange={(backgroundColor) => onPatch({ backgroundColor })}
@@ -136,7 +144,7 @@ export function BackgroundFill({
               reset={null}
             />
             <OptionSelect
-              label="Image size"
+              label={t("Image size")}
               value={style?.backgroundSize}
               options={sizeOptions}
               onChange={(backgroundSize) =>
@@ -144,7 +152,7 @@ export function BackgroundFill({
               }
             />
             <OptionSelect
-              label="Image position"
+              label={t("Image position")}
               value={style?.backgroundPosition}
               options={positionOptions}
               onChange={(backgroundPosition) =>
@@ -154,7 +162,7 @@ export function BackgroundFill({
               }
             />
             <OptionSelect
-              label="Repeat"
+              label={t("Repeat")}
               value={style?.backgroundRepeat}
               options={repeatOptions}
               onChange={(backgroundRepeat) =>
@@ -165,10 +173,10 @@ export function BackgroundFill({
         )}
         {shown === "video" && (
           <Input
-            label="Background video"
+            label={t("Background video")}
             className={FIELD}
             value={style?.backgroundVideo ?? ""}
-            placeholder="https:// or /path"
+            placeholder={t("https:// or /path")}
             onChange={(event) => {
               const next = event.target.value.trim();
               onPatch({ backgroundVideo: next === "" ? undefined : next });
@@ -201,20 +209,23 @@ function OptionSelect({
   options: { value: string; label: string }[];
   onChange: (next: string) => void;
 }) {
+  const t = useI18n();
   const current = value ?? options[0]?.value ?? "";
   return (
     <Select
-      label={label}
+      label={t(label)}
       className={FIELD}
       value={current}
       onValueChange={(next) => {
         if (typeof next === "string") onChange(next);
       }}
-      renderValue={(v: unknown) => options.find((o) => o.value === String(v))?.label ?? String(v)}
+      renderValue={(v: unknown) =>
+        t(options.find((o) => o.value === String(v))?.label ?? String(v))
+      }
     >
       {options.map((option) => (
         <Select.Option key={option.value} value={option.value}>
-          {option.label}
+          {t(option.label)}
         </Select.Option>
       ))}
     </Select>

@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖受控表单、创建回调与界面翻译。
+ * [OUTPUT]: 提供页面和主题部件共用的新建弹窗。
+ * [POS]: 创建失败保留原因与原文；当前语言只参与渲染。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { useI18n, type Translate } from "../i18n/index.ts";
 import { Button, Dialog, Input, Loader } from "@cloudflare/kumo";
 import { PlusIcon } from "@phosphor-icons/react";
 import * as React from "react";
@@ -7,20 +14,51 @@ import { slugTakenMessage } from "../editor/useSave.ts";
 import { useMediaQuery } from "../editor/useMediaQuery.ts";
 import { BUTTON, FIELD, SOLID_PRIMARY, UI_CSS } from "../ui.ts";
 
-type FieldError = { field: "title" | "slug" | "form"; message: string };
+type FieldError =
+  | { field: "title"; reason: "required" }
+  | { field: "slug"; reason: "invalid" }
+  | { field: "slug"; reason: "conflict"; slug: string }
+  | { field: "form"; reason: "api"; code: string; message: string }
+  | { field: "form"; reason: "connection" };
 
-/** Why creating failed: a taken slug belongs to the slug field, anything else to the form. */
-function createFailure(failure: unknown, noun: string, slug: string): FieldError {
+/** 创建失败只记录原因；切换语言不重提创建请求。 */
+function createFailure(failure: unknown, slug: string): FieldError {
   if (failure instanceof ApiError && failure.code === "SLUG_CONFLICT") {
-    return { field: "slug", message: slugTakenMessage(slug) };
+    return { field: "slug", reason: "conflict", slug };
   }
-  return {
-    field: "form",
-    message:
-      failure instanceof ApiError
-        ? `Couldn't create the ${noun}. ${failure.message}`
-        : `Couldn't create the ${noun}. Check your connection and try again.`,
-  };
+  return failure instanceof ApiError
+    ? { field: "form", reason: "api", code: failure.code, message: failure.message }
+    : { field: "form", reason: "connection" };
+}
+
+/** 只有已知界面错误进入词典；外部 API 原文按参数展示。 */
+function createErrorMessage(
+  error: FieldError | undefined,
+  emptyTitle: string,
+  noun: string,
+  t: Translate,
+): string | undefined {
+  if (!error) return;
+  switch (error.reason) {
+    case "required":
+      return t(emptyTitle);
+    case "invalid":
+      return t("Enter a slug using letters, digits or -.");
+    case "conflict":
+      return slugTakenMessage(error.slug, t);
+    case "api":
+      return t("Couldn't create the {type}. {message}", {
+        type: t(noun),
+        message:
+          error.code === "TEMPLATE_UNAVAILABLE"
+            ? t("The selected page template couldn't be loaded. Try again or choose Blank page.")
+            : error.message,
+      });
+    case "connection":
+      return t("Couldn't create the {type}. Check your connection and try again.", {
+        type: t(noun),
+      });
+  }
 }
 
 /**
@@ -43,7 +81,7 @@ export function CreateDialog({
   name: string;
   heading: string;
   noun: string;
-  emptyTitle: string;
+  emptyTitle: "Enter a title for the page." | "Enter a title.";
   slugPrefix?: string;
   slugHint: string;
   submitLabel: string;
@@ -52,10 +90,12 @@ export function CreateDialog({
   onOpenChange: (open: boolean) => void;
   children?: React.ReactNode;
 }) {
+  const t = useI18n();
   const [title, setTitle] = React.useState("");
   const [slug, setSlug] = React.useState("");
   const [slugEdited, setSlugEdited] = React.useState(false);
   const [error, setError] = React.useState<FieldError>();
+  const errorMessage = createErrorMessage(error, emptyTitle, noun, t);
   const [busy, setBusy] = React.useState(false);
   const pending = React.useRef(false);
   // W-813: a refused or failed create moved focus nowhere (to the page body after a 409), and
@@ -87,9 +127,9 @@ export function CreateDialog({
     const cleanTitle = title.trim();
     const cleanSlug = pageSlug(slug);
     setErrorTurn((turn) => turn + 1);
-    if (!cleanTitle) return setError({ field: "title", message: emptyTitle });
+    if (!cleanTitle) return setError({ field: "title", reason: "required" });
     if (!cleanSlug) {
-      return setError({ field: "slug", message: "Enter a slug using letters, digits or -." });
+      return setError({ field: "slug", reason: "invalid" });
     }
     setError(undefined);
     pending.current = true;
@@ -99,7 +139,7 @@ export function CreateDialog({
     } catch (failure) {
       pending.current = false;
       setBusy(false);
-      setError(createFailure(failure, noun, cleanSlug));
+      setError(createFailure(failure, cleanSlug));
     }
   };
 
@@ -133,7 +173,7 @@ export function CreateDialog({
           <fieldset className="emvb-create-fields" aria-disabled={busy}>
             {children}
             <Input
-              label="Title"
+              label={t("Title")}
               readOnly={busy}
               ref={titleInput}
               aria-invalid={error?.field === "title" || undefined}
@@ -150,21 +190,21 @@ export function CreateDialog({
                 }
               }}
               value={title}
-              error={error?.field === "title" ? error.message : undefined}
+              error={error?.field === "title" ? errorMessage : undefined}
               onChange={(event) => {
                 setTitle(event.target.value);
                 if (!slugEdited) setSlug(pageSlug(`${slugPrefix}${event.target.value}`));
               }}
             />
             <Input
-              label="Slug"
+              label={t("Slug")}
               readOnly={busy}
               ref={slugInput}
               aria-invalid={error?.field === "slug" || undefined}
               className={`${FIELD} emvb-mono`}
               value={slug}
               description={slugHint}
-              error={error?.field === "slug" ? error.message : undefined}
+              error={error?.field === "slug" ? errorMessage : undefined}
               onChange={(event) => {
                 setSlugEdited(true);
                 setSlug(event.target.value);
@@ -173,22 +213,22 @@ export function CreateDialog({
           </fieldset>
           {error?.field === "form" && (
             <p className="emvb-inline-error" role="alert">
-              {error.message}
+              {errorMessage}
             </p>
           )}
           <p
             className="emvb-create-status"
             role="status"
-            aria-label="Creation status"
+            aria-label={t("Creation status")}
             aria-live="polite"
           >
-            {busy ? `Creating ${noun}…` : ""}
+            {busy ? t("Creating {type}…", { type: t(noun) }) : ""}
           </p>
           <div className="emvb-dialog-actions">
             <Dialog.Close
               render={(props) => (
                 <Button {...props} variant="secondary" className={BUTTON} aria-disabled={busy}>
-                  Cancel
+                  {t("Cancel")}
                 </Button>
               )}
             />

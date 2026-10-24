@@ -1,4 +1,11 @@
+/**
+ * [INPUT]: 依赖 core 样式属性与后台语言上下文。
+ * [OUTPUT]: 导出栏目、属性映射与含语义上下文的显示标签。
+ * [POS]: 元素设置面板的样式栏目元数据，提供英文标签源，调用方按后台语言翻译。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
 import type { StyleProps } from "../../../../core/index.ts";
+import type { LocalizedTranslate } from "../../../i18n/index.ts";
 
 export type StyleSectionId =
   | "icon"
@@ -394,6 +401,18 @@ export const STYLE_LABELS: Record<StyleKey, string> = {
   iconAnimation: "Animation",
   transition: "Transition",
 };
+
+// ---- 中文按样式属性限定词义，英文保留原有短标签。----
+const STYLE_LABEL_CONTEXT: Partial<Record<StyleKey, string>> = {
+  flexDirection: "Flex direction",
+  borderRadius: "Border radius",
+  iconScale: "Scale transform",
+};
+
+export function displayStyleLabel(key: StyleKey, t: LocalizedTranslate): string {
+  const source = STYLE_LABELS[key];
+  return t(t.locale === "zh-CN" ? (STYLE_LABEL_CONTEXT[key] ?? source) : source);
+}
 
 /** Every StyleProps key that the settings panel must be able to edit. */
 export const CONTROLLED_STYLE_KEYS: StyleKey[] = Object.values(SECTION_KEYS).flat();

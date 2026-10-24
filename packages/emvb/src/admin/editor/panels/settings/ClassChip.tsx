@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖 Kumo 菜单、状态标记与后台翻译。
+ * [OUTPUT]: 导出 ClassChip 与 stopEditorShortcuts。
+ * [POS]: 元素设置面板的已应用类标签，翻译展示文案并保留存储值。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { useI18n } from "../../../i18n/index.ts";
 import { DropdownMenu } from "@cloudflare/kumo";
 import {
   ArrowLeftIcon,
@@ -42,10 +49,11 @@ type Props = {
  * duplicates, reorders or removes it, and the × removes it. F2 renames in place.
  */
 export function ClassChip(props: Props) {
+  const t = useI18n();
   const { id, active, missing } = props;
   // The visible label reads "Missing (id)"; names read "Remove missing class id".
-  const name = missing ? `missing class ${id}` : props.name;
-  const label = missing ? `Missing (${id})` : props.name;
+  const name = missing ? t("missing class {id}", { id }) : props.name;
+  const label = missing ? t("Missing ({id})", { id }) : props.name;
   const [renaming, setRenaming] = React.useState(false);
   const main = React.useRef<HTMLButtonElement | null>(null);
   /** Enter, Escape and the blur that can follow them must end one rename only once. */
@@ -78,7 +86,7 @@ export function ClassChip(props: Props) {
       {renaming ? (
         <input
           className="emvb-chip-rename"
-          aria-label={`Rename ${name}`}
+          aria-label={t("Rename {name}", { name })}
           defaultValue={name}
           maxLength={60}
           // oxlint-disable-next-line jsx-a11y/no-autofocus -- the user asked to rename; focus moves into the field
@@ -101,7 +109,7 @@ export function ClassChip(props: Props) {
           aria-pressed={active}
           title={
             missing
-              ? "This class isn't in Site styles any more. Remove it from the element."
+              ? t("This class isn't in Site styles any more. Remove it from the element.")
               : `${name} · .emvb-k-${id}`
           }
           onClick={missing ? undefined : props.onEdit}
@@ -125,13 +133,17 @@ export function ClassChip(props: Props) {
         }}
       >
         <DropdownMenu.Trigger>
-          <button type="button" className="emvb-chip-icon" aria-label={`Actions for ${name}`}>
+          <button
+            type="button"
+            className="emvb-chip-icon"
+            aria-label={t("Actions for {name}", { name })}
+          >
             <DotsThreeVerticalIcon size={12} weight="bold" aria-hidden="true" />
           </button>
         </DropdownMenu.Trigger>
         <DropdownMenu.Content data-emvb-chip-menu={id}>
           <DropdownMenu.Item icon={PaintBrushIcon} disabled={missing} onClick={props.onEdit}>
-            Edit class styles
+            {t("Edit class styles")}
           </DropdownMenu.Item>
           <DropdownMenu.Item
             icon={PencilSimpleLineIcon}
@@ -140,28 +152,28 @@ export function ClassChip(props: Props) {
               renameAfterMenu.current = true;
             }}
           >
-            Rename
+            {t("Rename")}
           </DropdownMenu.Item>
           <DropdownMenu.Item icon={CopySimpleIcon} disabled={missing} onClick={props.onDuplicate}>
-            Duplicate
+            {t("Duplicate")}
           </DropdownMenu.Item>
           <DropdownMenu.Item
             icon={ArrowLeftIcon}
             disabled={props.first}
             onClick={() => props.onMove(-1)}
           >
-            Move earlier
+            {t("Move earlier")}
           </DropdownMenu.Item>
           <DropdownMenu.Item
             icon={ArrowRightIcon}
             disabled={props.last}
             onClick={() => props.onMove(1)}
           >
-            Move later
+            {t("Move later")}
           </DropdownMenu.Item>
           <DropdownMenu.Separator />
           <DropdownMenu.Item icon={XIcon} onClick={props.onRemove}>
-            Remove from element
+            {t("Remove from element")}
           </DropdownMenu.Item>
         </DropdownMenu.Content>
       </DropdownMenu>
@@ -169,7 +181,7 @@ export function ClassChip(props: Props) {
         type="button"
         className="emvb-chip-icon"
         tabIndex={-1}
-        aria-label={`Remove ${name}`}
+        aria-label={t("Remove {name}", { name })}
         onClick={props.onRemove}
       >
         <XIcon size={12} aria-hidden="true" />

@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖样式元数据、专用控件与后台翻译。
+ * [OUTPUT]: 导出 StyleRow、placeholderOf 与 IMPLEMENTED_STYLE_KEYS。
+ * [POS]: 元素设置面板的单项样式路由器，翻译展示文案并保留存储值。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { useI18n } from "../../../i18n/index.ts";
 import { Input, Select } from "@cloudflare/kumo";
 import { MotionControl } from "./MotionControl.tsx";
 import { isSafeFontStack, type DesignSystem, type StyleProps } from "../../../../core/index.ts";
@@ -5,7 +12,7 @@ import type { Fetcher } from "../../../api.ts";
 import { FIELD } from "../../../ui.ts";
 import { ColorControl } from "../ColorControl.tsx";
 import { BackgroundFill } from "./BackgroundFill.tsx";
-import { STYLE_LABELS, type StyleKey } from "./style-sections.ts";
+import { displayStyleLabel, type StyleKey } from "./style-sections.ts";
 import { ChoiceGroup, LAYOUT_CHOICES } from "./ChoiceGroup.tsx";
 import { LengthRow } from "./LengthRow.tsx";
 import {
@@ -223,9 +230,18 @@ export function StyleRow({
   onPatch: (patch: Partial<StyleProps>) => void;
   onDesignChange: (design: DesignSystem) => Promise<void>;
 }) {
+  const t = useI18n();
+  const optionLabel = (source: string) => {
+    // ---- 同一英文词在字重、文本对齐与其他界面中语义不同。----
+    if (t.locale === "en") return source;
+    if (styleKey === "fontWeight" && (source === "Light" || source === "Black"))
+      return t(`Font weight ${source}`);
+    if (styleKey === "borderStyle" && source === "Solid") return t("Solid border");
+    return styleKey === "textAlign" && source === "Justify" ? t("Justify text") : t(source);
+  };
   const value = style?.[styleKey];
   const set = value !== undefined;
-  const label = STYLE_LABELS[styleKey];
+  const label = displayStyleLabel(styleKey, t);
   const normalValue = inherited?.[styleKey];
   const placeholder = set ? undefined : placeholderOf(normalValue, design);
   const inheriting = !set && normalValue !== undefined ? "true" : undefined;
@@ -241,15 +257,24 @@ export function StyleRow({
         elementType={elementType}
         design={design}
         fetcher={fetcher}
-        sizeOptions={SELECT_OPTIONS.backgroundSize ?? []}
-        positionOptions={SELECT_OPTIONS.backgroundPosition ?? []}
-        repeatOptions={SELECT_OPTIONS.backgroundRepeat ?? []}
+        sizeOptions={(SELECT_OPTIONS.backgroundSize ?? []).map((option) => ({
+          value: option.value,
+          label: t(option.label),
+        }))}
+        positionOptions={(SELECT_OPTIONS.backgroundPosition ?? []).map((option) => ({
+          value: option.value,
+          label: t(option.label),
+        }))}
+        repeatOptions={(SELECT_OPTIONS.backgroundRepeat ?? []).map((option) => ({
+          value: option.value,
+          label: t(option.label),
+        }))}
         onPatch={onPatch}
         onDesignChange={onDesignChange}
         memoryScope={fillScope}
         reset={
           <ResetButton
-            label="Background"
+            label={t("Background")}
             set={
               style?.backgroundColor !== undefined ||
               style?.gradient !== undefined ||
@@ -352,13 +377,13 @@ export function StyleRow({
           }}
           renderValue={(v: unknown) =>
             v === UNSET
-              ? "Default"
-              : (options.find((o) => o.value === String(v))?.label ?? String(v))
+              ? t("Default")
+              : optionLabel(options.find((o) => o.value === String(v))?.label ?? String(v))
           }
         >
           {options.map((option) => (
             <Select.Option key={option.value} value={option.value}>
-              {option.label}
+              {optionLabel(option.label)}
             </Select.Option>
           ))}
         </Select>

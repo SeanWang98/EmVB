@@ -6,7 +6,7 @@ Page 字段回传布局，宿主自动保存草稿并负责发布。
 
 ## 成员清单
 
-**snapshots**/：API 契约快照。
+`__snapshots__`/：API 契约快照。
 access/：后台角色与侧栏兼容边界。
 agents-api.ts：代理变更接口；读取代理修改记录。
 api-client.test.ts：回归验证 api-client 的行为及边界。
@@ -22,6 +22,7 @@ forms-api.test.ts：回归验证 forms-api 的行为及边界。
 forms-api.ts：表单插件探测与定义查询；容忍缺失插件。
 icon-uploads-api.ts：图标媒体接口；上传与查询用户图标。
 image-editor/：媒体副本编辑；保存独立媒体资源。
+i18n/：跟随后台语言的显示词典与 React 订阅边界。
 index.tsx：后台注册入口；导出独立页面与 layout、canvas 字段组件。
 kumo-rules.test.ts：回归验证 kumo-rules 的行为及边界。
 list-paging.test.ts：回归验证 list-paging 的行为及边界。
@@ -35,7 +36,7 @@ search.ts：后台列表搜索；统一标题与 slug 匹配。
 seo-fields.test.ts：回归验证 seo-fields 的行为及边界。
 setup/：独立集合初始化与能力探测。
 theme-api.test.ts：回归验证 theme-api 的行为及边界。
-theme-api.ts：主题部件接口；保存布局、条件与发布状态。
+theme-api.ts：主题部件接口与条件摘要；译文只影响显示。
 ui.test.ts：回归验证 ui 的行为及边界。
 ui.ts：后台视觉常量；提供 Kumo 按钮与弹窗样式。
 widgets/：受控 Page 画布与独立页面摘要。

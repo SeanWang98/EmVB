@@ -1,3 +1,9 @@
+/**
+ * [INPUT]: 依赖iframe 文档的键盘及指针焦点事件。
+ * [OUTPUT]: 提供useFrameFocusRing。
+ * [POS]: 跨文档焦点环适配，区分键盘进入和指针点击。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
 import { useRef, useState, type SyntheticEvent } from "react";
 
 /**

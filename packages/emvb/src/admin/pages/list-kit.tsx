@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖列表请求、发布状态与界面翻译。
+ * [OUTPUT]: 提供列表状态、搜索、时间和重试组件。
+ * [POS]: 后台列表的共用界面边界；保留查询原文。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { useI18n } from "../i18n/index.ts";
 import { Banner, Button, Input, SkeletonLine } from "@cloudflare/kumo";
 import { PlusIcon, WarningCircleIcon } from "@phosphor-icons/react";
 import * as React from "react";
@@ -112,6 +119,7 @@ export function ListError({
   message: string;
   onRetry: () => void;
 }) {
+  const t = useI18n();
   const ref = React.useRef<HTMLButtonElement>(null);
   useRetryLanding(ref, true);
   return (
@@ -132,7 +140,7 @@ export function ListError({
             onRetry();
           }}
         >
-          Retry
+          {t("Retry")}
         </Button>
       }
     />
@@ -140,26 +148,31 @@ export function ListError({
 }
 
 export function StatusBadge({ status }: { status: string }) {
+  const t = useI18n();
   return (
     <span className="emvb-status" data-status={status}>
       <span className="emvb-status-dot" aria-hidden="true" />
-      {statusLabel(status)}
+      {t(statusLabel(status))}
     </span>
   );
 }
 
-const formatter = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" });
+const formatters = {
+  en: new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }),
+  "zh-CN": new Intl.DateTimeFormat("zh-CN", { dateStyle: "medium", timeStyle: "short" }),
+};
 
 /** W-685: a time the browser can't read showed "Invalid time value" by throwing, which blanked the list. */
-const readableTime = (iso: string) => {
+const readableTime = (iso: string, formatter: Intl.DateTimeFormat) => {
   const time = iso ? Date.parse(iso) : Number.NaN;
   return Number.isNaN(time) ? "" : formatter.format(time);
 };
 
 export function EditedTime({ iso }: { iso: string }) {
+  const t = useI18n();
   return (
     <time dateTime={iso} title={iso} className="emvb-tabular">
-      {readableTime(iso)}
+      {readableTime(iso, formatters[t.locale])}
     </time>
   );
 }
@@ -194,13 +207,14 @@ export function ListSearch({
 
 /** Shown when a search finds nothing (W-207). */
 export function NoMatches({ query, onClear }: { query: string; onClear: () => void }) {
+  const t = useI18n();
   return (
     <div className="emvb-surface-card">
       <p className="emvb-helper" role="status" data-emvb-no-matches>
-        Nothing matches "{query.trim()}".
+        {t('Nothing matches "{query}".', { query: query.trim() })}
       </p>
       <Button type="button" variant="secondary" className={BUTTON} onClick={onClear}>
-        Clear search
+        {t("Clear search")}
       </Button>
     </div>
   );

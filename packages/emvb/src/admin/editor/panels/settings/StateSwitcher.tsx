@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖核心状态枚举、Kumo Tabs 与后台翻译。
+ * [OUTPUT]: 导出 StateDot、StateSwitcher 与 StyleStateChoice。
+ * [POS]: 元素设置面板的交互状态切换器，翻译展示文案并保留存储值。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { useI18n } from "../../../i18n/index.ts";
 import { Tabs } from "@cloudflare/kumo";
 import * as React from "react";
 import { STYLE_STATES, type StyleStateName, type StyleStates } from "../../../../core/index.ts";
@@ -22,14 +29,15 @@ const isChoice = (value: string): value is StyleStateChoice =>
  * so their names stay "Hover", "Focus" and "Active".
  */
 export function StateDot({ decorative = false }: { decorative?: boolean }) {
+  const t = useI18n();
   return decorative ? (
-    <span className="emvb-state-dot" aria-hidden="true" title="Has state styles" />
+    <span className="emvb-state-dot" aria-hidden="true" title={t("Has state styles")} />
   ) : (
     <span
       className="emvb-state-dot"
       role="img"
-      aria-label="Has state styles"
-      title="Has state styles"
+      aria-label={t("Has state styles")}
+      title={t("Has state styles")}
     />
   );
 }
@@ -48,23 +56,24 @@ export function StateSwitcher({
   className: string | null;
   onChange: (next: StyleStateChoice) => void;
 }) {
+  const t = useI18n();
   const ref = React.useRef<HTMLDivElement>(null);
   React.useEffect(() => {
-    ref.current?.querySelector('[role="tablist"]')?.setAttribute("aria-label", "Style state");
+    ref.current?.querySelector('[role="tablist"]')?.setAttribute("aria-label", t("Style state"));
   });
   const tabs = CHOICES.map((choice) => ({
     value: choice,
     label:
       choice !== "normal" && Object.keys(states?.[choice] ?? {}).length > 0 ? (
         <>
-          {STATE_LABELS[choice]}
+          {t(STATE_LABELS[choice])}
           <StateDot decorative />
         </>
       ) : (
-        STATE_LABELS[choice]
+        t(STATE_LABELS[choice])
       ),
   }));
-  const label = STATE_LABELS[value];
+  const label = t(STATE_LABELS[value]);
   return (
     <div ref={ref} className="emvb-state-switch" data-emvb-state-switch={value}>
       <Tabs
@@ -78,8 +87,8 @@ export function StateSwitcher({
       {value !== "normal" && (
         <p className="emvb-helper" data-emvb-state-help="">
           {className
-            ? `Editing ${label} for class "${className}"`
-            : `Editing ${label} for this element`}
+            ? t('Editing {state} for class "{name}"', { state: label, name: className })
+            : t("Editing {state} for this element", { state: label })}
         </p>
       )}
     </div>

@@ -1,3 +1,9 @@
+/**
+ * [INPUT]: 依赖布局节点、拖放协议与 iframe 文档事件。
+ * [OUTPUT]: 提供useCanvasEvents 与 ResolvedDrop 类型。
+ * [POS]: 每次文档加载后接入选择、编辑和拖放事件。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
 import * as React from "react";
 import { canDrop, findNode, type DragSource, type Layout } from "../../../core/index.ts";
 import {

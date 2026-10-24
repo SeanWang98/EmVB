@@ -1,4 +1,10 @@
 /**
+ * [INPUT]: 依赖图片 Blob 与浏览器画布编码能力。
+ * [OUTPUT]: 提供needsFlatten、flattenToJpeg 与 downloadBlob。
+ * [POS]: JPEG 导出前铺白底，避免透明区域变黑。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+/**
  * W-495: JPEG has no transparency, and photocn's JPEG export leaves transparent pixels black.
  * Pictures that may have transparency (anything but a JPEG) are exported as PNG and then
  * flattened onto white before the single JPEG encode.

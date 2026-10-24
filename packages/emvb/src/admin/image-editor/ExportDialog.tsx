@@ -1,4 +1,10 @@
 /**
+ * [INPUT]: 依赖图片引擎导出、save 格式规则与副本保存回调。
+ * [OUTPUT]: 提供ExportDialog 与导出设置、结果类型。
+ * [POS]: 导出选项及结果入口，下载与媒体副本各自提交。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+/**
  * "Save copy" export step (W-485), following photocn's `export-dialog.tsx`
  * (https://github.com/rbbydotdev/photocn, apps/www/src/registry/image-editor), MIT License,
  * Copyright (c) 2026 rbbydotdev: format, quality, W × H with "Full size", an error alert, and
@@ -7,6 +13,7 @@
  * location gets "Remove location (GPS)", on by default. On phones the dialog sits at the bottom
  * like photocn's drawer.
  */
+import { useI18n } from "../i18n/index.ts";
 import { Button, Dialog, Select, Switch } from "@cloudflare/kumo";
 import {
   DownloadSimpleIcon,
@@ -17,6 +24,7 @@ import {
 import * as React from "react";
 import { ImageEditOutput } from "../../core/index.ts";
 import { SOLID_PRIMARY } from "../ui.ts";
+import { imageError, type ImageMessage } from "./messages.ts";
 import { withDataUrlFetch } from "./data-url-fetch.ts";
 import { downloadBlob, flattenToJpeg, needsFlatten } from "./flatten.ts";
 import { useImageEditor } from "./engine.ts";
@@ -44,7 +52,10 @@ export type ExportResult = { blob: Blob; width: number; height: number; type: st
 
 const MAX_PX = 16384;
 const COPY_SIZE_BOUNDS = ImageEditOutput.shape.maxSide.unwrap();
-const COPY_SIZE_HINT = `For Save copy, use Full size or a custom longest side between ${COPY_SIZE_BOUNDS.minValue} and ${COPY_SIZE_BOUNDS.maxValue} px.`;
+const copySizeHint = (): ImageMessage => ({
+  message: "For Save copy, use Full size or a custom longest side between {min} and {max} px.",
+  values: { min: COPY_SIZE_BOUNDS.minValue ?? 0, max: COPY_SIZE_BOUNDS.maxValue ?? 0 },
+});
 type Pending = "download" | "save" | null;
 
 export function ExportDialog({
@@ -114,6 +125,7 @@ function ExportForm({
   pending: Pending;
   onPendingChange: (pending: Pending) => void;
 }) {
+  const t = useI18n();
   const editor = useImageEditor();
   const id = React.useId();
   const full = editor.geometry.outputSize;
@@ -125,7 +137,7 @@ function ExportForm({
     full ? cappedWidth(full, DEFAULT_MAX_SIDE) : null,
   );
   const [stripGps, setStripGps] = React.useState(true);
-  const [error, setError] = React.useState<string | null>(null);
+  const [error, setError] = React.useState<ImageMessage | null>(null);
   const [failedSave, setFailedSave] = React.useState(false);
   const output = full ? outputSize(full, width) : null;
   const maximum = full
@@ -151,7 +163,7 @@ function ExportForm({
       stripGps: format === "jpeg" ? stripGps : true,
     };
     if (kind === "save" && !ImageEditOutput.shape.maxSide.safeParse(settings.maxSide).success) {
-      setError(COPY_SIZE_HINT);
+      setError(copySizeHint());
       setFailedSave(false);
       return;
     }
@@ -180,7 +192,7 @@ function ExportForm({
       }
       setFailedSave(false);
     } catch (caught) {
-      setError(caught instanceof Error && caught.message ? caught.message : "Export failed.");
+      setError(imageError(caught, "Export failed."));
       if (kind === "save") setFailedSave(true);
     } finally {
       onPendingChange(null);
@@ -205,9 +217,9 @@ function ExportForm({
       data-emvb-image-export=""
     >
       <div className="emvb-ie-export-head">
-        <Dialog.Title className="emvb-ie-export-title">Export image</Dialog.Title>
+        <Dialog.Title className="emvb-ie-export-title">{t("Export image")}</Dialog.Title>
         <Dialog.Description className="emvb-ie-export-desc">
-          Pick a format and size. Rendering always starts from the original.
+          {t("Pick a format and size. Rendering always starts from the original.")}
         </Dialog.Description>
         {/* W-830: Close stays focusable while saving (onOpenChange already refuses to close). */}
         <Dialog.Close
@@ -220,7 +232,7 @@ function ExportForm({
               size="sm"
               shape="square"
               className="emvb-ie-btn emvb-ie-btn-icon emvb-ie-export-close"
-              aria-label="Close"
+              aria-label={t("Close")}
               icon={<XIcon aria-hidden="true" />}
             />
           )}
@@ -229,7 +241,7 @@ function ExportForm({
       <div className="emvb-ie-export-fields">
         <div className="emvb-ie-export-row">
           <span id={`${id}-format`} className="emvb-ie-label">
-            Format
+            {t("Format")}
           </span>
           <Select
             aria-labelledby={`${id}-format`}
@@ -253,7 +265,7 @@ function ExportForm({
 
         {lossy ? (
           <ValueSlider
-            label="Quality"
+            label={t("Quality")}
             name="export-quality"
             value={Math.round(quality * 100)}
             min={10}
@@ -268,7 +280,7 @@ function ExportForm({
           <div className="emvb-ie-export-size">
             <div className="emvb-ie-export-row">
               <label htmlFor={`${id}-width`} className="emvb-ie-label">
-                Size
+                {t("Size")}
               </label>
               {width ? (
                 <button
@@ -277,7 +289,7 @@ function ExportForm({
                   onClick={() => setWidth(null)}
                   data-emvb-image-export-full=""
                 >
-                  Full size
+                  {t("Full size")}
                 </button>
               ) : null}
             </div>
@@ -285,7 +297,7 @@ function ExportForm({
               <input
                 id={`${id}-width`}
                 className="emvb-ie-number emvb-ie-export-px"
-                aria-label="Width in pixels"
+                aria-label={t("Width in pixels")}
                 type="number"
                 inputMode="numeric"
                 min={1}
@@ -297,7 +309,7 @@ function ExportForm({
               <span aria-hidden="true">×</span>
               <input
                 className="emvb-ie-number emvb-ie-export-px"
-                aria-label="Height in pixels"
+                aria-label={t("Height in pixels")}
                 type="number"
                 inputMode="numeric"
                 min={1}
@@ -310,12 +322,14 @@ function ExportForm({
             </div>
             <p className="emvb-ie-subtle" data-emvb-image-export-note="">
               {width
-                ? `${Math.round((output.width / full.width) * 100)}% of the crop`
-                : "Full resolution"}
+                ? t("{percent}% of the crop", {
+                    percent: Math.round((output.width / full.width) * 100),
+                  })
+                : t("Full resolution")}
               {format === "jpeg"
                 ? jpegGps && stripGps
-                  ? " · EXIF kept, location removed"
-                  : " · EXIF preserved"
+                  ? t(" · EXIF kept, location removed")
+                  : t(" · EXIF preserved")
                 : null}
             </p>
           </div>
@@ -323,7 +337,7 @@ function ExportForm({
 
         {jpegGps ? (
           <Switch
-            label="Remove location (GPS)"
+            label={t("Remove location (GPS)")}
             checked={stripGps}
             onCheckedChange={(checked) => setStripGps(checked === true)}
             data-emvb-image-export-gps=""
@@ -333,7 +347,7 @@ function ExportForm({
         {error ? (
           <div className="emvb-ie-alert" role="alert" data-emvb-image-export-error="">
             <WarningCircleIcon aria-hidden="true" />
-            <span>{error}</span>
+            <span>{t(error.message, error.values)}</span>
           </div>
         ) : null}
       </div>
@@ -355,7 +369,7 @@ function ExportForm({
           onClick={() => void run("download")}
           data-emvb-image-download=""
         >
-          Download
+          {t("Download")}
         </Button>
         <Button
           type="button"
@@ -376,7 +390,7 @@ function ExportForm({
           onClick={() => void run("save")}
           data-emvb-image-export-save=""
         >
-          {pending === "save" ? "Saving…" : failedSave ? "Retry" : "Save copy"}
+          {t(pending === "save" ? "Saving…" : failedSave ? "Retry" : "Save copy")}
         </Button>
       </div>
     </div>

@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖站点设计、布局引用与本地化上下文。
+ * [OUTPUT]: 导出站点样式抽屉及独立发布操作。
+ * [POS]: 共享设计的保存、导入和删除边界；保留命令错误源消息。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { useI18n, type Translate } from "../../i18n/index.ts";
 import { Button, Loader, Select, Tabs } from "@cloudflare/kumo";
 import { deletionOf, type Deletion } from "../restore-deleted.ts";
 import { UploadSimpleIcon, XIcon } from "@phosphor-icons/react";
@@ -5,7 +12,6 @@ import * as React from "react";
 import {
   clearClassRefs,
   deleteVariable,
-  designChangeLabel,
   designChanges,
   designFromJson,
   designToJson,
@@ -25,6 +31,7 @@ import {
 } from "../../../core/index.ts";
 import { BUTTON, SOLID_DESTRUCTIVE } from "../../ui.ts";
 import { ClassesSection } from "./ClassesSection.tsx";
+import { designImportError } from "./design-import-error.ts";
 import { stopEditorShortcuts } from "./settings/ClassChip.tsx";
 import { isCancelEscape } from "../ime.ts";
 import { StyleRow } from "./settings/StyleRow.tsx";
@@ -34,6 +41,7 @@ import { InlineError } from "./inline-error.tsx";
 import { VariableSection } from "./VariableSection.tsx";
 import { useMediaQuery } from "../useMediaQuery.ts";
 import { useEditedNoun, type EditedNoun } from "../edited-noun.ts";
+import { errorMessage, type LocalizedMessage } from "../localized-message.ts";
 
 const STYLE_NOTE = "Style changes stay unpublished until you publish styles.";
 
@@ -76,8 +84,9 @@ export function SiteStylesDrawer({
   onDeleted,
   onClose,
 }: Props) {
+  const t = useI18n();
   const [tab, setTab] = React.useState<"variables" | "classes" | "defaults">("variables");
-  const [error, setError] = React.useState<string | null>(null);
+  const [error, setError] = React.useState<LocalizedMessage | null>(null);
   const [publishing, setPublishing] = React.useState(false);
   const publishPending = React.useRef(false);
   // W-829: Publish styles stays focusable while publishing; once it publishes the button goes
@@ -109,7 +118,7 @@ export function SiteStylesDrawer({
       await onDesignChange(next);
       return true;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn't save site styles. Try again.");
+      setError(errorMessage(err, "Couldn't save site styles. Try again."));
       return false;
     }
   };
@@ -124,7 +133,7 @@ export function SiteStylesDrawer({
       await onPublishStyles();
     } catch (err) {
       refocusAfterPublish.current = false;
-      setError(err instanceof Error ? err.message : "Couldn't publish site styles. Try again.");
+      setError(errorMessage(err, "Couldn't publish site styles. Try again."));
     } finally {
       publishPending.current = false;
       setPublishing(false);
@@ -142,7 +151,7 @@ export function SiteStylesDrawer({
     const text = await file.text();
     const result = designFromJson(text);
     if (!result.ok) {
-      setError(result.message);
+      setError({ format: (currentT) => designImportError(result.message, currentT) });
       return;
     }
     setPendingImport({ name: file.name, design: result.design, renamed: result.renamed });
@@ -154,7 +163,9 @@ export function SiteStylesDrawer({
     onClose();
     requestAnimationFrame(() =>
       document
-        .querySelector<HTMLElement>('[data-emvb-editor] button[aria-label="Site styles"]')
+        .querySelector<HTMLElement>(
+          `[data-emvb-editor] button[aria-label="${CSS.escape(t("Site styles"))}"]`,
+        )
         ?.focus(),
     );
   };
@@ -172,13 +183,13 @@ export function SiteStylesDrawer({
     >
       <div className="emvb-site-styles-head">
         <div className="emvb-site-styles-titles">
-          <h2 className="emvb-panel-title">Site styles</h2>
+          <h2 className="emvb-panel-title">{t("Site styles")}</h2>
           <p className="emvb-helper emvb-site-styles-subtitle" data-emvb-manager-label="">
             {tab === "variables"
-              ? "Variables manager"
+              ? t("Variables manager")
               : tab === "classes"
-                ? "Classes manager"
-                : "Defaults"}
+                ? t("Classes manager")
+                : t("Defaults")}
           </p>
         </div>
         <Button
@@ -186,7 +197,7 @@ export function SiteStylesDrawer({
           variant="ghost"
           shape="square"
           className="emvb-icon-btn"
-          aria-label="Close site styles"
+          aria-label={t("Close site styles")}
           icon={<XIcon aria-hidden="true" />}
           onClick={closeAndReturn}
         />
@@ -195,7 +206,7 @@ export function SiteStylesDrawer({
       <div
         className="emvb-site-styles-actions"
         role="group"
-        aria-label="Site styles actions"
+        aria-label={t("Site styles actions")}
         data-emvb-site-styles-actions=""
       >
         {/* UX-024: the change list folds under a count, so a long draft can't push the tabs away. */}
@@ -203,13 +214,16 @@ export function SiteStylesDrawer({
           <details className="emvb-style-diff" data-emvb-style-diff="">
             <summary className="emvb-helper">
               {changes.length === 1
-                ? "1 unpublished change"
-                : `${changes.length} unpublished changes`}
+                ? t("1 unpublished change")
+                : t("{count} unpublished changes", { count: changes.length })}
             </summary>
             <ul className="emvb-helper">
               {changes.map((change) => (
                 <li key={`${change.kind}:${change.what}:${change.name}`}>
-                  {designChangeLabel(change)}
+                  {t(
+                    `${change.kind === "added" ? "Add" : change.kind === "removed" ? "Remove" : "Change"} ${change.what} {name}`,
+                    { name: change.what === "setting" ? t(change.name) : change.name },
+                  )}
                 </li>
               ))}
             </ul>
@@ -232,7 +246,7 @@ export function SiteStylesDrawer({
             aria-busy={publishing}
             onClick={() => void publish()}
           >
-            Publish styles
+            {t("Publish styles")}
           </Button>
         )}
         <Button
@@ -242,7 +256,7 @@ export function SiteStylesDrawer({
           size="sm"
           onClick={() => exportDesign(design)}
         >
-          Export
+          {t("Export")}
         </Button>
         <Button
           type="button"
@@ -250,7 +264,7 @@ export function SiteStylesDrawer({
           size="sm"
           onClick={() => fileRef.current?.click()}
         >
-          Import
+          {t("Import")}
         </Button>
         <input
           ref={fileRef}
@@ -269,9 +283,9 @@ export function SiteStylesDrawer({
         variant="underline"
         className="emvb-tabs"
         tabs={[
-          { value: "variables", label: "Variables" },
-          { value: "classes", label: "Classes" },
-          { value: "defaults", label: "Defaults" },
+          { value: "variables", label: t("Variables") },
+          { value: "classes", label: t("Classes") },
+          { value: "defaults", label: t("Defaults") },
         ]}
         value={tab}
         onValueChange={(value) =>
@@ -343,10 +357,10 @@ export function SiteStylesDrawer({
       <p
         className="emvb-helper emvb-site-styles-footer"
         role="status"
-        aria-label="Site styles status"
+        aria-label={t("Site styles status")}
         aria-live="polite"
       >
-        {publishing ? "Publishing site styles…" : STYLE_NOTE}
+        {t(publishing ? "Publishing site styles…" : STYLE_NOTE)}
       </p>
       {pendingImport && (
         <ImportConfirm
@@ -407,7 +421,8 @@ export function SiteStylesDrawer({
   );
 }
 
-const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+const plural = (t: Translate, n: number, one: string, many: string) =>
+  t(`{count} ${n === 1 ? one : many}`, { count: n });
 
 /**
  * W-251: only this page and the design are checked; other pages and theme parts that use the
@@ -417,12 +432,22 @@ const NOT_CHECKED =
   "Other pages and theme parts aren't checked; any that use it lose that styling.";
 
 /** "2 places on this page and 1 class", or null when nothing uses it. */
-function usedIn(pageUses: number, classUses: number, noun: EditedNoun): string | null {
+function usedIn(
+  t: Translate,
+  pageUses: number,
+  classUses: number,
+  noun: EditedNoun,
+): string | null {
   const parts = [
-    pageUses > 0 ? `${plural(pageUses, "place", "places")} on this ${noun}` : "",
-    classUses > 0 ? plural(classUses, "class", "classes") : "",
+    pageUses > 0
+      ? t("{places} on this {noun}", {
+          places: plural(t, pageUses, "place", "places"),
+          noun: t(noun),
+        })
+      : "",
+    classUses > 0 ? plural(t, classUses, "class", "classes") : "",
   ].filter(Boolean);
-  return parts.length > 0 ? parts.join(" and ") : null;
+  return parts.length > 0 ? parts.join(t(" and ")) : null;
 }
 
 /** The list row the delete confirmation is about. */
@@ -468,6 +493,7 @@ function DeleteConfirm({
   onCancel: () => void;
   onConfirm: () => void;
 }) {
+  const t = useI18n();
   const variable = confirm.kind === "variable";
   const pageUses = !layout
     ? 0
@@ -480,7 +506,7 @@ function DeleteConfirm({
       ).size
     : 0;
   const noun = useEditedNoun();
-  const where = usedIn(pageUses, classUses, noun);
+  const where = usedIn(t, pageUses, classUses, noun);
   // W-849: the confirmation opened below the list with focus left on the closed row menu, so a
   // keyboard or screen reader user didn't reach it. It takes focus on Cancel, the safe answer.
   const cancelRef = React.useRef<HTMLButtonElement>(null);
@@ -498,15 +524,15 @@ function DeleteConfirm({
       aria-describedby={bodyId}
     >
       <p className="emvb-field-label" id={titleId}>
-        Delete {confirm.name}?
+        {t("Delete {name}?", { name: confirm.name })}
       </p>
       <p className="emvb-helper" id={bodyId}>
         {where
-          ? `In use in ${where}. Deleting drops those bindings.`
+          ? t("In use in {where}. Deleting drops those bindings.", { where })
           : variable
-            ? `Not used on this ${noun} or by any class.`
-            : `Not used on this ${noun}.`}{" "}
-        {NOT_CHECKED}
+            ? t("Not used on this {noun} or by any class.", { noun: t(noun) })
+            : t("Not used on this {noun}.", { noun: t(noun) })}{" "}
+        {t(NOT_CHECKED)}
       </p>
       <div className="emvb-dialog-actions">
         <Button
@@ -516,7 +542,7 @@ function DeleteConfirm({
           className={BUTTON}
           onClick={onCancel}
         >
-          Cancel
+          {t("Cancel")}
         </Button>
         <Button
           type="button"
@@ -525,7 +551,7 @@ function DeleteConfirm({
           style={SOLID_DESTRUCTIVE}
           onClick={onConfirm}
         >
-          {variable ? "Delete variable" : "Delete class"}
+          {t(variable ? "Delete variable" : "Delete class")}
         </Button>
       </div>
     </div>
@@ -565,6 +591,7 @@ function DefaultsSection({
   design: DesignSystem;
   onSave: (design: DesignSystem) => Promise<boolean | void>;
 }) {
+  const t = useI18n();
   const [tag, setTag] = React.useState<DefaultStyleTag>("p");
   const style = design.defaults?.[tag];
   const patch = (partial: Partial<StyleProps>) => {
@@ -582,16 +609,16 @@ function DefaultsSection({
     <>
       {/* UX-058: the note belongs to Tag, so it sits under it; tags read as names. */}
       <Select
-        label="Tag"
+        label={t("Tag")}
         className={FIELD}
         value={tag}
-        description="Elements of this tag start here. A class or a local style still wins."
-        renderValue={(value: unknown) => TAG_NAMES[value as DefaultStyleTag] ?? String(value)}
+        description={t("Elements of this tag start here. A class or a local style still wins.")}
+        renderValue={(value: unknown) => t(TAG_NAMES[value as DefaultStyleTag] ?? String(value))}
         onValueChange={(value) => setTag(value as DefaultStyleTag)}
       >
         {DEFAULT_STYLE_TAGS.map((item) => (
           <Select.Option key={item} value={item}>
-            {TAG_NAMES[item]}
+            {t(TAG_NAMES[item])}
           </Select.Option>
         ))}
       </Select>
@@ -626,9 +653,10 @@ function ImportConfirm({
   onCancel: () => void;
   onConfirm: () => void;
 }) {
+  const t = useI18n();
   const lost = [
-    losses.classes > 0 ? plural(losses.classes, "class", "classes") : "",
-    losses.variables > 0 ? plural(losses.variables, "variable", "variables") : "",
+    losses.classes > 0 ? plural(t, losses.classes, "class", "classes") : "",
+    losses.variables > 0 ? plural(t, losses.variables, "variable", "variables") : "",
   ].filter(Boolean);
   // W-854: like the delete confirmation (W-849), it takes focus on Cancel, the safe answer, so a
   // keyboard or screen reader user reaches it after picking the file.
@@ -647,25 +675,33 @@ function ImportConfirm({
       aria-describedby={bodyId}
     >
       <p className="emvb-field-label" id={titleId}>
-        Replace site styles with {name}?
+        {t("Replace site styles with {name}?", { name })}
       </p>
       <p className="emvb-helper" id={bodyId}>
         {lost.length > 0
-          ? `${lost.join(" and ")} that the file doesn't have will be removed. `
-          : "Every class and variable is replaced by the file's. "}
+          ? t("{items} that the file doesn't have will be removed. ", {
+              items: lost.join(t(" and ")),
+            })
+          : t("Every class and variable is replaced by the file's. ")}
         {losses.usedOnPage > 0 &&
-          `This page uses ${losses.usedOnPage} of them, so those elements lose that styling. `}
-        Export first to keep a copy.
+          t("This page uses {count} of them, so those elements lose that styling. ", {
+            count: losses.usedOnPage,
+          })}
+        {t("Export first to keep a copy.")}
       </p>
       {renamed.length > 0 && (
         <p className="emvb-helper" data-emvb-import-renamed="">
-          {`The file repeats some names, so ${renamed.length === 1 ? "one is" : "these are"} renamed: `}
+          {t(
+            renamed.length === 1
+              ? "The file repeats some names, so one is renamed: "
+              : "The file repeats some names, so these are renamed: ",
+          )}
           {renamed
             .slice(0, MAX_RENAMES_LISTED)
             .map((r) => `${r.from} → ${r.to}`)
             .join(", ")}
           {renamed.length > MAX_RENAMES_LISTED
-            ? ` and ${renamed.length - MAX_RENAMES_LISTED} more.`
+            ? t(" and {count} more.", { count: renamed.length - MAX_RENAMES_LISTED })
             : "."}
         </p>
       )}
@@ -677,7 +713,7 @@ function ImportConfirm({
           className={BUTTON}
           onClick={onCancel}
         >
-          Cancel
+          {t("Cancel")}
         </Button>
         <Button
           type="button"
@@ -686,7 +722,7 @@ function ImportConfirm({
           style={SOLID_DESTRUCTIVE}
           onClick={onConfirm}
         >
-          Replace site styles
+          {t("Replace site styles")}
         </Button>
       </div>
     </div>
@@ -707,14 +743,15 @@ function DirectionSelect({
   design: DesignSystem;
   onSave: (next: DesignSystem) => Promise<unknown> | void;
 }) {
+  const t = useI18n();
   return (
     <div className="emvb-field-group" data-emvb-site-direction="">
       <Select
-        label="Text direction"
+        label={t("Text direction")}
         className={FIELD}
         value={design.direction ?? "ltr"}
         renderValue={(v: unknown) =>
-          DIRECTIONS.find((item) => item.value === String(v))?.label ?? String(v)
+          t(DIRECTIONS.find((item) => item.value === String(v))?.label ?? String(v))
         }
         onValueChange={(value) => {
           const { direction: _old, ...rest } = design;
@@ -726,12 +763,12 @@ function DirectionSelect({
       >
         {DIRECTIONS.map((item) => (
           <Select.Option key={item.value} value={item.value}>
-            {item.label}
+            {t(item.label)}
           </Select.Option>
         ))}
       </Select>
       <p className="emvb-helper">
-        Right to left mirrors the layout for Arabic, Hebrew and other right-to-left sites.
+        {t("Right to left mirrors the layout for Arabic, Hebrew and other right-to-left sites.")}
       </p>
     </div>
   );

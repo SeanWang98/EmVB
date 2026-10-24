@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖主题部件 API、类型定义与界面翻译。
+ * [OUTPUT]: 提供类型筛选、搜索和主题部件列表。
+ * [POS]: 主题构建器列表；不改写部件名称或条件参数。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { useI18n } from "../i18n/index.ts";
 import { Empty, Table } from "@cloudflare/kumo";
 import { SquaresFourIcon } from "@phosphor-icons/react";
 import * as React from "react";
@@ -56,6 +63,7 @@ function FilterTabs({
   counts: Map<Filter, number>;
   onChange: (next: Filter) => void;
 }) {
+  const t = useI18n();
   const refs = React.useRef(new Map<Filter, HTMLButtonElement>());
 
   const onKeyDown = (event: React.KeyboardEvent) => {
@@ -86,7 +94,7 @@ function FilterTabs({
       ref={rowRef}
       className="emvb-theme-filters"
       role="tablist"
-      aria-label="Filter by type"
+      aria-label={t("Filter by type")}
       onKeyDown={onKeyDown}
     >
       {FILTERS.map(({ value, label }) => {
@@ -109,7 +117,7 @@ function FilterTabs({
             data-active={selected ? "true" : undefined}
             onClick={() => onChange(value)}
           >
-            {label}
+            {t(label)}
             {count > 0 && <span className="emvb-theme-filter-count emvb-tabular">{count}</span>}
           </button>
         );
@@ -120,13 +128,15 @@ function FilterTabs({
 
 /** Theme Builder list: title, type, conditions, status, last edited; New theme part. */
 export function ThemePartList({ fetcher }: { fetcher: Fetcher }) {
-  const list = useList(fetcher, listThemeParts);
+  const t = useI18n();
+  const loadParts = React.useCallback((client: Fetcher) => listThemeParts(client, t), [t]);
+  const list = useList(fetcher, loadParts);
   const [creating, setCreating] = React.useState(false);
   const [filter, setFilter] = React.useState<Filter>("all");
   const [query, setQuery] = React.useState("");
   const searchRef = React.useRef<HTMLInputElement>(null);
 
-  const newPart = <NewButton label="New theme part" onClick={() => setCreating(true)} />;
+  const newPart = <NewButton label={t("New theme part")} onClick={() => setCreating(true)} />;
 
   const visible =
     list.state === "ready"
@@ -135,16 +145,25 @@ export function ThemePartList({ fetcher }: { fetcher: Fetcher }) {
         : list.items.filter((p) => p.partType === filter)
       : [];
   const shown = visible.filter((p) =>
-    matchesSearch(query, p.title, partTypeLabel(p.partType), p.conditionsSummary),
+    matchesSearch(
+      query,
+      p.title,
+      partTypeLabel(p.partType),
+      t(partTypeLabel(p.partType)),
+      p.conditionsSummary,
+      p.conditionsSearch ?? "",
+    ),
   );
 
   const emptyFilterLabel =
-    filter === "all" ? "theme parts" : FILTERS.find((f) => f.value === filter)?.label.toLowerCase();
+    filter === "all"
+      ? t("theme parts")
+      : t(FILTERS.find((f) => f.value === filter)?.label ?? "theme parts").toLowerCase();
 
   return (
     <>
       <div className="emvb-list-header">
-        <h1 className="emvb-page-title">Theme Builder</h1>
+        <h1 className="emvb-page-title">{t("Theme Builder")}</h1>
         {list.state === "ready" && list.items.length > 0 && newPart}
       </div>
       {list.state === "ready" && list.items.length > 0 && (
@@ -153,21 +172,25 @@ export function ThemePartList({ fetcher }: { fetcher: Fetcher }) {
           <ListSearch
             value={query}
             onChange={setQuery}
-            label="Search theme parts"
+            label={t("Search theme parts")}
             inputRef={searchRef}
           />
         </>
       )}
-      {list.state === "loading" && <ListLoading label="Loading theme parts…" />}
+      {list.state === "loading" && <ListLoading label={t("Loading theme parts…")} />}
       {list.state === "error" && (
-        <ListError title="Couldn't load theme parts" message={list.message} onRetry={list.retry} />
+        <ListError
+          title={t("Couldn't load theme parts")}
+          message={list.message}
+          onRetry={list.retry}
+        />
       )}
       {list.state === "ready" && list.items.length === 0 && (
         <div className="emvb-surface-card emvb-empty-shell">
           <Empty
             icon={<SquaresFourIcon size={32} aria-hidden="true" />}
-            title="No site parts yet"
-            description="Create a Header, Footer, content template, Popup, or Float."
+            title={t("No site parts yet")}
+            description={t("Create a Header, Footer, content template, Popup, or Float.")}
             contents={newPart}
           />
         </div>
@@ -178,8 +201,8 @@ export function ThemePartList({ fetcher }: { fetcher: Fetcher }) {
             <div className="emvb-surface-card emvb-empty-shell">
               <Empty
                 icon={<SquaresFourIcon size={32} aria-hidden="true" />}
-                title={`No ${emptyFilterLabel} yet`}
-                description="Create one or choose a different filter."
+                title={t("No {type} yet", { type: emptyFilterLabel })}
+                description={t("Create one or choose a different filter.")}
                 contents={newPart}
               />
             </div>
@@ -196,11 +219,11 @@ export function ThemePartList({ fetcher }: { fetcher: Fetcher }) {
               <Table data-emvb-list="theme-parts">
                 <Table.Header>
                   <Table.Row>
-                    <Table.Head>Title</Table.Head>
-                    <Table.Head>Type</Table.Head>
-                    <Table.Head>Conditions</Table.Head>
-                    <Table.Head>Status</Table.Head>
-                    <Table.Head>Last edited</Table.Head>
+                    <Table.Head>{t("Title")}</Table.Head>
+                    <Table.Head>{t("Type")}</Table.Head>
+                    <Table.Head>{t("Conditions")}</Table.Head>
+                    <Table.Head>{t("Status")}</Table.Head>
+                    <Table.Head>{t("Last edited")}</Table.Head>
                   </Table.Row>
                 </Table.Header>
                 <Table.Body>
@@ -214,7 +237,7 @@ export function ThemePartList({ fetcher }: { fetcher: Fetcher }) {
                           {part.title}
                         </a>
                       </Table.Cell>
-                      <Table.Cell>{partTypeLabel(part.partType)}</Table.Cell>
+                      <Table.Cell>{t(partTypeLabel(part.partType))}</Table.Cell>
                       <Table.Cell>
                         <span className="emvb-tabular">{part.conditionsSummary}</span>
                       </Table.Cell>

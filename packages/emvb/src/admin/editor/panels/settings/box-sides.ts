@@ -1,3 +1,9 @@
+/**
+ * [INPUT]: 依赖布局字段与设置面板的调用参数。
+ * [OUTPUT]: 定义盒型分组、边与 CSS 键的映射。
+ * [POS]: 元素设置面板的 box-sides 边界。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
 import type { StyleProps } from "../../../../core/index.ts";
 import type { LengthUnit } from "./length-units.ts";
 import type { StyleKey } from "./style-sections.ts";

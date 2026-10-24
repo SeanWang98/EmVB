@@ -1,4 +1,10 @@
 /**
+ * [INPUT]: 依赖图片配方摘要规则与节点尺寸属性。
+ * [OUTPUT]: 提供工具元信息、显示名与元素宽高比选项。
+ * [POS]: 图片工具的轻量模型；显示名仅翻译缺省值。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+/**
  * The image editor's tools, in photocn's order (W-483). The ids are photocn's tool ids, so the
  * crop tool is "compose" (its crop view) and the panels can come straight from its hook.
  */
@@ -27,9 +33,9 @@ export const sizeLabel = (width: number, height: number) => `${width} × ${heigh
 const STORAGE_KEY = /^[0-9A-HJKMNP-TV-Z]{26}\.[a-z0-9]+$/i;
 
 /** The name shown in the editor: the file name, unless it is a storage key. */
-export function displayName(fileName: string, alt: unknown): string {
+export function displayName(fileName: string, alt: unknown, fallback = "Library picture"): string {
   if (!STORAGE_KEY.test(fileName)) return fileName;
-  return typeof alt === "string" && alt.trim() ? alt.trim() : "Library picture";
+  return typeof alt === "string" && alt.trim() ? alt.trim() : fallback;
 }
 
 /** The widest aspect ratio the edit record accepts (core/image-edit/schema.ts). */

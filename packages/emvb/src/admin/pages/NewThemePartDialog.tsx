@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖主题类型、创建 API 与界面翻译。
+ * [OUTPUT]: 提供主题部件类型和标题表单。
+ * [POS]: 主题部件创建入口；类型值与校验源文保持稳定。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { useI18n } from "../i18n/index.ts";
 import { Select } from "@cloudflare/kumo";
 import * as React from "react";
 import { THEME_PART_TYPES, THEME_PART_TYPE_LABELS, type ThemePartType } from "../../core/index.ts";
@@ -26,6 +33,7 @@ export function NewThemePartDialog({
   /** UX-055: opened from a type's filter, the dialog starts on that type. */
   defaultType?: ThemePartType;
 }) {
+  const t = useI18n();
   const [partType, setPartType] = React.useState<ThemePartType>(defaultType);
   const [wasOpen, setWasOpen] = React.useState(open);
   if (open !== wasOpen) {
@@ -35,12 +43,12 @@ export function NewThemePartDialog({
   return (
     <CreateDialog
       name="new-theme-part"
-      heading="New theme part"
+      heading={t("New theme part")}
       noun="theme part"
       emptyTitle="Enter a title."
       slugPrefix={`${partType}-`}
-      slugHint="Tells theme parts apart. Theme parts have no public address."
-      submitLabel="Create theme part"
+      slugHint={t("Tells theme parts apart. Theme parts have no public address.")}
+      submitLabel={t("Create theme part")}
       open={open}
       onOpenChange={onOpenChange}
       create={async (title, slug) =>
@@ -48,19 +56,19 @@ export function NewThemePartDialog({
       }
     >
       <Select
-        label="Type"
+        label={t("Type")}
         className={FIELD}
         value={partType}
         onValueChange={(value) =>
           setPartType(TYPES.find((option) => option.value === value)?.value ?? "header")
         }
         renderValue={(value: unknown) =>
-          TYPES.find((option) => option.value === value)?.label ?? String(value)
+          t(TYPES.find((option) => option.value === value)?.label ?? String(value))
         }
       >
         {TYPES.map((option) => (
           <Select.Option key={option.value} value={option.value}>
-            {option.label}
+            {t(option.label)}
           </Select.Option>
         ))}
       </Select>

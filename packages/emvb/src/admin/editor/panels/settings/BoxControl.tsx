@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖盒模型补丁、长度解析与按当前语言格式化的错误。
+ * [OUTPUT]: 导出 BoxControl。
+ * [POS]: 联动盒模型控件；错误保留提交快照与出错边，切语言不改草稿。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { useI18n } from "../../../i18n/index.ts";
 import { DropdownMenu } from "@cloudflare/kumo";
 import { CaretDownIcon, LinkSimpleBreakIcon, LinkSimpleIcon } from "@phosphor-icons/react";
 import * as React from "react";
@@ -17,10 +24,11 @@ import {
 } from "./box-sides.ts";
 import { parseLengthDraft, unitsFor, type LengthUnit } from "./length-units.ts";
 import { ResetButton } from "./NumberRow.tsx";
-import { STYLE_LABELS } from "./style-sections.ts";
+import { displayStyleLabel } from "./style-sections.ts";
 import { placeholderOf } from "./StyleRow.tsx";
 import { bindKind, boundRef, VariableButton } from "./VariableBinding.tsx";
 import { isCommitEnter } from "../../ime.ts";
+import { formatError, type LocalizedError } from "./localized-error.ts";
 
 /** Margin's "auto" menu item: auto left and right margins centre a box with a width (W-151). */
 const autoSidesPatch = (group: BoxGroup): Partial<StyleProps> => ({
@@ -46,6 +54,10 @@ export function BoxControl({
   design: DesignSystem;
   onPatch: (patch: Partial<StyleProps>) => void;
 }) {
+  const t = useI18n();
+  const label =
+    t.locale === "zh-CN" && group.id === "borderRadius" ? t("Border radius") : t(group.label);
+  const noun = t(group.noun);
   const values = sideValues(group, style);
   const normal = inherited ? sideValues(group, inherited) : [];
   const same = allSame(values);
@@ -63,8 +75,17 @@ export function BoxControl({
   const [fallbackUnit, setFallbackUnit] = React.useState<LengthUnit>(units[0] ?? "px");
   const unit = sharedUnit(values, fallbackUnit);
   // What a box takes, as a tooltip (W-151): Margin also takes auto.
-  const hint = `A number in ${unit}, or with its own unit (2rem, 50%)${takesAuto ? ", or auto" : ""}`;
-  const [error, setError] = React.useState<{ index: number; message: string } | null>(null);
+  const hint = t(
+    takesAuto
+      ? "A number in {unit}, or with its own unit (2rem, 50%), or auto"
+      : "A number in {unit}, or with its own unit (2rem, 50%)",
+    { unit },
+  );
+  const [error, setError] = React.useState<{
+    index: number;
+    message: LocalizedError;
+  } | null>(null);
+  const errorText = formatError(error?.message ?? null, t);
   const labelId = React.useId();
   const set = groupSet(group, style);
   const kind = bindKind(group.sides[0]);
@@ -78,9 +99,17 @@ export function BoxControl({
       return;
     }
     const key = group.sides[index] as (typeof group.sides)[number];
-    const parsed = parseLengthDraft(draft, key, unit);
+    const parsed = parseLengthDraft(draft, key, unit, t);
     if (!parsed.ok) {
-      setError({ index, message: parsed.message });
+      setError({
+        index,
+        message: {
+          format: (tr) => {
+            const again = parseLengthDraft(draft, key, unit, tr);
+            return again.ok ? "" : again.message;
+          },
+        },
+      });
       return;
     }
     setError(null);
@@ -96,7 +125,10 @@ export function BoxControl({
     if (!same) onPatch(linkPatch(group, style));
   };
 
-  const linkLabel = `Link ${group.label.toLowerCase()} ${group.noun}`;
+  const linkLabel = t("Link {label} {noun}", {
+    label: t.locale === "zh-CN" ? label : t(group.label.toLowerCase()),
+    noun,
+  });
   return (
     <div
       className="emvb-style-row emvb-box"
@@ -108,14 +140,14 @@ export function BoxControl({
       <div className="emvb-box-body">
         <div className="emvb-box-head">
           <span className="emvb-box-label" id={labelId}>
-            {group.label}
+            {label}
           </span>
           <DropdownMenu>
             <DropdownMenu.Trigger>
               <button
                 type="button"
                 className="emvb-unit-btn"
-                aria-label={`${group.label} unit (${unit})`}
+                aria-label={t("{label} unit ({unit})", { label, unit })}
                 data-emvb-unit={unit}
               >
                 {unit}
@@ -124,7 +156,7 @@ export function BoxControl({
             </DropdownMenu.Trigger>
             <DropdownMenu.Content data-emvb-unit-menu={group.id}>
               <DropdownMenu.RadioGroup
-                aria-label={`${group.label} unit`}
+                aria-label={t("{label} unit", { label })}
                 value={unit}
                 onValueChange={(next: LengthUnit) => {
                   setFallbackUnit(next);
@@ -155,7 +187,7 @@ export function BoxControl({
                     }}
                   >
                     <span className="emvb-mono">auto</span>
-                    <span className="emvb-unit-note">left and right, to centre</span>
+                    <span className="emvb-unit-note">{t("left and right, to centre")}</span>
                   </DropdownMenu.Item>
                 </>
               )}
@@ -163,7 +195,7 @@ export function BoxControl({
           </DropdownMenu>
           {kind && (
             <VariableButton
-              label={group.label}
+              label={label}
               kind={kind}
               design={design}
               current={boundAll}
@@ -178,7 +210,11 @@ export function BoxControl({
             className="emvb-link-btn"
             aria-label={linkLabel}
             aria-pressed={linked}
-            title={linked ? `Linked: one value for all ${group.noun}` : `Link the ${group.noun}`}
+            title={
+              linked
+                ? t("Linked: one value for all {noun}", { noun })
+                : t("Link the {noun}", { noun })
+            }
             data-emvb-box-link={group.id}
             onClick={toggleLink}
           >
@@ -193,8 +229,8 @@ export function BoxControl({
           {group.sides.map((key, index) => (
             <SideBox
               key={key}
-              label={STYLE_LABELS[key]}
-              name={group.names[index] ?? ""}
+              label={displayStyleLabel(key, t)}
+              name={t(group.names[index] ?? "")}
               styleKey={key}
               text={sideDraft(values[index], unit, placeholderOf(values[index], design))}
               placeholder={placeholderOf(normal[index], design)}
@@ -205,14 +241,14 @@ export function BoxControl({
             />
           ))}
         </div>
-        {error && (
+        {errorText && (
           <p className="emvb-box-error" role="alert">
-            {error.message}
+            {errorText}
           </p>
         )}
       </div>
       <ResetButton
-        label={group.label}
+        label={label}
         set={set}
         onReset={() => {
           setError(null);

@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖布局节点、后台界面翻译与同目录字段控件。
+ * [OUTPUT]: 表单风险提示；显示缺失必填字段、不可满足限制与控件类型冲突。
+ * [POS]: 元素设置面板的 RequiredFieldsNotice；不拥有页面保存与发布。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { useI18n, type Translate } from "../../../i18n/index.ts";
 import { Banner } from "@cloudflare/kumo";
 import { WarningIcon } from "@phosphor-icons/react";
 import * as React from "react";
@@ -7,20 +14,43 @@ import {
   impossibleRangeFields,
   mismatchedControls,
   requiredFieldIssues,
-  requiredFieldIssueText,
   type LayoutNode,
   type RequiredFieldIssue,
 } from "../../../../core/index.ts";
 
 /** The panel's short line for one issue; the full sentence is its tooltip and the MCP text. */
-function shortReason(issue: RequiredFieldIssue): string {
-  if (issue.kind === "missing") return `has no field on this form (${issue.field}).`;
+function shortReason(issue: RequiredFieldIssue, t: Translate): string {
+  if (issue.kind === "missing")
+    return t("has no field on this form ({name}).", { name: issue.field });
   if (issue.kind === "hidden") {
     return issue.devices.length === 3
-      ? "is hidden on every device."
-      : `is hidden on ${issue.devices.join(" and ")}.`;
+      ? t("is hidden on every device.")
+      : t("is hidden on {devices}.", {
+          devices: issue.devices.map((device) => t(device)).join(t(" and ")),
+        });
   }
-  return `is shown only to some visitors: ${issue.who}.`;
+  return t("is shown only to some visitors: {who}.", { who: issue.who });
+}
+
+function issueText(issue: RequiredFieldIssue, t: Translate): string {
+  if (issue.kind === "missing")
+    return t(
+      "“{name}” is required by the form but has no field here, so the form can't be sent. Add a field bound to {field}, or make it optional in Forms.",
+      { name: issue.label, field: issue.field },
+    );
+  if (issue.kind === "audience")
+    return t(
+      "“{name}” is required but shown only to some visitors ({who}), so everyone else can't send the form. Remove the rule from the field, or make it optional in Forms.",
+      { name: issue.label, who: issue.who },
+    );
+  const where =
+    issue.devices.length === 3
+      ? t("on every device")
+      : t("on {devices}", { devices: issue.devices.map((device) => t(device)).join(t(" and ")) });
+  return t(
+    "“{name}” is required but hidden {where}, so visitors there can't send the form. Show the field there, or make it optional in Forms.",
+    { name: issue.label, where },
+  );
 }
 
 /**
@@ -28,6 +58,7 @@ function shortReason(issue: RequiredFieldIssue): string {
  * a device. Either way the form can't be sent there, and the visitor sees no reason why.
  */
 export function RequiredFieldsNotice({ node, fetcher }: { node: LayoutNode; fetcher: Fetcher }) {
+  const t = useI18n();
   const formId = String((node.props as { formId?: unknown }).formId ?? "").trim();
   const [fields, setFields] = React.useState<DefinitionField[] | null>(null);
   React.useEffect(() => {
@@ -54,15 +85,17 @@ export function RequiredFieldsNotice({ node, fetcher }: { node: LayoutNode; fetc
         icon={<WarningIcon aria-hidden="true" />}
         title={
           kinds.length === 1
-            ? "A field needs a choice element"
-            : `${kinds.length} fields need a choice element`
+            ? t("A field needs a choice element")
+            : t("{count} fields need a choice element", { count: kinds.length })
         }
         description={
           <ul className="emvb-required-notice__list">
             {kinds.map((kind) => (
               <li key={kind.nodeId} data-emvb-kind-issue={kind.fieldType}>
-                <strong>{kind.label}</strong> only accepts one of its options in Forms, so typed or
-                ticked answers are refused. Use a Select or Radio element for it.
+                <strong>{kind.label}</strong>{" "}
+                {t(
+                  "only accepts one of its options in Forms, so typed or ticked answers are refused. Use a Select or Radio element for it.",
+                )}
               </li>
             ))}
           </ul>
@@ -76,8 +109,8 @@ export function RequiredFieldsNotice({ node, fetcher }: { node: LayoutNode; fetc
         icon={<WarningIcon aria-hidden="true" />}
         title={
           ranges.length === 1
-            ? "A field's limits can't be met"
-            : `${ranges.length} fields' limits can't be met`
+            ? t("A field's limits can't be met")
+            : t("{count} fields' limits can't be met", { count: ranges.length })
         }
         description={
           <ul className="emvb-required-notice__list">
@@ -85,11 +118,13 @@ export function RequiredFieldsNotice({ node, fetcher }: { node: LayoutNode; fetc
               <li key={range.name} data-emvb-range-issue={range.kind}>
                 <strong>{range.label}</strong>{" "}
                 {range.kind === "length"
-                  ? "has a minimum length above its maximum length"
+                  ? t("has a minimum length above its maximum length")
                   : range.kind === "both"
-                    ? "has a minimum length above its maximum length and a minimum value above its maximum"
-                    : "has a minimum value above its maximum"}
-                , so no answer is accepted. Fix the limits in Forms.
+                    ? t(
+                        "has a minimum length above its maximum length and a minimum value above its maximum",
+                      )
+                    : t("has a minimum value above its maximum")}
+                {t(", so no answer is accepted. Fix the limits in Forms.")}
               </li>
             ))}
           </ul>
@@ -106,8 +141,8 @@ export function RequiredFieldsNotice({ node, fetcher }: { node: LayoutNode; fetc
   }
   const title =
     issues.length === 1
-      ? "A required field can't be filled in"
-      : `${issues.length} required fields can't be filled in`;
+      ? t("A required field can't be filled in")
+      : t("{count} required fields can't be filled in", { count: issues.length });
   return (
     <div className="emvb-required-notice" data-emvb-required-fields="">
       {kindBanner}
@@ -123,15 +158,16 @@ export function RequiredFieldsNotice({ node, fetcher }: { node: LayoutNode; fetc
                 <li
                   key={`${issue.kind}:${issue.field}`}
                   data-emvb-required-issue={issue.kind}
-                  title={requiredFieldIssueText(issue)}
+                  title={issueText(issue, t)}
                 >
-                  <strong>{issue.label}</strong> {shortReason(issue)}
+                  <strong>{issue.label}</strong> {shortReason(issue, t)}
                 </li>
               ))}
             </ul>
             <span className="emvb-required-notice__hint">
-              Visitors who can't fill a required field can't send the form. Show the field to
-              everyone, or make it optional in Forms.
+              {t(
+                "Visitors who can't fill a required field can't send the form. Show the field to everyone, or make it optional in Forms.",
+              )}
             </span>
           </>
         }

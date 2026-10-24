@@ -1,3 +1,9 @@
+/**
+ * [INPUT]: 依赖主题条件 schema、标签适配与后台翻译上下文
+ * [OUTPUT]: 导出条件菜单转换及本地化 ConditionsEditor
+ * [POS]: 主题部件显示范围面板；规则键与参数保持原值
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
 import { Button } from "@cloudflare/kumo";
 import { PlusIcon, TrashIcon } from "@phosphor-icons/react";
 import {
@@ -7,6 +13,7 @@ import {
   type ConditionsDoc,
 } from "../../../core/index.ts";
 import { conditionRuleLabel } from "../../theme-api.ts";
+import { useI18n } from "../../i18n/index.ts";
 import { BUTTON } from "../../ui.ts";
 import { PanelSelect } from "./settings/PanelSelect.tsx";
 
@@ -116,12 +123,16 @@ const newConditionId = () => `r-${Date.now().toString(36)}-${(++ruleSeq).toStrin
 
 /** Include/Exclude display conditions for theme parts (Elementor-like MVP set). */
 export function ConditionsEditor({ conditions, onChange }: Props) {
+  const t = useI18n();
   const doc = conditions ?? defaultConditions();
   const setRules = (rules: ConditionRule[]) => onChange({ schemaVersion: 1, rules });
 
   /** The schema allows at most 20 rules, so a 21st would make the part unsavable (W-092). */
   const full = doc.rules.length >= MAX_CONDITION_RULES;
-  const fullReason = `${MAX_CONDITION_RULES} conditions is the most one part can have. Remove one to add another.`;
+  const fullReason = t(
+    "{count} conditions is the most one part can have. Remove one to add another.",
+    { count: MAX_CONDITION_RULES },
+  );
 
   const add = (op: "include" | "exclude") => {
     if (full) return;
@@ -138,13 +149,13 @@ export function ConditionsEditor({ conditions, onChange }: Props) {
 
   return (
     <div className="emvb-conditions" data-emvb-panel="conditions">
-      <h3 className="emvb-section-label">Display conditions</h3>
+      <h3 className="emvb-section-label">{t("Display conditions")}</h3>
       <p className="emvb-helper">
-        Include where this part should appear. Exclude overrides include for the same part.
+        {t("Include where this part should appear. Exclude overrides include for the same part.")}
       </p>
       {doc.rules.length === 0 && (
         <p className="emvb-helper" role="status">
-          No conditions yet — this part will not appear anywhere until you add an Include.
+          {t("No conditions yet — this part will not appear anywhere until you add an Include.")}
         </p>
       )}
       <ul className="emvb-condition-list">
@@ -152,11 +163,11 @@ export function ConditionsEditor({ conditions, onChange }: Props) {
           <li key={rule.id} className="emvb-condition-row" data-emvb-condition={rule.id}>
             <PanelSelect
               className="emvb-condition-op"
-              label="Include or exclude"
+              label={t("Include or exclude")}
               value={rule.op}
               options={[
-                { value: "include", label: "Include" },
-                { value: "exclude", label: "Exclude" },
+                { value: "include", label: t("Include") },
+                { value: "exclude", label: t("Exclude") },
               ]}
               onChange={(value) =>
                 update(rule.id, { op: value === "exclude" ? "exclude" : "include" })
@@ -164,13 +175,13 @@ export function ConditionsEditor({ conditions, onChange }: Props) {
             />
             <PanelSelect
               className="emvb-condition-where"
-              label="Where"
+              label={t("Where")}
               value={menuValue(rule)}
               options={[
                 ...(menuValue(rule) === CURRENT_RULE
-                  ? [{ value: CURRENT_RULE, label: conditionRuleLabel(rule) }]
+                  ? [{ value: CURRENT_RULE, label: conditionRuleLabel(rule, t) }]
                   : []),
-                ...GROUP_OPTIONS.map((option) => ({ value: option.value, label: option.label })),
+                ...GROUP_OPTIONS.map((option) => ({ value: option.value, label: t(option.label) })),
               ]}
               onChange={(value) => {
                 if (value === CURRENT_RULE) return;
@@ -183,7 +194,7 @@ export function ConditionsEditor({ conditions, onChange }: Props) {
               shape="square"
               // W-767: the 28 px icon button its grid column expects; the text-button size overflowed.
               className="emvb-icon-btn"
-              aria-label="Remove condition"
+              aria-label={t("Remove condition")}
               icon={<TrashIcon aria-hidden="true" />}
               onClick={() => remove(rule.id)}
             />
@@ -200,9 +211,9 @@ export function ConditionsEditor({ conditions, onChange }: Props) {
           disabled={full}
           title={full ? fullReason : undefined}
           onClick={() => add("include")}
-          aria-label="Add include rule"
+          aria-label={t("Add include rule")}
         >
-          Include
+          {t("Include")}
         </Button>
         <Button
           type="button"
@@ -212,9 +223,9 @@ export function ConditionsEditor({ conditions, onChange }: Props) {
           disabled={full}
           title={full ? fullReason : undefined}
           onClick={() => add("exclude")}
-          aria-label="Add exclude rule"
+          aria-label={t("Add exclude rule")}
         >
-          Exclude
+          {t("Exclude")}
         </Button>
       </div>
       {full && (

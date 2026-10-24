@@ -11684,9 +11684,7 @@ exports[`element panel markup (W-021, W-086 M16) an unknown element renders its 
   h2.emvb-panel-title
     "Unknown element"
   p.emvb-helper
-    "Unknown element ""
-    "mystery"
-    "". It can be moved or deleted, but not edited."
+    "Unknown element "mystery". It can be moved or deleted, but not edited."
   p.emvb-inline-error role="alert"
     svg aria-hidden="true"
     "Can't go there.""
@@ -11696,9 +11694,7 @@ exports[`element panel markup (W-021, W-086 M16) an unknown element renders its 
   h2.emvb-panel-title
     "Unknown element"
   p.emvb-helper
-    "Unknown element ""
-    "mystery"
-    "". It can be moved or deleted, but not edited."
+    "Unknown element "mystery". It can be moved or deleted, but not edited."
   p.emvb-inline-error role="alert"
     svg aria-hidden="true"
     "Can't go there.""

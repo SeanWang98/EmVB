@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖编辑器状态、操作接口与后台语言。
+ * [OUTPUT]: 提供随后台语言更新的面板控件。
+ * [POS]: 编辑器面板；只翻译界面，保留用户内容原值。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { useI18n, type Translate } from "../../i18n/index.ts";
 import { CaretDownIcon, CaretRightIcon, DotsThreeIcon } from "@phosphor-icons/react";
 import * as React from "react";
 import {
@@ -10,7 +17,7 @@ import {
   type Layout,
   type LayoutNode,
   nodeScript,
-  audienceSummary,
+  type Audience,
   SCRIPT_LABELS,
   type PageScript,
 } from "../../../core/index.ts";
@@ -55,6 +62,7 @@ type LayerActions = {
 };
 
 type MenuItem = {
+  id: string;
   label: string;
   run: (id: string) => void;
   className?: string;
@@ -68,11 +76,12 @@ const pasteHint = (clip: ClipboardActions | undefined) =>
 /** The ··· menu: clipboard items, then Duplicate and the moves; the root row gets what applies to it. */
 /** W-311: an element that makes the page load a script says so; everything else is zero-JS. */
 function JsBadge({ script }: { script: PageScript | undefined }) {
+  const t = useI18n();
   if (!script) return null;
   return (
     <span
       className="emvb-js-badge"
-      title={`Adds a script: ${SCRIPT_LABELS[script]}`}
+      title={t("Adds a script: {name}", { name: t(SCRIPT_LABELS[script]) })}
       aria-hidden="true"
     >
       JS
@@ -110,11 +119,31 @@ function menuItems(
       pasteStyleBlocked: clip?.pasteStyleBlocked,
     },
   }).map((command) => ({
+    id: command.id,
     label: command.label,
     run: () => command.run(),
     disabled: command.disabled,
     className: command.danger ? "emvb-danger-text" : undefined,
   }));
+}
+
+const clipped = (values: readonly string[], joiner: string) =>
+  values.slice(0, 3).join(joiner) + (values.length > 3 ? "…" : "");
+
+/** 只翻译规则说明；国家代码与用户分群名保持原值。 */
+function audienceLabel(audience: Audience, t: Translate): string {
+  const parts: string[] = [];
+  if (audience.countries) parts.push(clipped(audience.countries, ", "));
+  if (audience.devices) parts.push(audience.devices.map((device) => t(device)).join("/"));
+  if (audience.visitor) parts.push(t(audience.visitor === "new" ? "new visitors" : "returning"));
+  if (audience.segments) parts.push(clipped(audience.segments, "/"));
+  if (audience.hours) parts.push(`${audience.hours.from}:00–${audience.hours.to}:00`);
+  if (audience.days) {
+    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    parts.push(audience.days.map((day) => t(days[day] ?? "")).join(" "));
+  }
+  const who = parts.join(" · ") || t("everyone");
+  return t(audience.hide ? "Hidden for {who}" : "Only {who}", { who });
 }
 
 /** The row above or below `id` among the rows Layers shows, or `id` at either end. */
@@ -204,6 +233,7 @@ export function LayersPanel({
   layout: Layout | null;
   selectedId: string | null;
 } & LayerActions) {
+  const t = useI18n();
   const [collapsed, setCollapsed] = React.useState<Set<string>>(() => new Set());
   const [menuId, setMenuId] = React.useState<string | null>(null);
   const listRef = React.useRef<HTMLUListElement>(null);
@@ -278,7 +308,7 @@ export function LayersPanel({
     }
   }, [selectedId]);
 
-  if (!layout) return <p className="emvb-helper">This page is empty.</p>;
+  if (!layout) return <p className="emvb-helper">{t("This page is empty.")}</p>;
 
   const items = rows(layout.root, 0, collapsed);
 
@@ -288,7 +318,7 @@ export function LayersPanel({
         ref={listRef}
         className="emvb-layers"
         role="tree"
-        aria-label="Layers"
+        aria-label={t("Layers")}
         onKeyDown={(event) => {
           if (!selectedId) return;
           // W-258: keys on a row's ··· button or its menu belong to them (Enter opens the menu).
@@ -359,11 +389,12 @@ const LayerRow = React.memo(function LayerRow({
   /** The clipboard, passed only to the row whose menu is open so the other rows stay memoized. */
   clip: ClipboardActions | undefined;
 }) {
+  const t = useI18n();
   const onToggle = () => toggleRow(node.id);
   const onMenu = (open: boolean) => menuRow(node.id, open);
   const Icon = elementIcon(node.type);
   const preview = layerPreview(node);
-  const typeName = ELEMENT_NAMES[node.type] ?? node.type;
+  const typeName = t(ELEMENT_NAMES[node.type] ?? node.type);
   // A label names the row in place of the type (W-157); the type stays in the tooltip.
   const name = node.label ?? typeName;
   // Names and previews truncate, so the tooltip carries them in full (DESIGN.md, W-168).
@@ -465,7 +496,7 @@ const LayerRow = React.memo(function LayerRow({
             }}
             role="button"
             tabIndex={-1}
-            aria-label={collapsed ? "Expand" : "Collapse"}
+            aria-label={t(collapsed ? "Expand" : "Collapse")}
           >
             {collapsed ? (
               <CaretRightIcon size={12} aria-hidden="true" />
@@ -514,7 +545,7 @@ const LayerRow = React.memo(function LayerRow({
             {node.audience && (
               <span
                 className="emvb-js-badge emvb-ab-badge"
-                title={audienceSummary(node.audience)}
+                title={audienceLabel(node.audience, t)}
                 aria-hidden="true"
               >
                 ◎
@@ -523,7 +554,10 @@ const LayerRow = React.memo(function LayerRow({
             {node.variant && (
               <span
                 className="emvb-js-badge emvb-ab-badge"
-                title={`A/B test ${node.variant.test}, variant ${node.variant.arm.toUpperCase()}`}
+                title={t("A/B test {name}, variant {arm}", {
+                  name: node.variant.test,
+                  arm: node.variant.arm.toUpperCase(),
+                })}
                 aria-hidden="true"
               >
                 {node.variant.arm.toUpperCase()}
@@ -536,7 +570,7 @@ const LayerRow = React.memo(function LayerRow({
             <button
               type="button"
               className="emvb-layer-menu-btn"
-              aria-label={`Actions for ${name}`}
+              aria-label={t("Actions for {name}", { name })}
               aria-expanded={menuOpen}
               onClick={(event) => {
                 event.stopPropagation();
@@ -549,12 +583,10 @@ const LayerRow = React.memo(function LayerRow({
             {menuOpen && (
               <div ref={menuList} className="emvb-layer-menu-list" role="menu" onKeyDown={menuKeys}>
                 {menuItems(node, isRoot, actions, clip, startRename).map(
-                  ({ label, run, className, disabled }) => (
-                    <React.Fragment key={label}>
+                  ({ id, label, run, className, disabled }) => (
+                    <React.Fragment key={id}>
                       {/* UX-026: Delete sits apart from the other actions, as in Site styles. */}
-                      {label === "Delete" && (
-                        <hr className="emvb-layer-menu-sep" aria-hidden="true" />
-                      )}
+                      {id === "delete" && <hr className="emvb-layer-menu-sep" aria-hidden="true" />}
                       <button
                         type="button"
                         role="menuitem"
@@ -568,14 +600,14 @@ const LayerRow = React.memo(function LayerRow({
                           window.setTimeout(() => focusSelectedRow(tree), 0);
                         }}
                       >
-                        {label}
+                        {t(label)}
                       </button>
                     </React.Fragment>
                   ),
                 )}
                 {pasteHint(clip) && (
                   <p className="emvb-layer-menu-hint" data-emvb-paste-hint="">
-                    {pasteHint(clip)}
+                    {t(pasteHint(clip) ?? "")}
                   </p>
                 )}
               </div>
@@ -597,6 +629,7 @@ function RenameInput({
   placeholder: string;
   onDone: (text: string | null, byKey?: boolean) => void;
 }) {
+  const t = useI18n();
   const [text, setText] = React.useState(initial);
   const done = React.useRef(false);
   const finish = (value: string | null, byKey = false) => {
@@ -607,7 +640,7 @@ function RenameInput({
   return (
     <input
       className="emvb-layer-rename"
-      aria-label="Layer name"
+      aria-label={t("Layer name")}
       data-emvb-layer-rename=""
       value={text}
       placeholder={placeholder}

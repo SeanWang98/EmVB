@@ -1,3 +1,9 @@
+/**
+ * [INPUT]: 依赖iframe、选区状态、宿主样式与舞台尺寸。
+ * [OUTPUT]: 提供useCanvasSession、CanvasSelection 与 boxOf。
+ * [POS]: 画布文档会话层，同步选区及文本编辑几何。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
 import * as React from "react";
 import {
   findNode,

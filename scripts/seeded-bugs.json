@@ -198,7 +198,7 @@
       "env": {
         "CI": "1"
       },
-      "expect": "\u2718.*\\[node\\].*the EmVB plugin is loaded by the host"
+      "expect": "✘.*\\[node\\].*the EmVB plugin is loaded by the host"
     },
     {
       "id": "W-004/size-check-loosened",
@@ -572,7 +572,7 @@
         }
       ],
       "command": ["bun", "run", "e2e", "e2e/setup.e2e.ts", "--project=node"],
-      "expect": "\u2718.*\\[node\\].*read-only widget instead of a JSON input",
+      "expect": "✘.*\\[node\\].*read-only widget instead of a JSON input",
       "env": {
         "CI": "1"
       }
@@ -603,7 +603,7 @@
         }
       ],
       "command": ["bun", "run", "e2e", "e2e/access.e2e.ts", "--project=node"],
-      "expect": "\u2718.*\\[node\\].*author \\(30\\): no Visual pages link",
+      "expect": "✘.*\\[node\\].*author \\(30\\): no Visual pages link",
       "env": {
         "CI": "1"
       }
@@ -620,7 +620,7 @@
         }
       ],
       "command": ["bun", "run", "e2e", "e2e/access.e2e.ts", "--project=node"],
-      "expect": "\u2718.*\\[node\\].*editor \\(40\\): sees the link",
+      "expect": "✘.*\\[node\\].*editor \\(40\\): sees the link",
       "env": {
         "CI": "1"
       }
@@ -637,7 +637,7 @@
         }
       ],
       "command": ["bun", "run", "e2e", "e2e/access.e2e.ts", "--project=node"],
-      "expect": "\u2718.*\\[node\\].*subscriber \\(10\\): no Visual pages link",
+      "expect": "✘.*\\[node\\].*subscriber \\(10\\): no Visual pages link",
       "env": {
         "CI": "1"
       }
@@ -649,8 +649,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/server/plugin.ts",
-          "search": "        { path: \"/theme\", label: \"Theme Builder\", icon: \"layout\" },",
-          "replace": "        { path: \"/theme\", label: \"Theme Builder\", icon: \"layout\" },\n        { path: \"/editor\", label: \"Editor\" },"
+          "search": "        { path: \"/theme\", label: \"主题构建器 · Theme Builder\", icon: \"layout\" },",
+          "replace": "        { path: \"/theme\", label: \"主题构建器 · Theme Builder\", icon: \"layout\" },\n        { path: \"/editor\", label: \"Editor\" },"
         }
       ],
       "command": ["bun", "test", "./packages/emvb/test/server"],
@@ -696,7 +696,7 @@
         }
       ],
       "command": ["bun", "run", "e2e", "e2e/editor.e2e.ts", "--project=node"],
-      "expect": "\u2718.*\\[node\\].*a Kumo dialog opened from the editor stacks above it",
+      "expect": "✘.*\\[node\\].*a Kumo dialog opened from the editor stacks above it",
       "env": {
         "CI": "1"
       }
@@ -779,7 +779,7 @@
         }
       ],
       "command": ["bun", "run", "e2e", "e2e/editor.e2e.ts", "--project=node"],
-      "expect": "\u2718.*\\[node\\].*at 1280\u00d7720 the overlay covers the admin and the canvas fits a desktop page between the panels",
+      "expect": "✘.*\\[node\\].*at 1280×720 the overlay covers the admin and the canvas fits a desktop page between the panels",
       "env": {
         "CI": "1"
       }
@@ -796,7 +796,7 @@
         }
       ],
       "command": ["bun", "run", "e2e", "e2e/editor.e2e.ts", "--project=node"],
-      "expect": "\u2718.*\\[node\\].*below 1024 px the small-screen notice replaces the editor",
+      "expect": "✘.*\\[node\\].*below 1024 px the small-screen notice replaces the editor",
       "env": {
         "CI": "1"
       }
@@ -827,7 +827,7 @@
         }
       ],
       "command": ["bun", "run", "e2e", "e2e/editing.e2e.ts", "--project=node"],
-      "expect": "\u2718.*\\[node\\].*a concurrent edit from another browser shows the conflict dialog",
+      "expect": "✘.*\\[node\\].*a concurrent edit from another browser shows the conflict dialog",
       "env": {
         "CI": "1"
       }
@@ -844,7 +844,7 @@
         }
       ],
       "command": ["bun", "run", "e2e", "e2e/editing.e2e.ts", "--project=node"],
-      "expect": "\u2718.*\\[node\\].*a draft save leaves the published page alone",
+      "expect": "✘.*\\[node\\].*a draft save leaves the published page alone",
       "env": {
         "CI": "1"
       }
@@ -939,7 +939,7 @@
         "-g",
         "Restore toast"
       ],
-      "expect": "\u2718.*\\[node\\].*Delete shows a Restore toast above the editor",
+      "expect": "✘.*\\[node\\].*Delete shows a Restore toast above the editor",
       "env": {
         "CI": "1"
       }
@@ -956,7 +956,7 @@
         }
       ],
       "command": ["bun", "run", "e2e", "e2e/editing.e2e.ts", "--project=node"],
-      "expect": "\u2718.*\\[node\\].*a duplicate slug is refused inline",
+      "expect": "✘.*\\[node\\].*a duplicate slug is refused inline",
       "env": {
         "CI": "1"
       }
@@ -987,7 +987,7 @@
         }
       ],
       "command": ["bun", "run", "e2e:prod", "--project=node-public", "-g", "colour variable"],
-      "expect": "\u2718.*\\[node-public\\].*changing a colour variable changes the published page",
+      "expect": "✘.*\\[node-public\\].*changing a colour variable changes the published page",
       "env": {
         "CI": "1"
       }
@@ -1018,7 +1018,7 @@
         }
       ],
       "command": ["bun", "run", "e2e:prod", "--project=node-public", "-g", "adds no script"],
-      "expect": "\u2718.*\\[node-public\\].*adds no script",
+      "expect": "✘.*\\[node-public\\].*adds no script",
       "env": {
         "CI": "1"
       }
@@ -1035,7 +1035,7 @@
         }
       ],
       "command": ["bun", "run", "e2e:prod", "--project=node-public", "-g", "blank-canvas"],
-      "expect": "\u2718.*\\[node-public\\].*a blank-canvas page is a whole document",
+      "expect": "✘.*\\[node-public\\].*a blank-canvas page is a whole document",
       "env": {
         "CI": "1"
       }
@@ -1052,7 +1052,7 @@
         }
       ],
       "command": ["bun", "run", "e2e:prod", "--project=node-public", "-g", "are 404"],
-      "expect": "\u2718.*\\[node-public\\].*unpublished and missing pages are 404",
+      "expect": "✘.*\\[node-public\\].*unpublished and missing pages are 404",
       "env": {
         "CI": "1"
       }
@@ -1069,7 +1069,7 @@
         }
       ],
       "command": ["bun", "run", "e2e:prod", "--project=node-public", "-g", "preview link"],
-      "expect": "\u2718.*\\[node-public\\].*a preview link renders the draft",
+      "expect": "✘.*\\[node-public\\].*a preview link renders the draft",
       "env": {
         "CI": "1"
       }
@@ -1114,7 +1114,7 @@
         }
       ],
       "command": ["bun", "run", "e2e", "e2e/access.e2e.ts", "--project=node", "-g", "author"],
-      "expect": "\u2718.*\\[node\\].*author \\(30\\)",
+      "expect": "✘.*\\[node\\].*author \\(30\\)",
       "env": {
         "CI": "1"
       }
@@ -1232,7 +1232,7 @@
       "env": {
         "CI": "1"
       },
-      "expect": "\u2718.*\\[node\\].*dragging Heading onto the canvas inserts at the pointed index"
+      "expect": "✘.*\\[node\\].*dragging Heading onto the canvas inserts at the pointed index"
     },
     {
       "id": "W-015/e2e-drop-listener-removed",
@@ -1254,7 +1254,7 @@
       "env": {
         "CI": "1"
       },
-      "expect": "\u2718.*\\[node\\].*dragging Heading onto the canvas inserts at the pointed index"
+      "expect": "✘.*\\[node\\].*dragging Heading onto the canvas inserts at the pointed index"
     },
     {
       "id": "W-016/javascript-href-allowed",
@@ -1381,8 +1381,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/AddPanel.tsx",
-          "search": "      matchesSearch(query, d.name, d.group),",
-          "replace": "      true,"
+          "search": "      matchesSearch(\n        query,\n        d.type,\n        d.name,\n        d.group,\n        t(d.name),\n        t(GROUPS.find((group) => group.id === d.group)?.label ?? d.group),\n      )",
+          "replace": "      true"
         }
       ],
       "command": ["bun", "test", "./packages/emvb/src/admin/editor/panels/add-panel.test.tsx"],
@@ -1471,7 +1471,7 @@
     {
       "id": "W-020/alt-down-moves-up",
       "requirement": "R-003",
-      "description": "Alt+\u2193 calls moveUp instead of moveDown",
+      "description": "Alt+↓ calls moveUp instead of moveDown",
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/useEditorShortcuts.ts",
@@ -1516,7 +1516,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/useNodeActions.ts",
-          "search": "    const count = subtreeSize(layout, id);\n    if (count > 1) {\n      const node = findNode(layout, id);\n      setDeleteAsk({\n        id,\n        label: ELEMENT_NAMES[node?.type ?? \"container\"] ?? \"Element\",\n        count,\n      });\n      return;\n    }\n    finishDelete(id);",
+          "search": "    const count = subtreeSize(layout, id);\n    if (count > 1) {\n      const node = findNode(layout, id);\n      setDeleteAsk({\n        id,\n        nodeType: node?.type ?? \"container\",\n        ...(node?.label ? { userLabel: node.label } : {}),\n        count,\n      });\n      return;\n    }\n    finishDelete(id);",
           "replace": "    const count = subtreeSize(layout, id);\n    if (count > 1) {\n      /* seeded: skip dialog */\n    }\n    finishDelete(id);"
         }
       ],
@@ -2081,8 +2081,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/SiteStylesDrawer.tsx",
-          "search": "        tabs={[\n          { value: \"variables\", label: \"Variables\" },\n          { value: \"classes\", label: \"Classes\" },\n          { value: \"defaults\", label: \"Defaults\" },\n        ]}\n",
-          "replace": "        tabs={[\n          { value: \"classes\", label: \"Classes\" },\n          { value: \"defaults\", label: \"Defaults\" },\n        ]}\n"
+          "search": "        tabs={[\n          { value: \"variables\", label: t(\"Variables\") },\n          { value: \"classes\", label: t(\"Classes\") },\n          { value: \"defaults\", label: t(\"Defaults\") },\n        ]}\n",
+          "replace": "        tabs={[\n          { value: \"classes\", label: t(\"Classes\") },\n          { value: \"defaults\", label: t(\"Defaults\") },\n        ]}\n"
         }
       ],
       "command": [
@@ -2414,7 +2414,7 @@
         }
       ],
       "command": ["bun", "run", "e2e", "e2e/overlay.e2e.ts", "--project=node", "-g", "below 1024"],
-      "expect": "\\(fail\\)|\u2718"
+      "expect": "\\(fail\\)|✘"
     },
     {
       "id": "W-044/pack-missing-astro-source",
@@ -2755,8 +2755,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/AddPanel.tsx",
-          "search": "  const matched = ELEMENT_DESCRIPTORS.filter(\n    (d) =>\n      d.type !== \"tab-panel\" &&\n      (formsAvailable || d.group !== \"form\") &&\n      matchesSearch(query, d.name, d.group),\n  );",
-          "replace": "  const matched = ELEMENT_DESCRIPTORS.filter(\n    (d) =>\n      d.type !== \"tab-panel\" &&\n      d.type !== \"flexbox\" && // seeded: hide flexbox\n      (formsAvailable || d.group !== \"form\") &&\n      matchesSearch(query, d.name, d.group),\n  );"
+          "search": "      d.type !== \"tab-panel\" &&",
+          "replace": "      d.type !== \"tab-panel\" &&\n      d.type !== \"flexbox\" && // seeded: hide flexbox"
         }
       ],
       "command": [
@@ -2777,7 +2777,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/pages/ThemePartList.tsx",
-          "search": "<NewButton label=\"New theme part\"",
+          "search": "<NewButton label={t(\"New theme part\")}",
           "replace": "<NewButton label=\"New site chrome\""
         }
       ],
@@ -2887,7 +2887,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/useNodeActions.ts",
-          "search": "    if (!result.ok) {\n      announce(result.reason);\n      return;\n    }",
+          "search": "    if (!result.ok) {\n      announce(translate(result.reason));\n      return;\n    }",
           "replace": "    if (!result.ok) {\n      return;\n    }"
         }
       ],
@@ -2953,7 +2953,7 @@
     {
       "id": "W-086/post-title-level-unclamped",
       "requirement": "R-011",
-      "description": "a post title level outside 1\u20136 is not clamped",
+      "description": "a post title level outside 1–6 is not clamped",
       "edits": [
         {
           "file": "packages/emvb/src/core/render/dynamic-post.ts",
@@ -2981,7 +2981,7 @@
     {
       "id": "W-086/layers-left-skips-collapse",
       "requirement": "R-003",
-      "description": "\u2190 in Layers leaves an open container instead of collapsing it",
+      "description": "← in Layers leaves an open container instead of collapsing it",
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/LayersPanel.tsx",
@@ -3055,7 +3055,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/theme-api.ts",
-          "search": "  if (args?.[\"slug\"]) return `${names?.one ?? slug}: ${String(args[\"slug\"])}`;\n",
+          "search": "  if (args?.[\"slug\"])\n    return t(\"{taxonomy}: {slug}\", {\n      taxonomy: names ? t(names.one) : slug,\n      slug: String(args[\"slug\"]),\n    });\n",
           "replace": ""
         }
       ],
@@ -3129,8 +3129,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/useSave.ts",
-          "search": "|| error.status >= 500) return { status: offline };",
-          "replace": "|| error.status >= 600) return { status: offline };"
+          "search": "|| error.status >= 500) return { status: offline() };",
+          "replace": "|| error.status >= 600) return { status: offline() };"
         }
       ],
       "command": ["bun", "test", "./packages/emvb/src/admin/editor/save-failure.test.ts"],
@@ -3143,8 +3143,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/useSave.ts",
-          "search": "return { status: fixAndSave, rejection: error.message, select: id };",
-          "replace": "return { status: fixAndSave, rejection: error.message };"
+          "search": "return { status: fixAndSave(), rejection: literalMessage(error.message), select: id };",
+          "replace": "return { status: fixAndSave(), rejection: literalMessage(error.message) };"
         }
       ],
       "command": ["bun", "test", "./packages/emvb/src/admin/editor/save-failure.test.ts"],
@@ -3227,8 +3227,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/pages/CreateDialog.tsx",
-          "search": "return { field: \"slug\", message: slugTakenMessage(slug) };",
-          "replace": "return { field: \"form\", message: slugTakenMessage(slug) };"
+          "search": "return { field: \"slug\", reason: \"conflict\", slug };",
+          "replace": "return { field: \"form\", reason: \"api\", code: failure.code, message: failure.message };"
         }
       ],
       "command": ["bun", "test", "./packages/emvb/src/admin/pages/create-dialogs.test.tsx"],
@@ -3283,7 +3283,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/pages/list-kit.tsx",
-          "search": "{statusLabel(status)}",
+          "search": "{t(statusLabel(status))}",
           "replace": "{\"Draft\"}"
         }
       ],
@@ -3729,7 +3729,7 @@
     {
       "id": "W-086/move-in-any-sibling",
       "requirement": "R-003",
-      "description": "Alt+\u2192 moves into a sibling above that holds no children (re-anchored for W-211)",
+      "description": "Alt+→ moves into a sibling above that holds no children (re-anchored for W-211)",
       "edits": [
         {
           "file": "packages/emvb/src/core/arrange.ts",
@@ -3802,7 +3802,7 @@
         }
       ],
       "command": ["bun", "run", "e2e", "e2e/security.e2e.ts", "--project=node"],
-      "expect": "\u2718.*\\[node\\].*XSS corpus strings stay inert"
+      "expect": "✘.*\\[node\\].*XSS corpus strings stay inert"
     },
     {
       "id": "W-086/bench-times-unsorted",
@@ -3942,7 +3942,7 @@
         }
       ],
       "command": ["bun", "run", "e2e", "e2e/keyboard.e2e.ts", "--project=node"],
-      "expect": "\u2718.*\\[node\\].*keyboard move, duplicate and delete"
+      "expect": "✘.*\\[node\\].*keyboard move, duplicate and delete"
     },
     {
       "id": "W-086/e2e-submission-wrong-field",
@@ -3956,7 +3956,7 @@
         }
       ],
       "command": ["bun", "run", "e2e", "e2e/forms.e2e.ts", "--project=node"],
-      "expect": "\u2718.*\\[node\\].*integration POST submit succeeds"
+      "expect": "✘.*\\[node\\].*integration POST submit succeeds"
     },
     {
       "id": "W-086/e2e-published-html-unpublished",
@@ -3977,7 +3977,7 @@
         "-g",
         "published page renders"
       ],
-      "expect": "\u2718.*\\[node-public\\].*a published page renders from the production build"
+      "expect": "✘.*\\[node-public\\].*a published page renders from the production build"
     },
     {
       "id": "W-086/qa3-forms-missing-plugin-counts-as-present",
@@ -4098,7 +4098,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/settings/FormBindControl.tsx",
-          "search": "          renderValue={(current: unknown) => {\n            const form = capability.forms.find((item) => item.id === current);\n            return form ? formLabel(form) : placeholder;\n          }}\n",
+          "search": "          renderValue={(current: unknown) => {\n            const form = capability.forms.find((item) => item.id === current);\n            return form ? formLabel(form, t) : placeholder;\n          }}\n",
           "replace": ""
         }
       ],
@@ -4116,8 +4116,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/settings/FieldBindControl.tsx",
-          "search": "            return field ? fieldLabel(field) : CHOOSE;",
-          "replace": "            return field ? fieldLabel(field) : String(current);"
+          "search": "return field ? fieldLabel(field) : t(CHOOSE);",
+          "replace": "return field ? fieldLabel(field) : String(current);"
         }
       ],
       "command": [
@@ -4125,16 +4125,16 @@
         "test",
         "./packages/emvb/src/admin/editor/panels/settings/form-bind.test.tsx"
       ],
-      "expect": "\\(fail\\).*field \"\" reads \"Choose a field\u2026\""
+      "expect": "\\(fail\\).*field \"\" reads \"Choose a field…\""
     },
     {
       "id": "W-086/qa7-class-picker-shows-sentinel",
       "requirement": "R-021",
-      "description": "the Add class input loses its \"Add class\u2026\" prompt (was the Add class select showing its internal placeholder value; the chip input replaced the select in W-087)",
+      "description": "the Add class input loses its \"Add class…\" prompt (was the Add class select showing its internal placeholder value; the chip input replaced the select in W-087)",
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/settings/ClassChipInput.tsx",
-          "search": "placeholder={full ? \"\" : \"Add class\u2026\"}",
+          "search": "placeholder={full ? \"\" : t(\"Add class…\")}",
           "replace": "placeholder=\"\""
         }
       ],
@@ -4193,7 +4193,7 @@
         "-g",
         "tab label shows its panel"
       ],
-      "expect": "\u2718.*\\[node\\].*on the canvas a tab label shows its panel"
+      "expect": "✘.*\\[node\\].*on the canvas a tab label shows its panel"
     },
     {
       "id": "W-086/qa5-canvas-tab-label-selects-tabs",
@@ -4215,7 +4215,7 @@
         "-g",
         "tab label shows its panel"
       ],
-      "expect": "\u2718.*\\[node\\].*on the canvas a tab label shows its panel"
+      "expect": "✘.*\\[node\\].*on the canvas a tab label shows its panel"
     },
     {
       "id": "W-086/qa6-canvas-svg-tags-lowercase",
@@ -4312,12 +4312,12 @@
     {
       "id": "W-087/chip-x-does-nothing",
       "requirement": "R-021",
-      "description": "the chip \u00d7 doesn't remove the class",
+      "description": "the chip × doesn't remove the class",
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/settings/ClassChip.tsx",
-          "search": "        aria-label={`Remove ${name}`}\n        onClick={props.onRemove}",
-          "replace": "        aria-label={`Remove ${name}`}"
+          "search": "        aria-label={t(\"Remove {name}\", { name })}\n        onClick={props.onRemove}",
+          "replace": "        aria-label={t(\"Remove {name}\", { name })}"
         }
       ],
       "command": [
@@ -4325,7 +4325,7 @@
         "test",
         "./packages/emvb/src/admin/editor/panels/settings/class-chip-input.test.tsx"
       ],
-      "expect": "\\(fail\\).*\u00d7 removes a class"
+      "expect": "\\(fail\\).*× removes a class"
     },
     {
       "id": "W-087/suggests-applied",
@@ -4424,8 +4424,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/settings/ClassChipInput.tsx",
-          "search": "\"Couldn't create the class. Try again.\");\n      return;\n",
-          "replace": "\"Couldn't create the class. Try again.\");\n"
+          "search": "      setError(errorMessage(err, \"Couldn't create the class. Try again.\"));\n      return;\n",
+          "replace": "      setError(errorMessage(err, \"Couldn't create the class. Try again.\"));\n"
         }
       ],
       "command": [
@@ -4718,8 +4718,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/settings/ClassChipInput.tsx",
-          "search": "              title=\"Local styles: this element only\"\n              onClick={() => onEdit(null)}",
-          "replace": "              title=\"Local styles: this element only\""
+          "search": "              title={t(\"Local styles: this element only\")}\n              onClick={() => onEdit(null)}",
+          "replace": "              title={t(\"Local styles: this element only\")}"
         }
       ],
       "command": [
@@ -4790,7 +4790,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/ElementPanel.tsx",
-          "search": "      setDesignError(\n        error instanceof Error ? error.message : \"Couldn't save the class. Try again.\",\n      ),",
+          "search": "      setDesignError(errorMessage(error, \"Couldn't save the class. Try again.\")),",
           "replace": "      void error,"
         }
       ],
@@ -4826,8 +4826,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/settings/ClassChip.tsx",
-          "search": "            Remove from element\n",
-          "replace": "            Remove\n"
+          "search": "            {t(\"Remove from element\")}\n",
+          "replace": "            {t(\"Remove\")}\n"
         }
       ],
       "command": [
@@ -5073,7 +5073,7 @@
         "-g",
         "adds a class by typing and autocomplete"
       ],
-      "expect": "\u2718.*\\[node\\].*adds a class by typing and autocomplete"
+      "expect": "✘.*\\[node\\].*adds a class by typing and autocomplete"
     },
     {
       "id": "W-087/e2e-create-not-applied",
@@ -5095,7 +5095,7 @@
         "-g",
         "creates a new class inline with Enter"
       ],
-      "expect": "\u2718.*\\[node\\].*creates a new class inline with Enter"
+      "expect": "✘.*\\[node\\].*creates a new class inline with Enter"
     },
     {
       "id": "W-087/e2e-chip-backspace-deletes-element",
@@ -5122,7 +5122,7 @@
         "-g",
         "works from the keyboard"
       ],
-      "expect": "\u2718.*\\[node\\].*works from the keyboard"
+      "expect": "✘.*\\[node\\].*works from the keyboard"
     },
     {
       "id": "W-087/mgr-rename-escape-saves",
@@ -5251,8 +5251,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/ClassesSection.tsx",
-          "search": "count === 1 ? \"element\" : \"elements\"",
-          "replace": "\"elements\""
+          "search": "count === 1\n                      ? \"Used by {count} element on this {noun}\"\n                      : \"Used by {count} elements on this {noun}\"",
+          "replace": "\"Used by {count} elements on this {noun}\""
         }
       ],
       "command": [
@@ -5351,8 +5351,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/ClassesSection.tsx",
-          "search": "label: open ? \"Hide styles\" : \"Edit styles\",",
-          "replace": "label: \"Edit styles\","
+          "search": "label: t(open ? \"Hide styles\" : \"Edit styles\"),",
+          "replace": "label: t(\"Edit styles\"),"
         }
       ],
       "command": [
@@ -5651,8 +5651,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/VariableSection.tsx",
-          "search": "                    inClasses ? ` and in",
-          "replace": "                    false ? ` and in"
+          "search": "(inClasses\n                      ? t(inClasses === 1 ? \" and in {count} class\" : \" and in {count} classes\", {",
+          "replace": "(false\n                      ? t(inClasses === 1 ? \" and in {count} class\" : \" and in {count} classes\", {"
         }
       ],
       "command": [
@@ -6011,8 +6011,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/TriggersEditor.tsx",
-          "search": "label={index === 0 ? \"Open when\" : \"Or when\"}",
-          "replace": "label={index === 0 ? \"Open when\" : undefined}"
+          "search": "label={t(index === 0 ? \"Open when\" : \"Or when\")}",
+          "replace": "label={index === 0 ? t(\"Open when\") : undefined}"
         }
       ],
       "command": [
@@ -7090,7 +7090,7 @@
       "description": "a position from a class doesn't show the offsets",
       "edits": [
         {
-          "file": "packages/emvb/src/admin/editor/panels/ElementPanel.tsx",
+          "file": "packages/emvb/src/admin/editor/panels/element-panel-model.ts",
           "search": "resolveCascade(classStylesInListOrder(design.classes, node.classes ?? []), node.style)",
           "replace": "resolveCascade([], node.style)"
         }
@@ -7110,7 +7110,7 @@
       "description": "editing a class looks at the element's position",
       "edits": [
         {
-          "file": "packages/emvb/src/admin/editor/panels/ElementPanel.tsx",
+          "file": "packages/emvb/src/admin/editor/panels/element-panel-model.ts",
           "search": "  cls\n    ? cls.style?.position\n",
           "replace": "  cls\n    ? node.style?.position\n"
         }
@@ -7751,8 +7751,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/settings/NumberRow.tsx",
-          "search": "      label={spec.suffix ? `${label} (${spec.suffix})` : label}",
-          "replace": "      label={label}"
+          "search": "label={spec.suffix ? `${shownLabel} (${spec.suffix})` : shownLabel}",
+          "replace": "label={shownLabel}"
         }
       ],
       "command": [
@@ -7770,7 +7770,7 @@
       "description": "the Effects count counts each filter",
       "edits": [
         {
-          "file": "packages/emvb/src/admin/editor/panels/ElementPanel.tsx",
+          "file": "packages/emvb/src/admin/editor/panels/element-panel-model.ts",
           "search": "  keysFor(type, section, style).filter((key) => style?.[key] !== undefined).length;",
           "replace": "  keysFor(type, section, style).reduce((n, key) => n + (key === \"filter\" ? Object.keys(style?.filter ?? {}).length : style?.[key] !== undefined ? 1 : 0), 0);"
         }
@@ -7824,7 +7824,7 @@
         "-g",
         "Size section sets width"
       ],
-      "expect": "\u2718.*\\[node\\].*Size section sets width"
+      "expect": "✘.*\\[node\\].*Size section sets width"
     },
     {
       "id": "W-088/e2e-overflow-not-emitted",
@@ -7846,7 +7846,7 @@
         "-g",
         "Size section sets width"
       ],
-      "expect": "\u2718.*\\[node\\].*Size section sets width"
+      "expect": "✘.*\\[node\\].*Size section sets width"
     },
     {
       "id": "W-088/e2e-offsets-never-shown",
@@ -7868,7 +7868,7 @@
         "-g",
         "Position section shows offsets"
       ],
-      "expect": "\u2718.*\\[node\\].*Position section shows offsets"
+      "expect": "✘.*\\[node\\].*Position section shows offsets"
     },
     {
       "id": "W-088/e2e-negative-offset-refused",
@@ -7890,7 +7890,7 @@
         "-g",
         "Position section shows offsets"
       ],
-      "expect": "\u2718.*\\[node\\].*Position section shows offsets"
+      "expect": "✘.*\\[node\\].*Position section shows offsets"
     },
     {
       "id": "W-088/e2e-inset-ignored",
@@ -7912,12 +7912,12 @@
         "-g",
         "Effects section edits a class"
       ],
-      "expect": "\u2718.*\\[node\\].*Effects section edits a class"
+      "expect": "✘.*\\[node\\].*Effects section edits a class"
     },
     {
       "id": "D-031/layout-v1-step-missing",
       "requirement": "D-031",
-      "description": "no v1 \u2192 v2 layout step, so every stored v1 page is refused",
+      "description": "no v1 → v2 layout step, so every stored v1 page is refused",
       "edits": [
         {
           "file": "packages/emvb/src/core/migrate/index.ts",
@@ -7937,7 +7937,7 @@
     {
       "id": "D-031/design-v1-step-missing",
       "requirement": "D-031",
-      "description": "no v1 \u2192 v2 design step, so the stored design is refused",
+      "description": "no v1 → v2 design step, so the stored design is refused",
       "edits": [
         {
           "file": "packages/emvb/src/core/migrate/index.ts",
@@ -8141,7 +8141,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/SiteStylesDrawer.tsx",
-          "search": "    classUses > 0 ? plural(classUses, \"class\", \"classes\") : \"\",",
+          "search": "    classUses > 0 ? plural(t, classUses, \"class\", \"classes\") : \"\",",
           "replace": "    \"\","
         }
       ],
@@ -8237,7 +8237,7 @@
     {
       "id": "D-032/layout-v2-step-missing",
       "requirement": "D-032",
-      "description": "no v2 \u2192 v3 layout step, so every stored v2 page is refused",
+      "description": "no v2 → v3 layout step, so every stored v2 page is refused",
       "edits": [
         {
           "file": "packages/emvb/src/core/migrate/index.ts",
@@ -8257,7 +8257,7 @@
     {
       "id": "D-032/design-v2-step-missing",
       "requirement": "D-032",
-      "description": "no v2 \u2192 v3 design step, so the stored design is refused",
+      "description": "no v2 → v3 design step, so the stored design is refused",
       "edits": [
         {
           "file": "packages/emvb/src/core/migrate/index.ts",
@@ -9001,7 +9001,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/settings/StateSwitcher.tsx",
-          "search": "setAttribute(\"aria-label\", \"Style state\")",
+          "search": "setAttribute(\"aria-label\", t(\"Style state\"))",
           "replace": "setAttribute(\"aria-label\", \"\")"
         }
       ],
@@ -9145,7 +9145,7 @@
       "description": "Size has no jump warning in a state",
       "edits": [
         {
-          "file": "packages/emvb/src/admin/editor/panels/ElementPanel.tsx",
+          "file": "packages/emvb/src/admin/editor/panels/element-panel-model.ts",
           "search": "const JUMPY = new Set<StyleSectionId>([\"layout\", \"size\", \"position\"]);",
           "replace": "const JUMPY = new Set<StyleSectionId>([\"layout\", \"position\"]);"
         }
@@ -9186,8 +9186,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/settings/StateSwitcher.tsx",
-          "search": "            ? `Editing ${label} for class \"${className}\"`",
-          "replace": "            ? `Editing ${label} for this element`"
+          "search": "? t('Editing {state} for class \"{name}\"', { state: label, name: className })",
+          "replace": "? t(\"Editing {state} for this element\", { state: label })"
         }
       ],
       "command": [
@@ -9459,7 +9459,7 @@
         "-g",
         "state switcher edits Hover"
       ],
-      "expect": "\u2718.*\\[node\\].*state switcher edits Hover"
+      "expect": "✘.*\\[node\\].*state switcher edits Hover"
     },
     {
       "id": "W-089/e2e-preview-css-missing",
@@ -9481,7 +9481,7 @@
         "-g",
         "state switcher edits Hover"
       ],
-      "expect": "\u2718.*\\[node\\].*state switcher edits Hover"
+      "expect": "✘.*\\[node\\].*state switcher edits Hover"
     },
     {
       "id": "W-089/e2e-state-never-reported",
@@ -9503,7 +9503,7 @@
         "-g",
         "state switcher edits Hover"
       ],
-      "expect": "\u2718.*\\[node\\].*state switcher edits Hover"
+      "expect": "✘.*\\[node\\].*state switcher edits Hover"
     },
     {
       "id": "W-089/e2e-focus-is-plain-focus",
@@ -9525,7 +9525,7 @@
         "-g",
         "published page applies real"
       ],
-      "expect": "\u2718.*\\[node\\].*published page applies real"
+      "expect": "✘.*\\[node\\].*published page applies real"
     },
     {
       "id": "W-089/e2e-reduced-motion-kept",
@@ -9547,7 +9547,7 @@
         "-g",
         "published page applies real"
       ],
-      "expect": "\u2718.*\\[node\\].*published page applies real"
+      "expect": "✘.*\\[node\\].*published page applies real"
     },
     {
       "id": "W-089/e2e-states-reversed",
@@ -9569,7 +9569,7 @@
         "-g",
         "published page applies real"
       ],
-      "expect": "\u2718.*\\[node\\].*published page applies real"
+      "expect": "✘.*\\[node\\].*published page applies real"
     },
     {
       "id": "W-089/e2e-class-states-dropped",
@@ -9591,7 +9591,7 @@
         "-g",
         "published page applies real"
       ],
-      "expect": "\u2718.*\\[node\\].*published page applies real"
+      "expect": "✘.*\\[node\\].*published page applies real"
     },
     {
       "id": "W-089/e2e-colors-means-all",
@@ -9613,7 +9613,7 @@
         "-g",
         "published page applies real"
       ],
-      "expect": "\u2718.*\\[node\\].*published page applies real"
+      "expect": "✘.*\\[node\\].*published page applies real"
     },
     {
       "id": "W-089/e2e-prod-preview-leaks",
@@ -9634,7 +9634,7 @@
         "-g",
         "hover, focus and active states"
       ],
-      "expect": "\u2718.*\\[node-public\\].*hover, focus and active states",
+      "expect": "✘.*\\[node-public\\].*hover, focus and active states",
       "env": {
         "CI": "1"
       }
@@ -9686,7 +9686,7 @@
       "edits": [
         {
           "file": "test/setup/happydom.ts",
-          "search": "return text.length > MAX_PRINT ? `${text.slice(0, MAX_PRINT)}\u2026` : text;",
+          "search": "return text.length > MAX_PRINT ? `${text.slice(0, MAX_PRINT)}…` : text;",
           "replace": "return text;"
         }
       ],
@@ -9886,8 +9886,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/access/RequireEditor.tsx",
-          "search": "description=\"Visual pages are managed by editors and administrators. Ask an administrator if you need access.\"\n        />",
-          "replace": "description=\"Visual pages are managed by editors and administrators. Ask an administrator if you need access.\"\n        />\n        {children(status.role)}"
+          "search": "description={t(\n            \"Visual pages are managed by editors and administrators. Ask an administrator if you need access.\",\n          )}\n        />",
+          "replace": "description={t(\n            \"Visual pages are managed by editors and administrators. Ask an administrator if you need access.\",\n          )}\n        />\n        {children(status.role)}"
         }
       ],
       "command": [
@@ -10001,8 +10001,8 @@
         },
         {
           "file": "packages/emvb/src/admin/editor/panels/AddPanel.tsx",
-          "search": "      matchesSearch(query, d.name, d.group),\n  );",
-          "replace": "      matchesSearch(query, d.name, d.group),\n  );\n  const pinned = ELEMENT_DESCRIPTORS.filter((d) => d.type === \"container\");\n  const matched = found.length > 0 ? [...new Set([...pinned, ...found])] : found;"
+          "search": "      matchesSearch(\n        query,\n        d.type,\n        d.name,\n        d.group,\n        t(d.name),\n        t(GROUPS.find((group) => group.id === d.group)?.label ?? d.group),\n      ),\n  );",
+          "replace": "      matchesSearch(\n        query,\n        d.type,\n        d.name,\n        d.group,\n        t(d.name),\n        t(GROUPS.find((group) => group.id === d.group)?.label ?? d.group),\n      ),\n  );\n  const pinned = ELEMENT_DESCRIPTORS.filter((d) => d.type === \"container\");\n  const matched = found.length > 0 ? [...new Set([...pinned, ...found])] : found;"
         }
       ],
       "command": [
@@ -10021,8 +10021,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/Editor.tsx",
-          "search": "        <ListError\n          title={`Couldn't open this ${noun}`}\n          message={data.message}\n          onRetry={data.retry}\n        />\n",
-          "replace": "        <ListError\n          title={`Couldn't open this ${noun}`}\n          message={data.message}\n          onRetry={data.retry}\n        />\n        <iframe title=\"canvas\" />\n"
+          "search": "        <ListError\n          title={t(\"Couldn't open this {noun}\", { noun: t(noun) })}\n          message={formatMessage(data.message, t)}\n          onRetry={data.retry}\n        />\n",
+          "replace": "        <ListError\n          title={t(\"Couldn't open this {noun}\", { noun: t(noun) })}\n          message={formatMessage(data.message, t)}\n          onRetry={data.retry}\n        />\n        <iframe title=\"canvas\" />\n"
         }
       ],
       "command": [
@@ -10741,7 +10741,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/useEditorData.ts",
-          "search": "if (!result.ok) throw new Error(UNREADABLE);",
+          "search": "if (!result.ok) throw new LocalizedMessageError(UNREADABLE);",
           "replace": "if (!result.ok) return null;"
         }
       ],
@@ -11384,7 +11384,7 @@
         "-g",
         "upload stores media id"
       ],
-      "expect": "\u2718.*\\[node\\].*upload stores media id"
+      "expect": "✘.*\\[node\\].*upload stores media id"
     },
     {
       "id": "W-091/e2e-media-pick-wrong-id",
@@ -11406,7 +11406,7 @@
         "-g",
         "library picker reapplies"
       ],
-      "expect": "\u2718.*\\[node\\].*library picker reapplies"
+      "expect": "✘.*\\[node\\].*library picker reapplies"
     },
     {
       "id": "W-091/e2e-a11y-image-alt-dropped",
@@ -11428,7 +11428,7 @@
         "-g",
         "no serious axe violations"
       ],
-      "expect": "\u2718.*\\[node\\].*no serious axe violations"
+      "expect": "✘.*\\[node\\].*no serious axe violations"
     },
     {
       "id": "W-091/e2e-parity-justify-lost",
@@ -11450,7 +11450,7 @@
         "-g",
         "nested 3-deep flex styles match"
       ],
-      "expect": "\u2718.*\\[node\\].*nested 3-deep flex styles match"
+      "expect": "✘.*\\[node\\].*nested 3-deep flex styles match"
     },
     {
       "id": "W-091/e2e-success-editor-ids-public",
@@ -11472,7 +11472,7 @@
         "-g",
         "BRIEF success signal"
       ],
-      "expect": "\u2718.*\\[node\\].*BRIEF success signal"
+      "expect": "✘.*\\[node\\].*BRIEF success signal"
     },
     {
       "id": "W-091/resolve-param-ignored",
@@ -12219,11 +12219,11 @@
     {
       "id": "W-091/ui-tb-saving",
       "requirement": "R-006",
-      "description": "the save status never says Saving\u2026",
+      "description": "the save status never says Saving…",
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/TopBar.tsx",
-          "search": "content = \"Saving\u2026\";",
+          "search": "content = t(\"Saving…\");",
           "replace": "content = \"\";"
         }
       ],
@@ -12265,7 +12265,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/TopBar.tsx",
-          "search": "else if (dirty) content = \"Unsaved changes\";",
+          "search": "else if (dirty) content = t(\"Unsaved changes\");",
           "replace": ""
         }
       ],
@@ -12279,7 +12279,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/TopBar.tsx",
-          "search": "{page.title || \"Untitled page\"}",
+          "search": "{page.title || t(\"Untitled page\")}",
           "replace": "{page.title}"
         }
       ],
@@ -12623,7 +12623,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/ColorControl.tsx",
-          "search": "      await onCommit(hex);\n      setPhase(\"saved\");\n    } catch (failure) {\n      setError(errorText(failure));",
+          "search": "      await onCommit(hex);\n      setPhase(\"saved\");\n    } catch (failure) {\n      setError(errorMessage(failure, \"Couldn't save site styles. Try again.\"));",
           "replace": "      await onCommit(hex);\n      setPhase(\"saved\");\n    } catch {\n      setError(null);"
         }
       ],
@@ -12698,7 +12698,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/ColorControl.tsx",
-          "search": "      setError(errorText(failure));\n    } finally {",
+          "search": "      setError(errorMessage(failure, \"Couldn't save site styles. Try again.\"));\n    } finally {",
           "replace": "      setError(null);\n    } finally {"
         }
       ],
@@ -12753,7 +12753,7 @@
         "-g",
         "past the size limit"
       ],
-      "expect": "\u2718.*\\[node\\].*past the size limit"
+      "expect": "✘.*\\[node\\].*past the size limit"
     },
     {
       "id": "W-091/e2e-seo-title-not-saved",
@@ -12775,7 +12775,7 @@
         "-g",
         "SEO section closed until opened"
       ],
-      "expect": "\u2718.*\\[node\\].*SEO section closed until opened"
+      "expect": "✘.*\\[node\\].*SEO section closed until opened"
     },
     {
       "id": "W-091/e2e-site-styles-opens-classes",
@@ -12797,7 +12797,7 @@
         "-g",
         "Site styles opens the Variables drawer"
       ],
-      "expect": "\u2718.*\\[node\\].*Site styles opens the Variables drawer"
+      "expect": "✘.*\\[node\\].*Site styles opens the Variables drawer"
     },
     {
       "id": "W-091/e2e-variable-edit-keeps-old",
@@ -12819,7 +12819,7 @@
         "-g",
         "colour variable can be created, bound and edited"
       ],
-      "expect": "\u2718.*\\[node\\].*colour variable can be created, bound and edited"
+      "expect": "✘.*\\[node\\].*colour variable can be created, bound and edited"
     },
     {
       "id": "W-091/e2e-ctrlk-not-blocked",
@@ -12841,7 +12841,7 @@
         "-g",
         "Ctrl\\+K opens EmVB's palette, never the host's"
       ],
-      "expect": "\u2718.*\\[node\\].*Ctrl\\+K opens EmVB's palette, never the host's"
+      "expect": "✘.*\\[node\\].*Ctrl\\+K opens EmVB's palette, never the host's"
     },
     {
       "id": "W-091/e2e-overlay-above-host-dialogs",
@@ -12863,7 +12863,7 @@
         "-g",
         "block turned off, the host palette stacks above"
       ],
-      "expect": "\u2718.*\\[node\\].*block turned off, the host palette stacks above"
+      "expect": "✘.*\\[node\\].*block turned off, the host palette stacks above"
     },
     {
       "id": "W-091/e2e-unknown-entry-error",
@@ -12885,7 +12885,7 @@
         "-g",
         "unknown entry shows Page not found"
       ],
-      "expect": "\u2718.*\\[node\\].*unknown entry shows Page not found"
+      "expect": "✘.*\\[node\\].*unknown entry shows Page not found"
     },
     {
       "id": "W-091/e2e-setup-upgrade-skips-update",
@@ -12907,7 +12907,7 @@
         "-g",
         "upgrading an altered schema converges"
       ],
-      "expect": "\u2718.*\\[node\\].*upgrading an altered schema converges"
+      "expect": "✘.*\\[node\\].*upgrading an altered schema converges"
     },
     {
       "id": "W-091/e2e-setup-collection-visible",
@@ -12929,7 +12929,7 @@
         "-g",
         "hidden collection has no sidebar link"
       ],
-      "expect": "\u2718.*\\[node\\].*hidden collection has no sidebar link"
+      "expect": "✘.*\\[node\\].*hidden collection has no sidebar link"
     },
     {
       "id": "W-091/e2e-save-summary-no-path",
@@ -12951,7 +12951,7 @@
         "-g",
         "saves are validated over HTTP"
       ],
-      "expect": "\u2718.*\\[node\\].*saves are validated over HTTP"
+      "expect": "✘.*\\[node\\].*saves are validated over HTTP"
     },
     {
       "id": "W-091/e2e-chip-backspace-noop",
@@ -12973,7 +12973,7 @@
         "-g",
         "removes chips with the x, the menu and Backspace"
       ],
-      "expect": "\u2718.*\\[node\\].*removes chips with the x, the menu and Backspace"
+      "expect": "✘.*\\[node\\].*removes chips with the x, the menu and Backspace"
     },
     {
       "id": "W-091/e2e-chip-duplicate-not-swapped",
@@ -12995,7 +12995,7 @@
         "-g",
         "chip menu renames and duplicates"
       ],
-      "expect": "\u2718.*\\[node\\].*chip menu renames and duplicates"
+      "expect": "✘.*\\[node\\].*chip menu renames and duplicates"
     },
     {
       "id": "W-091/e2e-classes-tab-unreachable",
@@ -13017,7 +13017,7 @@
         "-g",
         "Classes Manager tab is reachable"
       ],
-      "expect": "\u2718.*\\[node\\].*Classes Manager tab is reachable"
+      "expect": "✘.*\\[node\\].*Classes Manager tab is reachable"
     },
     {
       "id": "W-091/e2e-popup-no-triggers",
@@ -13039,7 +13039,7 @@
         "-g",
         "Popup theme part loads in the editor with Triggers"
       ],
-      "expect": "\u2718.*\\[node\\].*Popup theme part loads in the editor with Triggers"
+      "expect": "✘.*\\[node\\].*Popup theme part loads in the editor with Triggers"
     },
     {
       "id": "W-091/e2e-forms-runtime-missing",
@@ -13061,7 +13061,7 @@
         "-g",
         "visitor can fill and submit"
       ],
-      "expect": "\u2718.*\\[node\\].*visitor can fill and submit"
+      "expect": "✘.*\\[node\\].*visitor can fill and submit"
     },
     {
       "id": "W-091/e2e-prod-spacing-vars-dropped",
@@ -13085,7 +13085,7 @@
       "env": {
         "CI": "1"
       },
-      "expect": "\u2718.*\\[node-public\\].*changing a spacing variable changes the published page"
+      "expect": "✘.*\\[node-public\\].*changing a spacing variable changes the published page"
     },
     {
       "id": "W-091/e2e-prod-class-rules-dropped",
@@ -13109,7 +13109,7 @@
       "env": {
         "CI": "1"
       },
-      "expect": "\u2718.*\\[node-public\\].*editing a class used on two elements"
+      "expect": "✘.*\\[node-public\\].*editing a class used on two elements"
     },
     {
       "id": "W-091/e2e-prod-unknown-node-public-marker",
@@ -13133,7 +13133,7 @@
       "env": {
         "CI": "1"
       },
-      "expect": "\u2718.*\\[node-public\\].*page with an unknown node still renders"
+      "expect": "✘.*\\[node-public\\].*page with an unknown node still renders"
     },
     {
       "id": "W-091/e2e-prod-max-height-wrong-property",
@@ -13157,7 +13157,7 @@
       "env": {
         "CI": "1"
       },
-      "expect": "\u2718.*\\[node-public\\].*Size, Position and Effects styles"
+      "expect": "✘.*\\[node-public\\].*Size, Position and Effects styles"
     },
     {
       "id": "W-091/css-flex-reverse-dropped",
@@ -14357,7 +14357,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/settings/MediaPicker.tsx",
-          "search": "      setLibraryError(\n        caught instanceof Error ? caught.message : \"Couldn't load the media library.\",\n      );",
+          "search": "      setLibraryError(errorMessage(caught, \"Couldn't load the media library.\"));",
           "replace": "      setLibraryError(null);"
         }
       ],
@@ -14375,8 +14375,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/settings/MediaPicker.tsx",
-          "search": "              onClick={closeLibrary}\n            >\n              Close",
-          "replace": "              onClick={() => undefined}\n            >\n              Close"
+          "search": "              onClick={closeLibrary}\n            >\n              {t(\"Close\")}",
+          "replace": "              onClick={() => undefined}\n            >\n              {t(\"Close\")}"
         }
       ],
       "command": [
@@ -14421,8 +14421,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/dialogs.tsx",
-          "search": "                <Button {...props} variant=\"secondary\" className={BUTTON} aria-disabled={saving}>\n                  Keep editing",
-          "replace": "                <Button {...props} onClick={undefined} variant=\"secondary\" className={BUTTON} aria-disabled={saving}>\n                  Keep editing"
+          "search": "                <Button {...props} variant=\"secondary\" className={BUTTON} aria-disabled={saving}>\n                  {t(\"Keep editing\")}",
+          "replace": "                <Button {...props} onClick={undefined} variant=\"secondary\" className={BUTTON} aria-disabled={saving}>\n                  {t(\"Keep editing\")}"
         }
       ],
       "command": ["bun", "test", "./packages/emvb/src/admin/editor/dialogs.test.tsx"],
@@ -14449,8 +14449,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/dialogs.tsx",
-          "search": "element{inside === 1 ? \"\" : \"s\"} inside it?",
-          "replace": "elements inside it?"
+          "search": "inside === 1\n              ? t(\"Delete {label} and the {inside} element inside it?\", { label, inside })",
+          "replace": "false\n              ? t(\"Delete {label} and the {inside} element inside it?\", { label, inside })"
         }
       ],
       "command": ["bun", "test", "./packages/emvb/src/admin/editor/dialogs.test.tsx"],
@@ -14733,8 +14733,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/settings/NumberRow.tsx",
-          "search": "label={spec.suffix ? `${label} (${spec.suffix})` : label}",
-          "replace": "label={label}"
+          "search": "label={spec.suffix ? `${shownLabel} (${spec.suffix})` : shownLabel}",
+          "replace": "label={shownLabel}"
         }
       ],
       "command": [
@@ -14823,8 +14823,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/settings/FieldControl.tsx",
-          "search": "field.options?.find((o) => String(o.value) === String(current))?.label ??\n            String(current)",
-          "replace": "String(current)"
+          "search": "            t(\n              field.options?.find((o) => String(o.value) === String(current))?.label ??\n                String(current),\n            )",
+          "replace": "            String(current)"
         }
       ],
       "command": [
@@ -14841,7 +14841,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/settings/FieldControl.tsx",
-          "search": "          Media library needs a signed-in session.\n",
+          "search": "          {t(\"Media library needs a signed-in session.\")}\n",
           "replace": ""
         }
       ],
@@ -15564,8 +15564,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/useClipboardActions.ts",
-          "search": "    const notice = droppedNotice(dropped);\n    if (notice) notify(message, notice);\n  };\n\n  const pasteStyle",
-          "replace": "    const notice = droppedNotice(dropped);\n    if (notice) announce(message);\n  };\n\n  const pasteStyle"
+          "search": "    const notice = localizedDroppedNotice(dropped);\n    if (notice) notify(message, translate(notice));\n  };\n\n  const pasteStyle",
+          "replace": "    const notice = localizedDroppedNotice(dropped);\n    if (notice) announce(message);\n  };\n\n  const pasteStyle"
         }
       ],
       "command": ["bun", "test", "./packages/emvb/src/admin/editor/clipboard.test.tsx"],
@@ -15725,7 +15725,7 @@
         "-g",
         "an element copied on one page pastes on another page and in a theme part"
       ],
-      "expect": "\u2718.*\\[node\\].*an element copied on one page pastes on another page and in a theme part"
+      "expect": "✘.*\\[node\\].*an element copied on one page pastes on another page and in a theme part"
     },
     {
       "id": "W-093/e2e-layers-paste-style-copies",
@@ -15747,7 +15747,7 @@
         "-g",
         "Copy style and Paste style in the Layers menu carry state styles and the transition"
       ],
-      "expect": "\u2718.*\\[node\\].*Copy style and Paste style in the Layers menu carry state styles and the transition"
+      "expect": "✘.*\\[node\\].*Copy style and Paste style in the Layers menu carry state styles and the transition"
     },
     {
       "id": "W-093/e2e-refusal-never-clears",
@@ -15769,7 +15769,7 @@
         "-g",
         "a paste the drop rules refuse shows the reason on the canvas and changes nothing"
       ],
-      "expect": "\u2718.*\\[node\\].*a paste the drop rules refuse shows the reason on the canvas and changes nothing"
+      "expect": "✘.*\\[node\\].*a paste the drop rules refuse shows the reason on the canvas and changes nothing"
     },
     {
       "id": "W-094/background-url-unsanitized",
@@ -15951,7 +15951,7 @@
         "-g",
         "Background section sets an image"
       ],
-      "expect": "\u2718.*\\[node\\].*Background section sets an image"
+      "expect": "✘.*\\[node\\].*Background section sets an image"
     },
     {
       "id": "W-095/undo-keeps-the-edit",
@@ -16133,7 +16133,7 @@
         "-g",
         "Ctrl\\+Z restores a deleted"
       ],
-      "expect": "\u2718.*\\[node\\].*Ctrl\\+Z restores a deleted"
+      "expect": "✘.*\\[node\\].*Ctrl\\+Z restores a deleted"
     },
     {
       "id": "W-096/tablet-query-wrong",
@@ -16235,7 +16235,7 @@
         "-g",
         "Hide on mobile"
       ],
-      "expect": "\u2718.*\\[node\\].*Hide on mobile"
+      "expect": "✘.*\\[node\\].*Hide on mobile"
     },
     {
       "id": "W-097/heading-not-plain-text",
@@ -16297,7 +16297,7 @@
         "-g",
         "double-clicking a heading"
       ],
-      "expect": "\u2718.*\\[node\\].*double-clicking a heading"
+      "expect": "✘.*\\[node\\].*double-clicking a heading"
     },
     {
       "id": "W-098/section-renders-local-children",
@@ -16359,7 +16359,7 @@
         "-g",
         "synced section"
       ],
-      "expect": "\u2718.*\\[node\\].*synced section"
+      "expect": "✘.*\\[node\\].*synced section"
     },
     {
       "id": "W-099/grid-columns-not-emitted",
@@ -16407,7 +16407,7 @@
         }
       ],
       "command": ["bun", "run", "e2e", "e2e/grid.e2e.ts", "--project=node", "-g", "equal columns"],
-      "expect": "\u2718.*\\[node\\].*equal columns"
+      "expect": "✘.*\\[node\\].*equal columns"
     },
     {
       "id": "W-100/draft-is-public",
@@ -16489,7 +16489,7 @@
         "-g",
         "colour variable"
       ],
-      "expect": "\u2718.*\\[node\\].*colour variable"
+      "expect": "✘.*\\[node\\].*colour variable"
     },
     {
       "id": "W-101/fade-up-not-emitted",
@@ -16545,7 +16545,7 @@
         "-g",
         "entrance animation"
       ],
-      "expect": "\u2718.*\\[node\\].*entrance animation"
+      "expect": "✘.*\\[node\\].*entrance animation"
     },
     {
       "id": "W-102/class-list-not-element-order",
@@ -17087,7 +17087,7 @@
         "-g",
         "bordered default look"
       ],
-      "expect": "\u2718.*\\[node\\].*bordered default look"
+      "expect": "✘.*\\[node\\].*bordered default look"
     },
     {
       "id": "W-115/actions-in-head",
@@ -17121,7 +17121,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/SiteStylesDrawer.tsx",
-          "search": "        aria-label=\"Site styles actions\"\n",
+          "search": "        aria-label={t(\"Site styles actions\")}\n",
           "replace": ""
         }
       ],
@@ -17234,7 +17234,7 @@
         "-g",
         "Desktop canvas uses desktop styles"
       ],
-      "expect": "\u2718.*\\[node\\].*Desktop canvas uses desktop styles"
+      "expect": "✘.*\\[node\\].*Desktop canvas uses desktop styles"
     },
     {
       "id": "W-117/live-computed-style",
@@ -17276,7 +17276,7 @@
         "-g",
         "stays visible"
       ],
-      "expect": "\u2718.*\\[node\\].*stays visible"
+      "expect": "✘.*\\[node\\].*stays visible"
     },
     {
       "id": "W-117/selection-kept",
@@ -17318,7 +17318,7 @@
         "-g",
         "stays visible"
       ],
-      "expect": "\u2718.*\\[node\\].*stays visible"
+      "expect": "✘.*\\[node\\].*stays visible"
     },
     {
       "id": "W-112/e2e-hide-rule-unscoped",
@@ -17340,7 +17340,7 @@
         "-g",
         "Hide on mobile is stored"
       ],
-      "expect": "\u2718.*\\[node\\].*Hide on mobile is stored"
+      "expect": "✘.*\\[node\\].*Hide on mobile is stored"
     },
     {
       "id": "W-112/scope-as-data-attribute",
@@ -17402,7 +17402,7 @@
         "-g",
         "state switcher edits Hover"
       ],
-      "expect": "\u2718.*\\[node\\].*state switcher edits Hover"
+      "expect": "✘.*\\[node\\].*state switcher edits Hover"
     },
     {
       "id": "W-118/e2e-draft-served-publicly",
@@ -17424,7 +17424,7 @@
         "-g",
         "state switcher edits Hover"
       ],
-      "expect": "\u2718.*\\[node\\].*state switcher edits Hover"
+      "expect": "✘.*\\[node\\].*state switcher edits Hover"
     },
     {
       "id": "W-118/e2e-class-style-not-stored",
@@ -17446,7 +17446,7 @@
         "-g",
         "Effects section edits a class"
       ],
-      "expect": "\u2718.*\\[node\\].*Effects section edits a class"
+      "expect": "✘.*\\[node\\].*Effects section edits a class"
     },
     {
       "id": "W-118/e2e-publish-keeps-old-styles",
@@ -17468,7 +17468,7 @@
         "-g",
         "Effects section edits a class"
       ],
-      "expect": "\u2718.*\\[node\\].*Effects section edits a class"
+      "expect": "✘.*\\[node\\].*Effects section edits a class"
     },
     {
       "id": "W-118/e2e-design-never-saved",
@@ -17490,7 +17490,7 @@
         "-g",
         "creates a new class inline"
       ],
-      "expect": "\u2718.*\\[node\\].*creates a new class inline"
+      "expect": "✘.*\\[node\\].*creates a new class inline"
     },
     {
       "id": "W-119/widget-schema-off-by-one",
@@ -17499,8 +17499,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/widgets/LayoutField.tsx",
-          "search": "schema ${summary.schemaVersion ?? \"unknown\"}",
-          "replace": "schema ${(summary.schemaVersion ?? 1) - 1}"
+          "search": "version: summary.schemaVersion ?? t(\"unknown\")",
+          "replace": "version: (summary.schemaVersion ?? 1) - 1"
         }
       ],
       "command": [
@@ -17519,8 +17519,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/widgets/LayoutField.tsx",
-          "search": "schema ${summary.schemaVersion ?? \"unknown\"}",
-          "replace": "schema ${(summary.schemaVersion ?? 1) - 1}"
+          "search": "version: summary.schemaVersion ?? t(\"unknown\")",
+          "replace": "version: (summary.schemaVersion ?? 1) - 1"
         }
       ],
       "command": [
@@ -17532,7 +17532,7 @@
         "-g",
         "read-only widget"
       ],
-      "expect": "\u2718.*\\[node\\].*read-only widget"
+      "expect": "✘.*\\[node\\].*read-only widget"
     },
     {
       "id": "W-120/e2e-draft-revision-hidden",
@@ -17546,7 +17546,7 @@
         }
       ],
       "command": ["bun", "run", "e2e", "e2e/access.e2e.ts", "--project=node", "-g", "saves pages"],
-      "expect": "\u2718.*\\[node\\].*saves pages"
+      "expect": "✘.*\\[node\\].*saves pages"
     },
     {
       "id": "W-121/pack-ships-tests",
@@ -17617,7 +17617,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/constants.ts",
-          "search": "export const PLUGIN_VERSION = \"0.8.0-dev.1\";",
+          "search": "export const PLUGIN_VERSION = \"0.8.0-dev.2\";",
           "replace": "export const PLUGIN_VERSION = \"0.0.0\";"
         }
       ],
@@ -17631,7 +17631,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/constants.ts",
-          "search": "export const PLUGIN_VERSION = \"0.8.0-dev.1\";",
+          "search": "export const PLUGIN_VERSION = \"0.8.0-dev.2\";",
           "replace": "export const PLUGIN_VERSION = \"0.0.0\";"
         }
       ],
@@ -17639,7 +17639,7 @@
       "env": {
         "CI": "1"
       },
-      "expect": "\u2718.*\\[node\\].*the EmVB plugin is loaded by the host"
+      "expect": "✘.*\\[node\\].*the EmVB plugin is loaded by the host"
     },
     {
       "id": "W-123/pack-expects-old-name",
@@ -17798,7 +17798,7 @@
       "env": {
         "CI": "1"
       },
-      "expect": "\u2718.*\\[node\\].*the device switcher hugs its options"
+      "expect": "✘.*\\[node\\].*the device switcher hugs its options"
     },
     {
       "id": "W-127/device-icons-missing",
@@ -17815,7 +17815,7 @@
       "env": {
         "CI": "1"
       },
-      "expect": "\u2718.*\\[node\\].*the device switcher hugs its options"
+      "expect": "✘.*\\[node\\].*the device switcher hugs its options"
     },
     {
       "id": "W-128/grid-not-a-drop-target",
@@ -17832,7 +17832,7 @@
       "env": {
         "CI": "1"
       },
-      "expect": "\u2718.*\\[node\\].*a drop over a Grid's empty cell goes into the Grid"
+      "expect": "✘.*\\[node\\].*a drop over a Grid's empty cell goes into the Grid"
     },
     {
       "id": "W-128/no-empty-placeholder",
@@ -17841,7 +17841,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/canvas/CanvasFrame.tsx",
-          "search": "(${DROP_BOXES})::after{content:\"Drop elements here\"",
+          "search": "(${DROP_BOXES})::after{content:${JSON.stringify(t(\"Drop elements here\"))}",
           "replace": "(${DROP_BOXES})::after{content:\"\""
         }
       ],
@@ -17849,7 +17849,7 @@
       "env": {
         "CI": "1"
       },
-      "expect": "\u2718.*\\[node\\].*dragging into an empty nested container"
+      "expect": "✘.*\\[node\\].*dragging into an empty nested container"
     },
     {
       "id": "W-128/drop-target-hidden",
@@ -17866,7 +17866,7 @@
       "env": {
         "CI": "1"
       },
-      "expect": "\u2718.*\\[node\\].*dragging into an empty nested container"
+      "expect": "✘.*\\[node\\].*dragging into an empty nested container"
     },
     {
       "id": "W-128/no-edge-zones",
@@ -17963,7 +17963,7 @@
       "env": {
         "CI": "1"
       },
-      "expect": "\u2718.*\\[node\\].*dragging into an empty nested container"
+      "expect": "✘.*\\[node\\].*dragging into an empty nested container"
     },
     {
       "id": "W-130/accordion-starts-empty",
@@ -18110,7 +18110,7 @@
       "env": {
         "CI": "1"
       },
-      "expect": "\u2718.*\\[node\\].*a new Accordion has three items"
+      "expect": "✘.*\\[node\\].*a new Accordion has three items"
     },
     {
       "id": "W-130/e2e-hidden-tab-panel-shown",
@@ -18135,7 +18135,7 @@
       "env": {
         "CI": "1"
       },
-      "expect": "\u2718.*\\[node\\].*a saved empty Accordion keeps working"
+      "expect": "✘.*\\[node\\].*a saved empty Accordion keeps working"
     },
     {
       "id": "W-130/e2e-no-accordion-reveal",
@@ -18160,7 +18160,7 @@
       "env": {
         "CI": "1"
       },
-      "expect": "\u2718.*\\[node\\].*selecting inside a closed accordion item"
+      "expect": "✘.*\\[node\\].*selecting inside a closed accordion item"
     },
     {
       "id": "W-131/toolbar-always-above",
@@ -18249,7 +18249,7 @@
       "env": {
         "CI": "1"
       },
-      "expect": "\u2718.*\\[node\\].*toolbar sits inside its outline"
+      "expect": "✘.*\\[node\\].*toolbar sits inside its outline"
     },
     {
       "id": "W-132/panel-keys-move-selection",
@@ -18308,7 +18308,7 @@
       "env": {
         "CI": "1"
       },
-      "expect": "\u2718.*\\[node\\].*leave the selection alone"
+      "expect": "✘.*\\[node\\].*leave the selection alone"
     },
     {
       "id": "W-133/duplicate-copies-css-id",
@@ -18367,7 +18367,7 @@
       "env": {
         "CI": "1"
       },
-      "expect": "\u2718.*\\[node\\].*its edits reach the site"
+      "expect": "✘.*\\[node\\].*its edits reach the site"
     },
     {
       "id": "W-134/devices-left-behind",
@@ -18418,7 +18418,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/settings/ClassChipInput.tsx",
-          "search": "    setSavedNote(`Saved as class \"${name}\". Publish site styles to show it on the site.`);",
+          "search": "    setSavedNote({\n      format: (currentT) =>\n        currentT('Saved as class \"{name}\". Publish site styles to show it on the site.', { name }),\n    });",
           "replace": "    setSavedNote(null);"
         }
       ],
@@ -18480,7 +18480,7 @@
       "env": {
         "CI": "1"
       },
-      "expect": "\u2718.*\\[node\\].*undoes in one step"
+      "expect": "✘.*\\[node\\].*undoes in one step"
     },
     {
       "id": "W-135/class-copy-drops-devices",
@@ -18573,7 +18573,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/ColorControl.tsx",
-          "search": "        <Select.Option value={CUSTOM}>Custom color</Select.Option>\n",
+          "search": "        <Select.Option value={CUSTOM}>{t(\"Custom color\")}</Select.Option>\n",
           "replace": ""
         }
       ],
@@ -18581,7 +18581,7 @@
       "env": {
         "CI": "1"
       },
-      "expect": "\u2718.*\\[node\\].*takes a validated custom hex"
+      "expect": "✘.*\\[node\\].*takes a validated custom hex"
     },
     {
       "id": "W-137/one-section-open",
@@ -18589,7 +18589,7 @@
       "description": "Only the element's default Style section opens; Typography, Spacing, Background and Border start closed.",
       "edits": [
         {
-          "file": "packages/emvb/src/admin/editor/panels/ElementPanel.tsx",
+          "file": "packages/emvb/src/admin/editor/panels/element-panel-model.ts",
           "search": "const OPEN_FIRST: StyleSectionId[] = [\"typography\", \"spacing\", \"background\", \"border\"];",
           "replace": "const OPEN_FIRST: StyleSectionId[] = [];"
         }
@@ -18607,7 +18607,7 @@
       "description": "Opening or closing a Style section isn't remembered, so the next element of that type resets it.",
       "edits": [
         {
-          "file": "packages/emvb/src/admin/editor/panels/ElementPanel.tsx",
+          "file": "packages/emvb/src/admin/editor/panels/element-panel-model.ts",
           "search": "    localStorage.setItem(sectionKey(type), JSON.stringify([...open]));",
           "replace": "    void [sectionKey(type), open];"
         }
@@ -18625,7 +18625,7 @@
       "description": "In the editor, a heading's Style tab opens with only Typography open.",
       "edits": [
         {
-          "file": "packages/emvb/src/admin/editor/panels/ElementPanel.tsx",
+          "file": "packages/emvb/src/admin/editor/panels/element-panel-model.ts",
           "search": "const OPEN_FIRST: StyleSectionId[] = [\"typography\", \"spacing\", \"background\", \"border\"];",
           "replace": "const OPEN_FIRST: StyleSectionId[] = [];"
         }
@@ -18642,7 +18642,7 @@
       "env": {
         "CI": "1"
       },
-      "expect": "\u2718.*\\[node\\].*open by default"
+      "expect": "✘.*\\[node\\].*open by default"
     },
     {
       "id": "W-138/linked-sets-one-side",
@@ -18749,7 +18749,7 @@
       "env": {
         "CI": "1"
       },
-      "expect": "\u2718.*\\[node\\].*the linked boxes set padding"
+      "expect": "✘.*\\[node\\].*the linked boxes set padding"
     },
     {
       "id": "W-139/tablet-columns-ignored",
@@ -18813,7 +18813,7 @@
         }
       ],
       "command": ["bun", "test", "packages/emvb/src/core/css/grid.test.ts"],
-      "expect": "\\(fail\\).*a device column count outside 1\u201312 is refused"
+      "expect": "\\(fail\\).*a device column count outside 1–12 is refused"
     },
     {
       "id": "W-139/e2e-device-field-edits-desktop",
@@ -18830,7 +18830,7 @@
       "env": {
         "CI": "1"
       },
-      "expect": "\u2718.*\\[node\\].*a grid takes its own column count"
+      "expect": "✘.*\\[node\\].*a grid takes its own column count"
     },
     {
       "id": "W-140/e2e-preview-scrollbar",
@@ -18847,7 +18847,7 @@
       "env": {
         "CI": "1"
       },
-      "expect": "\u2718.*\\[node\\].*Tablet and Mobile previews scroll"
+      "expect": "✘.*\\[node\\].*Tablet and Mobile previews scroll"
     },
     {
       "id": "W-141/heading-link-dropped",
@@ -18920,12 +18920,12 @@
       "env": {
         "CI": "1"
       },
-      "expect": "\u2718.*\\[node\\].*a Heading and an Icon take a link"
+      "expect": "✘.*\\[node\\].*a Heading and an Icon take a link"
     },
     {
       "id": "W-142/e2e-accent-variable-left-behind",
       "requirement": "W-142",
-      "description": "The colour-variable e2e leaves its 'Accent \u2026' variable on the dev site.",
+      "description": "The colour-variable e2e leaves its 'Accent …' variable on the dev site.",
       "edits": [
         {
           "file": "e2e/support/design.ts",
@@ -18945,7 +18945,7 @@
       "env": {
         "CI": "1"
       },
-      "expect": "\u2718.*\\[node\\].*a colour variable can be created"
+      "expect": "✘.*\\[node\\].*a colour variable can be created"
     },
     {
       "id": "W-143/text-has-no-preview",
@@ -19022,7 +19022,7 @@
       "env": {
         "CI": "1"
       },
-      "expect": "\u2718.*\\[node\\].*an empty box keeps the min-height"
+      "expect": "✘.*\\[node\\].*an empty box keeps the min-height"
     },
     {
       "id": "W-147/every-heading-h1",
@@ -19075,7 +19075,7 @@
       "env": {
         "CI": "1"
       },
-      "expect": "\u2718.*\\[cloudflare\\].*a Button looks like a button"
+      "expect": "✘.*\\[cloudflare\\].*a Button looks like a button"
     },
     {
       "id": "W-149/reset-stays-unlinked",
@@ -19120,8 +19120,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/VariableSection.tsx",
-          "search": "usageText(onPage, inClasses)}",
-          "replace": "usageText(onPage, 0)}"
+          "search": "usageText(t, onPage, inClasses)}",
+          "replace": "usageText(t, onPage, 0)}"
         }
       ],
       "command": ["bun", "test", "packages/emvb/src/admin/editor/panels/site-sections.test.tsx"],
@@ -19170,8 +19170,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/settings/BoxControl.tsx",
-          "search": "${takesAuto ? \", or auto\" : \"\"}",
-          "replace": ""
+          "search": "? \"A number in {unit}, or with its own unit (2rem, 50%), or auto\"",
+          "replace": "? \"A number in {unit}, or with its own unit (2rem, 50%)\""
         }
       ],
       "command": [
@@ -19204,7 +19204,7 @@
       "env": {
         "CI": "1"
       },
-      "expect": "\u2718.*\\[node\\].*keeps the scroll position of each tab"
+      "expect": "✘.*\\[node\\].*keeps the scroll position of each tab"
     },
     {
       "id": "W-153/publish-hides-pending-styles",
@@ -19321,7 +19321,7 @@
       "env": {
         "CI": "1"
       },
-      "expect": "\u2718.*\\[node\\].*a layout Section is added"
+      "expect": "✘.*\\[node\\].*a layout Section is added"
     },
     {
       "id": "W-157/label-refused",
@@ -19416,7 +19416,7 @@
       "env": {
         "CI": "1"
       },
-      "expect": "\u2718.*\\[node\\].*the Desktop canvas lays the page out at 1280"
+      "expect": "✘.*\\[node\\].*the Desktop canvas lays the page out at 1280"
     },
     {
       "id": "W-159/container-no-typography",
@@ -19863,7 +19863,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/useNodeActions.ts",
-          "search": "    lastToast.current = toasts.add({ title: message, timeout: NOTICE_TIMEOUT_MS });\n",
+          "search": "    lastToast.current = toasts.add({ title: translate(message), timeout: NOTICE_TIMEOUT_MS });\n",
           "replace": ""
         }
       ],
@@ -19999,7 +19999,7 @@
     {
       "id": "W-173/oklch-fraction-as-percent",
       "requirement": "W-173",
-      "description": "Pasted CSS oklch(0.628 \u2026) lightness is read as 0.628 of 100, so red turns near-black.",
+      "description": "Pasted CSS oklch(0.628 …) lightness is read as 0.628 of 100, so red turns near-black.",
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/color-space.ts",
@@ -20019,7 +20019,7 @@
     {
       "id": "W-173/oklch-fraction-threshold-high",
       "requirement": "W-173",
-      "description": "Bare lightness up to 5 is taken as 0\u20131, so EmVB's own darkest colours (L 3.0) turn white.",
+      "description": "Bare lightness up to 5 is taken as 0–1, so EmVB's own darkest colours (L 3.0) turn white.",
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/color-space.ts",
@@ -20379,7 +20379,7 @@
     {
       "id": "W-179/float-starter-h1",
       "requirement": "W-179",
-      "description": "A new float (or header, footer, popup\u2026) starts on an H1, a second H1 on every page it shows on.",
+      "description": "A new float (or header, footer, popup…) starts on an H1, a second H1 on every page it shows on.",
       "edits": [
         {
           "file": "packages/emvb/src/admin/theme-api.ts",
@@ -20399,7 +20399,7 @@
     {
       "id": "W-179/content-part-starter-h2",
       "requirement": "W-179",
-      "description": "Content parts (Single Page, Archive\u2026) lose their H1 starter too.",
+      "description": "Content parts (Single Page, Archive…) lose their H1 starter too.",
       "edits": [
         {
           "file": "packages/emvb/src/admin/theme-api.ts",
@@ -20439,7 +20439,7 @@
     {
       "id": "W-180/empty-angle-zero",
       "requirement": "W-180",
-      "description": "Emptying the angle silently stores 0\u00b0 instead of the type's default.",
+      "description": "Emptying the angle silently stores 0° instead of the type's default.",
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/settings/BackgroundControls.tsx",
@@ -20479,11 +20479,11 @@
     {
       "id": "W-181/rgb-no-range",
       "requirement": "W-181",
-      "description": "A refused RGB entry only shows an example, not the 0\u2013255 range.",
+      "description": "A refused RGB entry only shows an example, not the 0–255 range.",
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/ColorControl.tsx",
-          "search": "\"Enter red, green and blue from 0 to 255, such as 255, 128, 0. Alpha is optional: 0\u20131 or 0\u2013100%.\"",
+          "search": "\"Enter red, green and blue from 0 to 255, such as 255, 128, 0. Alpha is optional: 0–1 or 0–100%.\"",
           "replace": "\"Enter RGB as 255, 128, 0.\""
         }
       ],
@@ -20503,7 +20503,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/ColorControl.tsx",
-          "search": "\"Enter lightness 0\u2013100 (or 0\u20131), chroma 0\u20130.5 and hue 0\u2013360, such as 62.8, 0.150, 29.\"",
+          "search": "\"Enter lightness 0–100 (or 0–1), chroma 0–0.5 and hue 0–360, such as 62.8, 0.150, 29.\"",
           "replace": "\"Enter OKLCH as 62.8, 0.150, 29.\""
         }
       ],
@@ -21189,7 +21189,7 @@
     {
       "id": "W-600/one-page-gap",
       "requirement": "W-600",
-      "description": "Pagination shows a gap that hides only one page (1 \u2026 3).",
+      "description": "Pagination shows a gap that hides only one page (1 … 3).",
       "edits": [
         {
           "file": "packages/emvb/src/core/theme/pagination.ts",
@@ -21541,12 +21541,12 @@
     {
       "id": "W-207/accent-sensitive",
       "requirement": "W-207",
-      "description": "Searching CAFE doesn't find Caf\u00e9.",
+      "description": "Searching CAFE doesn't find Café.",
       "edits": [
         {
           "file": "packages/emvb/src/admin/search.ts",
-          "search": "  text.normalize(\"NFD\").replace(/\\p{M}/gu, \"\").toLocaleLowerCase().replace(/\u00df/g, \"ss\");",
-          "replace": "  text.toLocaleLowerCase().replace(/\u00df/g, \"ss\");"
+          "search": "  text.normalize(\"NFD\").replace(/\\p{M}/gu, \"\").toLocaleLowerCase().replace(/ß/g, \"ss\");",
+          "replace": "  text.toLocaleLowerCase().replace(/ß/g, \"ss\");"
         }
       ],
       "command": ["bun", "test", "./packages/emvb/src/admin/pages/list-search.test.tsx"],
@@ -21684,7 +21684,7 @@
     {
       "id": "W-211/move-in-container-only",
       "requirement": "W-211",
-      "description": "Alt+\u2192 only moves into a plain Container, never a Flexbox or Form above.",
+      "description": "Alt+→ only moves into a plain Container, never a Flexbox or Form above.",
       "edits": [
         {
           "file": "packages/emvb/src/core/arrange.ts",
@@ -22998,8 +22998,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/icons/IconLibraryDialog.tsx",
-          "search": "const iconSpokenName = (icon: LibraryIcon) => `${icon.label}, ${iconSource(icon)}`;",
-          "replace": "const iconSpokenName = (icon: LibraryIcon) => icon.label;"
+          "search": "const iconSpokenName = (icon: LibraryIcon, t: LocalizedTranslate) =>\n  `${icon.label}, ${iconSource(icon, t)}`;",
+          "replace": "const iconSpokenName = (icon: LibraryIcon, _t: LocalizedTranslate) => icon.label;"
         }
       ],
       "command": ["bun", "test", "./packages/emvb/src/admin/editor/icons/icon-library.test.tsx"],
@@ -23143,7 +23143,7 @@
       "description": "Hover offers Animation, which the schema refuses there, so the edit is lost on save.",
       "edits": [
         {
-          "file": "packages/emvb/src/admin/editor/panels/ElementPanel.tsx",
+          "file": "packages/emvb/src/admin/editor/panels/element-panel-model.ts",
           "search": "const NORMAL_ONLY_KEYS = new Set<StyleKey>([\n  \"transition\",\n  \"entrance\",\n  \"iconAnimation\",\n  \"scrollMotion\",\n]);",
           "replace": "const NORMAL_ONLY_KEYS = new Set<StyleKey>([\"transition\", \"entrance\", \"scrollMotion\"]);"
         }
@@ -23157,7 +23157,7 @@
     },
     {
       "id": "W-238/single-color-always",
-      "requirement": "W-238: Icon Force single colour (multi-colour SVG fills/strokes/stops \u2192 currentColor, only when on) and background Shape presets in the Icon section.",
+      "requirement": "W-238: Icon Force single colour (multi-colour SVG fills/strokes/stops → currentColor, only when on) and background Shape presets in the Icon section.",
       "description": "Uploaded multi-colour SVGs lose their colours even with Force single colour off.",
       "edits": [
         {
@@ -23171,7 +23171,7 @@
     },
     {
       "id": "W-238/single-color-keeps-root-black",
-      "requirement": "W-238: Icon Force single colour (multi-colour SVG fills/strokes/stops \u2192 currentColor, only when on) and background Shape presets in the Icon section.",
+      "requirement": "W-238: Icon Force single colour (multi-colour SVG fills/strokes/stops → currentColor, only when on) and background Shape presets in the Icon section.",
       "description": "With Force single colour on, an SVG root without a fill still paints black.",
       "edits": [
         {
@@ -23185,7 +23185,7 @@
     },
     {
       "id": "W-238/shape-overwrites-padding",
-      "requirement": "W-238: Icon Force single colour (multi-colour SVG fills/strokes/stops \u2192 currentColor, only when on) and background Shape presets in the Icon section.",
+      "requirement": "W-238: Icon Force single colour (multi-colour SVG fills/strokes/stops → currentColor, only when on) and background Shape presets in the Icon section.",
       "description": "Picking a shape replaces padding the author already set.",
       "edits": [
         {
@@ -23264,7 +23264,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/settings/IconControls.tsx",
-          "search": "          renderValue={(v: unknown) => ANIMATION_LABELS[String(v)] ?? \"None\"}\n",
+          "search": "          renderValue={(v: unknown) => t(ANIMATION_LABELS[String(v)] ?? \"None\")}\n",
           "replace": ""
         }
       ],
@@ -23684,7 +23684,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/SiteStylesDrawer.tsx",
-          "search": "        {NOT_CHECKED}\n",
+          "search": "        {t(NOT_CHECKED)}\n",
           "replace": ""
         }
       ],
@@ -23926,7 +23926,7 @@
     {
       "id": "W-258/tree-takes-menu-enter",
       "requirement": "W-258",
-      "description": "Enter on a selected row's \u00b7\u00b7\u00b7 button walks the tree instead of opening the menu.",
+      "description": "Enter on a selected row's ··· button walks the tree instead of opening the menu.",
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/LayersPanel.tsx",
@@ -23996,7 +23996,7 @@
     {
       "id": "W-259/escape-drops-focus",
       "requirement": "W-259",
-      "description": "Closing a Layers row menu with Escape drops focus instead of returning it to the \u00b7\u00b7\u00b7 button.",
+      "description": "Closing a Layers row menu with Escape drops focus instead of returning it to the ··· button.",
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/LayersPanel.tsx",
@@ -24010,7 +24010,7 @@
     {
       "id": "W-260/menu-opens-unfocused",
       "requirement": "W-260",
-      "description": "Opening a Layers row menu leaves focus on the \u00b7\u00b7\u00b7 button instead of the first item.",
+      "description": "Opening a Layers row menu leaves focus on the ··· button instead of the first item.",
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/LayersPanel.tsx",
@@ -24188,7 +24188,7 @@
     {
       "id": "W-263/demo-posts-title",
       "requirement": "W-263",
-      "description": "The demo /posts page 1 is titled All Posts while page 2 says Posts \u2013 page 2.",
+      "description": "The demo /posts page 1 is titled All Posts while page 2 says Posts – page 2.",
       "edits": [
         {
           "file": "demos/node/src/pages/posts/index.astro",
@@ -24772,7 +24772,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/settings/ClassChipInput.tsx",
-          "search": "    if (classNameTaken(design, name, id)) {\n      setError(classNameTakenMessage(name));\n",
+          "search": "    if (classNameTaken(design, name, id)) {\n      const duplicateName = cleanClassName(name);\n      setError({\n        format: (currentT) =>\n          currentT('A class named \"{name}\" already exists. Pick another name.', {\n            name: duplicateName,\n          }),\n      });\n",
           "replace": "    if (classNameTaken(design, name, id)) {\n"
         }
       ],
@@ -24790,7 +24790,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/ClassesSection.tsx",
-          "search": "    if (classNameTaken(design, trimmed)) {\n      setNameError(classNameTakenMessage(trimmed));\n      return;\n    }\n",
+          "search": "    if (classNameTaken(design, trimmed)) {\n      setDuplicateName(trimmed);\n      return;\n    }\n",
           "replace": ""
         }
       ],
@@ -24860,7 +24860,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/VariableSection.tsx",
-          "search": "    if (variableNameTaken(design, kind, trimmed)) {\n      setCreateError({ field: \"name\", message: variableNameTakenMessage(trimmed) });\n      return;\n    }\n",
+          "search": "    if (variableNameTaken(design, kind, trimmed)) {\n      setCreateError({\n        field: \"name\",\n        message: 'A variable named \"{name}\" already exists. Pick another name.',\n        values: { name: trimmed },\n      });\n      return;\n    }\n",
           "replace": ""
         }
       ],
@@ -24874,7 +24874,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/VariableSection.tsx",
-          "search": "      setNameError(variableNameTakenMessage(next));\n",
+          "search": "      setDuplicateName(next);\n",
           "replace": ""
         }
       ],
@@ -25202,7 +25202,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/PageSettings.tsx",
-          "search": "            error={canonicalError ?? undefined}\n",
+          "search": "            error={canonicalError ? t(canonicalError) : undefined}\n",
           "replace": ""
         }
       ],
@@ -25300,7 +25300,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/PageSettings.tsx",
-          "search": "                label=\"Social image\"\n",
+          "search": "                label={t(\"Social image\")}\n",
           "replace": ""
         }
       ],
@@ -25533,7 +25533,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/theme-api.ts",
-          "search": "  return Object.hasOwn(COLLECTION_NAMES, slug) ? (COLLECTION_NAMES[slug] as string) : slug;\n",
+          "search": "  return Object.hasOwn(COLLECTION_NAMES, slug) ? t(COLLECTION_NAMES[slug] as string) : slug;\n",
           "replace": "  return slug;\n"
         }
       ],
@@ -25551,7 +25551,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/theme-api.ts",
-          "search": "  if (args?.[\"slug\"]) return `${names?.one ?? slug}: ${String(args[\"slug\"])}`;\n",
+          "search": "  if (args?.[\"slug\"])\n    return t(\"{taxonomy}: {slug}\", {\n      taxonomy: names ? t(names.one) : slug,\n      slug: String(args[\"slug\"]),\n    });\n",
           "replace": "  if (args?.[\"slug\"]) return `${slug}:${String(args[\"slug\"])}`;\n"
         }
       ],
@@ -25569,8 +25569,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/theme-api.ts",
-          "search": "  \"singular/collection\": (args) => `${collectionName(args)} (all)`,\n",
-          "replace": "  \"singular/collection\": (args) => `One entry in ${collectionName(args)}`,\n"
+          "search": "  \"singular/collection\": (args, t) =>\n    t(\"{collection} (all)\", { collection: collectionName(args, t) }),\n",
+          "replace": "  \"singular/collection\": (args, t) =>\n    t(\"One entry in {collection}\", { collection: collectionName(args, t) }),\n"
         }
       ],
       "command": [
@@ -25871,7 +25871,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/settings/EffectsControls.tsx",
-          "search": "              renderValue={(v: unknown) => (v === \"inset\" ? \"Inset\" : \"Outset\")}\n",
+          "search": "              renderValue={(v: unknown) => (v === \"inset\" ? t(\"Inset\") : t(\"Outset\"))}\n",
           "replace": ""
         }
       ],
@@ -26565,8 +26565,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/settings/StyleSources.tsx",
-          "search": "{t.overridden.length > 0 && (",
-          "replace": "{t.overridden.length > 99 && ("
+          "search": "{source.overridden.length > 0 && (",
+          "replace": "{source.overridden.length > 99 && ("
         }
       ],
       "command": [
@@ -26745,8 +26745,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/AddPanel.tsx",
-          "search": "matchesSearch(query, r.name, r.description, \"recipe section\")",
-          "replace": "!query.trim() && matchesSearch(query, r.name, r.description, \"recipe section\")"
+          "search": "matchesSearch(\n          query,\n          r.id,\n          r.name,\n          r.description,\n          t(r.name),\n          t(r.description),\n          \"recipe section\",\n          t(\"Section recipes\"),\n        )",
+          "replace": "!query.trim() && matchesSearch(\n          query,\n          r.id,\n          r.name,\n          r.description,\n          t(r.name),\n          t(r.description),\n          \"recipe section\",\n          t(\"Section recipes\"),\n        )"
         }
       ],
       "command": ["bun", "test", "./packages/emvb/src/admin/editor/panels/recipes-panel.test.tsx"],
@@ -27007,8 +27007,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/settings/BindingsEditor.tsx",
-          "search": "{`${field.label} source`}",
-          "replace": "{field.label}"
+          "search": "{t(\"{name} source\", { name: t(field.label) })}",
+          "replace": "{t(field.label)}"
         }
       ],
       "command": [
@@ -28319,7 +28319,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/settings/AudienceEditor.tsx",
-          "search": "                if (bad) {\n                  setSegmentError(`${bad} isn't a segment name. Use letters, numbers, and : _ -`);\n                  return;\n                }\n",
+          "search": "                if (bad) {\n                  setSegmentError({\n                    format: (currentT) =>\n                      currentT(\"{name} isn't a segment name. Use letters, numbers, and : _ -\", {\n                        name: bad,\n                      }),\n                  });\n                  return;\n                }\n",
           "replace": ""
         }
       ],
@@ -29323,7 +29323,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/core/a11y/audit.ts",
-          "search": "\\s*[.!\u2026:\u00bb\u203a\u2192>\\u2192\\u203a\\u00bb-]*$/i;",
+          "search": "\\s*[.!…:»›→>\\u2192\\u203a\\u00bb-]*$/i;",
           "replace": "\\.?$/i;"
         }
       ],
@@ -30441,7 +30441,7 @@
       "edits": [
         {
           "file": "packages/emvb-mcp/src/bridge.ts",
-          "search": "export const BRIDGE_VERSION = \"0.8.0-dev.1\";",
+          "search": "export const BRIDGE_VERSION = \"0.8.0-dev.2\";",
           "replace": "export const BRIDGE_VERSION = \"0.4.9\";"
         }
       ],
@@ -31267,8 +31267,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/settings/RequiredFieldsNotice.tsx",
-          "search": "<strong>{issue.label}</strong> {shortReason(issue)}",
-          "replace": "{requiredFieldIssueText(issue)}"
+          "search": "<strong>{issue.label}</strong> {shortReason(issue, t)}",
+          "replace": "{issueText(issue, t)}"
         }
       ],
       "command": [
@@ -31572,7 +31572,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/AddPanel.tsx",
-          "search": "matchesSearch(query, d.name, d.group)",
+          "search": "matchesSearch(\n        query,\n        d.type,\n        d.name,\n        d.group,\n        t(d.name),\n        t(GROUPS.find((group) => group.id === d.group)?.label ?? d.group),\n      )",
           "replace": "d.name.toLowerCase().includes(query.trim().toLowerCase())"
         }
       ],
@@ -31592,7 +31592,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/AddPanel.tsx",
-          "search": "matchesSearch(query, r.name, r.description, \"recipe section\")",
+          "search": "matchesSearch(\n          query,\n          r.id,\n          r.name,\n          r.description,\n          t(r.name),\n          t(r.description),\n          \"recipe section\",\n          t(\"Section recipes\"),\n        )",
           "replace": "`${r.name} ${r.description} recipe section`.toLowerCase().includes(query.trim().toLowerCase())"
         }
       ],
@@ -31980,7 +31980,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/pages/NewPageDialog.tsx",
-          "search": "          renderValue={(value: unknown) =>\n            !value || value === NONE\n              ? \"Blank page\"\n              : (templates.find((part) => part.id === value)?.title ??\n                \"Previously selected template\")\n          }\n",
+          "search": "          renderValue={(value: unknown) =>\n            !value || value === NONE\n              ? t(\"Blank page\")\n              : (templates.find((part) => part.id === value)?.title ??\n                t(\"Previously selected template\"))\n          }\n",
           "replace": ""
         }
       ],
@@ -32062,8 +32062,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/settings/MediaPicker.tsx",
-          "search": "      setLibraryError(\n        caught instanceof Error ? caught.message : \"Couldn't load the media library.\",\n      );",
-          "replace": "      setError(caught instanceof Error ? caught.message : \"Couldn't load the media library.\");"
+          "search": "      setLibraryError(errorMessage(caught, \"Couldn't load the media library.\"));",
+          "replace": "      setError(errorMessage(caught, \"Couldn't load the media library.\"));"
         }
       ],
       "command": [
@@ -32134,8 +32134,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/settings/MediaPicker.tsx",
-          "search": "      if (!imageTarget()) return;\n      setError(\n        `Couldn't reach",
-          "replace": "      setError(\n        `Couldn't reach"
+          "search": "      if (!imageTarget()) return;\n      const detail = errorMessage(caught, \"\");\n      setError({",
+          "replace": "      const detail = errorMessage(caught, \"\");\n      setError({"
         }
       ],
       "command": [
@@ -32220,8 +32220,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/settings/MediaPicker.tsx",
-          "search": "      if (!imageTarget()) return;\n      setError(caught instanceof Error ? caught.message : \"Upload failed.\");",
-          "replace": "      setError(caught instanceof Error ? caught.message : \"Upload failed.\");"
+          "search": "      if (!imageTarget()) return;\n      setError(errorMessage(caught, \"Upload failed.\"));",
+          "replace": "      setError(errorMessage(caught, \"Upload failed.\"));"
         }
       ],
       "command": [
@@ -32486,8 +32486,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/image-editor/ExportDialog.tsx",
-          "search": "setError(COPY_SIZE_HINT);",
-          "replace": "setError(\"Unsupported size.\");"
+          "search": "setError(copySizeHint());",
+          "replace": "setError({ message: \"Unsupported size.\" });"
         }
       ],
       "command": [
@@ -32742,8 +32742,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/CommandPalette.tsx",
-          "search": "{query.trim() ? <span className=\"emvb-palette-kind\">{item.group}</span> : null}",
-          "replace": "{query.trim() ? item.group : null}"
+          "search": "{query.trim() ? (\n                      <span className=\"emvb-palette-kind\">{t(item.group)}</span>\n                    ) : null}",
+          "replace": "{query.trim() ? t(item.group) : null}"
         }
       ],
       "command": [
@@ -32762,8 +32762,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/CommandPalette.tsx",
-          "search": "{query.trim() ? <span className=\"emvb-palette-kind\">{item.group}</span> : null}",
-          "replace": "{<span className=\"emvb-palette-kind\">{item.group}</span>}"
+          "search": "{query.trim() ? (\n                      <span className=\"emvb-palette-kind\">{t(item.group)}</span>\n                    ) : null}",
+          "replace": "{<span className=\"emvb-palette-kind\">{t(item.group)}</span>}"
         }
       ],
       "command": [
@@ -32782,8 +32782,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/TokenScales.tsx",
-          "search": "Math.min(t.value.value, 64)",
-          "replace": "Math.min(t.value.value, 120)"
+          "search": "Math.min(token.value.value, 64)",
+          "replace": "Math.min(token.value.value, 120)"
         }
       ],
       "command": [
@@ -33324,7 +33324,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/SiteStylesDrawer.tsx",
-          "search": "publishing ? \"Publishing site styles\u2026\" : STYLE_NOTE",
+          "search": "publishing ? \"Publishing site styles…\" : STYLE_NOTE",
           "replace": "STYLE_NOTE"
         }
       ],
@@ -33490,7 +33490,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/TopBar.tsx",
-          "search": "if (busy === \"publish\") content = \"Publishing\u2026\";",
+          "search": "if (busy === \"publish\") content = t(\"Publishing…\");",
           "replace": "if (busy === \"publish\") content = \"Saved\";"
         }
       ],
@@ -34108,7 +34108,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/settings/FieldBindControl.tsx",
-          "search": "Loading form fields\u2026 You can enter a field name.",
+          "search": "Loading form fields… You can enter a field name.",
           "replace": ""
         }
       ],
@@ -34208,8 +34208,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/settings/FieldBindControl.tsx",
-          "search": "role=\"status\" aria-label=\"Form fields status\" aria-live=\"polite\"",
-          "replace": "role=\"presentation\""
+          "search": "        role=\"status\"\n        aria-label={t(\"Form fields status\")}\n        aria-live=\"polite\"",
+          "replace": "        role=\"presentation\""
         }
       ],
       "command": ["bun", "run", "e2e", "e2e/field-feedback.e2e.ts", "--project=node"],
@@ -34222,7 +34222,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/Timeline.tsx",
-          "search": "              role=\"status\"\n              aria-label=\"Version timeline status\"\n              aria-live=\"polite\"",
+          "search": "              role=\"status\"\n              aria-label={t(\"Version timeline status\")}\n              aria-live=\"polite\"",
           "replace": ""
         }
       ],
@@ -34242,7 +34242,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/Timeline.tsx",
-          "search": "              role=\"status\"\n              aria-label=\"Version timeline status\"\n              aria-live=\"polite\"",
+          "search": "              role=\"status\"\n              aria-label={t(\"Version timeline status\")}\n              aria-live=\"polite\"",
           "replace": ""
         }
       ],
@@ -34413,8 +34413,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/icons/IconLibraryDialog.tsx",
-          "search": "<span aria-hidden={uploading}>Upload SVG</span>",
-          "replace": "<span aria-hidden={false}>Upload SVG</span>"
+          "search": "<span aria-hidden={uploading}>{t(\"Upload SVG\")}</span>",
+          "replace": "<span aria-hidden={false}>{t(\"Upload SVG\")}</span>"
         }
       ],
       "command": [
@@ -34574,7 +34574,7 @@
       "description": "Compact sheet Close must restore the current outer tool: missing-return-focus",
       "edits": [
         {
-          "file": "packages/emvb/src/admin/image-editor/ImageEditorDialog.tsx",
+          "file": "packages/emvb/src/admin/image-editor/editor-layouts.tsx",
           "search": "    rootRef.current\n      ?.querySelector<HTMLButtonElement>(':scope > nav [aria-pressed=\"true\"]')\n      ?.focus();",
           "replace": ""
         }
@@ -34594,7 +34594,7 @@
       "description": "Compact sheet Close must restore the current outer tool: stale-tool",
       "edits": [
         {
-          "file": "packages/emvb/src/admin/image-editor/ImageEditorDialog.tsx",
+          "file": "packages/emvb/src/admin/image-editor/editor-layouts.tsx",
           "search": ":scope > nav [aria-pressed=\"true\"]",
           "replace": ":scope > nav [data-emvb-image-tool=\"compose\"]"
         }
@@ -34616,7 +34616,7 @@
       "description": "Compact sheet grip keyboard resize and dismiss focus: no-keyboard",
       "edits": [
         {
-          "file": "packages/emvb/src/admin/image-editor/ImageEditorDialog.tsx",
+          "file": "packages/emvb/src/admin/image-editor/editor-layouts.tsx",
           "search": "        onKeyDown={onGripKey}\n",
           "replace": ""
         }
@@ -34636,7 +34636,7 @@
       "description": "Compact sheet grip keyboard resize and dismiss focus: dismiss-loses-focus",
       "edits": [
         {
-          "file": "packages/emvb/src/admin/image-editor/ImageEditorDialog.tsx",
+          "file": "packages/emvb/src/admin/image-editor/editor-layouts.tsx",
           "search": "onOpenChange={(next) => (next ? setPanelOpen(true) : closePanel())}",
           "replace": "onOpenChange={setPanelOpen}"
         }
@@ -34656,7 +34656,7 @@
       "description": "Compact sheet grip keyboard resize and dismiss focus: down-never-closes",
       "edits": [
         {
-          "file": "packages/emvb/src/admin/image-editor/ImageEditorDialog.tsx",
+          "file": "packages/emvb/src/admin/image-editor/editor-layouts.tsx",
           "search": "snap > peek ? peek : \"close\"",
           "replace": "peek"
         }
@@ -34676,7 +34676,7 @@
       "description": "Compact sheet drag dismiss must return focus to the current tool (browser)",
       "edits": [
         {
-          "file": "packages/emvb/src/admin/image-editor/ImageEditorDialog.tsx",
+          "file": "packages/emvb/src/admin/image-editor/editor-layouts.tsx",
           "search": "onOpenChange={(next) => (next ? setPanelOpen(true) : closePanel())}",
           "replace": "onOpenChange={setPanelOpen}"
         }
@@ -34760,7 +34760,7 @@
       "description": "Drag release must use the last move, not the last render",
       "edits": [
         {
-          "file": "packages/emvb/src/admin/image-editor/ImageEditorDialog.tsx",
+          "file": "packages/emvb/src/admin/image-editor/editor-layouts.tsx",
           "search": "const released = d.latest ?? snap;",
           "replace": "const released = dragSnap ?? snap;"
         }
@@ -34903,7 +34903,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/pages/AgentsPage.tsx",
-          "search": "if (!state) return shell(<ListLoading label=\"Loading AI agent settings\u2026\" />);",
+          "search": "if (!state) return shell(<ListLoading label={t(\"Loading AI agent settings…\")} />);",
           "replace": "if (!state) return null;"
         }
       ],
@@ -34917,7 +34917,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/pages/AgentsPage.tsx",
-          "search": "{saving ? \"Saving\u2026\" : saved ? \"Saved.\" : \"\"}",
+          "search": "{saving ? t(\"Saving…\") : saved ? t(\"Saved.\") : \"\"}",
           "replace": "{\"\"}"
         }
       ],
@@ -34951,7 +34951,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/access/RequireEditor.tsx",
-          "search": "  if (status.state === \"loading\") return <LoadingStatus label=\"Checking your access\u2026\" />;",
+          "search": "  if (status.state === \"loading\") return <LoadingStatus label={t(\"Checking your access…\")} />;",
           "replace": "  if (status.state === \"loading\") return null;"
         }
       ],
@@ -35071,8 +35071,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/Timeline.tsx",
-          "search": "  }, [fetcher, collection, entryId, open, attempt]);",
-          "replace": "  }, [fetcher, collection, entryId, open]);"
+          "search": "  }, [fetcher, collection, entryId, open, attempt, t]);",
+          "replace": "  }, [fetcher, collection, entryId, open, t]);"
         }
       ],
       "command": [
@@ -35111,8 +35111,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/Timeline.tsx",
-          "search": "          setState({ kind: \"error\", message: noRevisions(editedNounOf(collection)) });",
-          "replace": "          setState({ kind: \"error\", message: noRevisions(editedNounOf(collection)), retry: () => undefined });"
+          "search": "          setState({ kind: \"error\", message: noRevisions(editedNounOf(collection), t) });",
+          "replace": "          setState({ kind: \"error\", message: noRevisions(editedNounOf(collection), t), retry: () => undefined });"
         }
       ],
       "command": [
@@ -35131,7 +35131,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/dialogs.tsx",
-          "search": "              Overwrite their version",
+          "search": "              {t(\"Overwrite their version\")}",
           "replace": "              Overwrite"
         }
       ],
@@ -35151,8 +35151,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/settings/AdvancedFields.tsx",
-          "search": "            Replace styles",
-          "replace": "            Replace"
+          "search": "            {t(\"Replace styles\")}",
+          "replace": "            {t(\"Replace\")}"
         }
       ],
       "command": [
@@ -35171,8 +35171,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/dialogs.tsx",
-          "search": "              Delete {count} elements",
-          "replace": "              Delete"
+          "search": "{t(\"Delete {count} elements\", { count })}",
+          "replace": "{t(\"Delete\")}"
         }
       ],
       "command": [
@@ -35187,7 +35187,7 @@
     {
       "id": "UX-016/box-caption-clipped",
       "requirement": "UX-016",
-      "description": "Radius captions clip to Bottom ri\u2026 in the 52 px box cells",
+      "description": "Radius captions clip to Bottom ri… in the 52 px box cells",
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/editor-css.ts",
@@ -35313,8 +35313,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/PageSettings.tsx",
-          "search": "{page.seoDescription.length} characters. Search results show about 150.",
-          "replace": "Search results show about 150 characters."
+          "search": "{t(\"{count} characters. Search results show about 150.\", {\n                count: page.seoDescription.length,\n              })}",
+          "replace": "{t(\"Search results show about 150 characters.\")}"
         }
       ],
       "command": [
@@ -35333,7 +35333,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/A11yCopilot.tsx",
-          "search": "                      aria-label=\"Warning\"",
+          "search": "                      aria-label={t(\"Warning\")}",
           "replace": ""
         }
       ],
@@ -35353,8 +35353,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/A11yCopilot.tsx",
-          "search": "Fix {fixable.length} issues",
-          "replace": "Fix all {fixable.length}"
+          "search": "t(\"Fix {count} issues\", { count: fixable.length })",
+          "replace": "t(\"Fix all {count}\", { count: fixable.length })"
         }
       ],
       "command": [
@@ -35427,8 +35427,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/LayersPanel.tsx",
-          "search": "{label === \"Delete\" && (",
-          "replace": "{label === \"Never\" && ("
+          "search": "{id === \"delete\" && <hr className=\"emvb-layer-menu-sep\" aria-hidden=\"true\" />}",
+          "replace": "{id === \"never\" && <hr className=\"emvb-layer-menu-sep\" aria-hidden=\"true\" />}"
         }
       ],
       "command": [
@@ -35480,7 +35480,7 @@
       "description": "Button icon position, size and gap show with no icon",
       "edits": [
         {
-          "file": "packages/emvb/src/admin/editor/panels/ElementPanel.tsx",
+          "file": "packages/emvb/src/admin/editor/panels/element-panel-model.ts",
           "search": "  if (!parent) return true;",
           "replace": "  if (!parent || parent) return true;"
         }
@@ -35500,7 +35500,7 @@
       "description": "A stored icon size disappears while the button has no icon",
       "edits": [
         {
-          "file": "packages/emvb/src/admin/editor/panels/ElementPanel.tsx",
+          "file": "packages/emvb/src/admin/editor/panels/element-panel-model.ts",
           "search": "  if (props[key] !== undefined) return true;",
           "replace": ""
         }
@@ -35521,7 +35521,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/AddPanel.tsx",
-          "search": "typeMayAddScript(tile.type) ? \"Adds a small script to the page\" : undefined",
+          "search": "typeMayAddScript(tile.type)\n                          ? t(\"Adds a small script to the page\")\n                          : undefined",
           "replace": "undefined"
         }
       ],
@@ -35561,7 +35561,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/TopBar.tsx",
-          "search": "<span className=\"emvb-topbar-title\" title={page.title ? page.title : \"Untitled page\"}>",
+          "search": "<span\n              className=\"emvb-topbar-title\"\n              title={page.title ? page.title : t(\"Untitled page\")}\n            >",
           "replace": "<span className=\"emvb-topbar-title\">"
         }
       ],
@@ -35581,7 +35581,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/TokenScales.tsx",
-          "search": "                title={t.fluid ? fluidClamp(t.fluid.min, t.fluid.max, range) : `${t.value.value}px`}\n",
+          "search": "                title={\n                  token.fluid\n                    ? fluidClamp(token.fluid.min, token.fluid.max, range)\n                    : `${token.value.value}px`\n                }\n",
           "replace": ""
         }
       ],
@@ -35601,8 +35601,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/settings/BackgroundFill.tsx",
-          "search": "<span className=\"emvb-var-field-label\">Fill</span>",
-          "replace": "<span className=\"emvb-var-field-label\">Background</span>"
+          "search": "<span className=\"emvb-var-field-label\">{t(\"Fill\")}</span>",
+          "replace": "<span className=\"emvb-var-field-label\">{t(\"Background\")}</span>"
         }
       ],
       "command": [
@@ -35621,8 +35621,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/settings/BackgroundFill.tsx",
-          "search": "            label=\"Background color\"",
-          "replace": "            label=\"Background\""
+          "search": "            label={t(\"Background color\")}",
+          "replace": "            label={t(\"Background\")}"
         }
       ],
       "command": [
@@ -35680,7 +35680,7 @@
       "description": "A Grid's children lose their span rows",
       "edits": [
         {
-          "file": "packages/emvb/src/admin/editor/panels/ElementPanel.tsx",
+          "file": "packages/emvb/src/admin/editor/panels/element-panel-model.ts",
           "search": "  return parent?.type === \"grid\" || parent?.type === \"loop\";",
           "replace": "  return parent?.type === \"loop\";"
         }
@@ -35868,7 +35868,7 @@
       "description": "Width and Height go back to separate rows",
       "edits": [
         {
-          "file": "packages/emvb/src/admin/editor/panels/ElementPanel.tsx",
+          "file": "packages/emvb/src/admin/editor/panels/element-panel-model.ts",
           "search": "const PAIRED: Readonly<Record<string, string>> = { focalX: \"focalY\", width: \"height\" };",
           "replace": "const PAIRED: Readonly<Record<string, string>> = { focalX: \"focalY\" };"
         }
@@ -35888,7 +35888,7 @@
       "description": "No fields share a row",
       "edits": [
         {
-          "file": "packages/emvb/src/admin/editor/panels/ElementPanel.tsx",
+          "file": "packages/emvb/src/admin/editor/panels/element-panel-model.ts",
           "search": "    if (next && PAIRED[field.key] === next.key) {",
           "replace": "    if (next && false) {"
         }
@@ -36049,7 +36049,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/settings/DraftTextField.tsx",
-          "search": "      description={field.message}\n",
+          "search": "      description={field.message ? t(field.message) : undefined}\n",
           "replace": ""
         }
       ],
@@ -36089,8 +36089,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/PageSettings.tsx",
-          "search": "            hint=\"Search engines are asked not to list this page or follow its links (noindex, nofollow).\"\n            hintData={{ \"data-emvb-noindex-help\": \"\" }}\n          />",
-          "replace": "          />\n          <p className=\"emvb-helper\" data-emvb-noindex-help=\"\">\n            Search engines are asked not to list this page or follow its links (noindex, nofollow).\n          </p>"
+          "search": "            hint={t(\n              \"Search engines are asked not to list this page or follow its links (noindex, nofollow).\",\n            )}\n            hintData={{ \"data-emvb-noindex-help\": \"\" }}\n          />",
+          "replace": "          />\n          <p className=\"emvb-helper\" data-emvb-noindex-help=\"\">\n            {t(\"Search engines are asked not to list this page or follow its links (noindex, nofollow).\")}\n          </p>"
         }
       ],
       "command": [
@@ -36109,7 +36109,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/settings/DraftTextField.tsx",
-          "search": "      description={error ? undefined : description}\n",
+          "search": "      description={error ? undefined : description ? t(description) : undefined}\n",
           "replace": ""
         }
       ],
@@ -36169,7 +36169,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/settings/StyleRow.tsx",
-          "search": "            v === UNSET\n              ? \"Default\"\n",
+          "search": "            v === UNSET\n              ? t(\"Default\")\n",
           "replace": "            v === UNSET\n              ? \"\"\n"
         }
       ],
@@ -36289,7 +36289,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/ConditionsEditor.tsx",
-          "search": "          aria-label=\"Add exclude rule\"\n",
+          "search": "          aria-label={t(\"Add exclude rule\")}\n",
           "replace": ""
         }
       ],
@@ -36309,8 +36309,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/ConditionsEditor.tsx",
-          "search": "        >\n          Include\n        </Button>",
-          "replace": "        >\n          Add Include\n        </Button>"
+          "search": "        >\n          {t(\"Include\")}\n        </Button>",
+          "replace": "        >\n          {t(\"Add Include\")}\n        </Button>"
         }
       ],
       "command": [
@@ -36369,8 +36369,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/AddPanel.tsx",
-          "search": "        aria-label=\"Search elements\"\n        type=\"search\"\n",
-          "replace": "        label=\"Search elements\"\n        type=\"search\"\n"
+          "search": "        aria-label={t(\"Search elements\")}\n        type=\"search\"\n",
+          "replace": "        label={t(\"Search elements\")}\n        type=\"search\"\n"
         }
       ],
       "command": [
@@ -36517,7 +36517,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/SiteStylesDrawer.tsx",
-          "search": "        description=\"Elements of this tag start here. A class or a local style still wins.\"\n",
+          "search": "        description={t(\"Elements of this tag start here. A class or a local style still wins.\")}\n",
           "replace": ""
         }
       ],
@@ -36617,7 +36617,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/PageSettings.tsx",
-          "search": "        description=\"A bar stays on that edge and leaves room for the page. A corner sits over the page.\"\n",
+          "search": "        description={t(\n          \"A bar stays on that edge and leaves room for the page. A corner sits over the page.\",\n        )}\n",
           "replace": ""
         }
       ],
@@ -36651,8 +36651,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/useNodeActions.ts",
-          "search": "    const title = count > 1 ? `${count} elements deleted` : `${name} deleted`;\n",
-          "replace": "    const title = \"Element deleted\";\n"
+          "search": "    const title =\n      count > 1\n        ? translate(\"{count} elements deleted\", { count })\n        : translate(\"{name} deleted\", { name });\n",
+          "replace": "    const title = translate(\"Element deleted\");\n"
         }
       ],
       "command": [
@@ -36671,8 +36671,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/useNodeActions.ts",
-          "search": "    const title = count > 1 ? `${count} elements deleted` : `${name} deleted`;\n",
-          "replace": "    const title = `${name} deleted`;\n"
+          "search": "    const title =\n      count > 1\n        ? translate(\"{count} elements deleted\", { count })\n        : translate(\"{name} deleted\", { name });\n",
+          "replace": "    const title = translate(\"{name} deleted\", { name });\n"
         }
       ],
       "command": [
@@ -36910,7 +36910,7 @@
       "description": "Loop Columns shows for List again",
       "edits": [
         {
-          "file": "packages/emvb/src/admin/editor/panels/ElementPanel.tsx",
+          "file": "packages/emvb/src/admin/editor/panels/element-panel-model.ts",
           "search": "  \"loop.columns\": (props) => props[\"display\"] === \"grid\" || props[\"display\"] === \"cards\",\n",
           "replace": ""
         }
@@ -36930,7 +36930,7 @@
       "description": "Count text shows with the page count off",
       "edits": [
         {
-          "file": "packages/emvb/src/admin/editor/panels/ElementPanel.tsx",
+          "file": "packages/emvb/src/admin/editor/panels/element-panel-model.ts",
           "search": "  \"pagination.countText\": (props) => props[\"showCount\"] === true,\n",
           "replace": ""
         }
@@ -36950,7 +36950,7 @@
       "description": "New-tab switches show with no link",
       "edits": [
         {
-          "file": "packages/emvb/src/admin/editor/panels/ElementPanel.tsx",
+          "file": "packages/emvb/src/admin/editor/panels/element-panel-model.ts",
           "search": "  newTab: \"href\",\n",
           "replace": ""
         }
@@ -36970,7 +36970,7 @@
       "description": "Post Link loses its new-tab switch",
       "edits": [
         {
-          "file": "packages/emvb/src/admin/editor/panels/ElementPanel.tsx",
+          "file": "packages/emvb/src/admin/editor/panels/element-panel-model.ts",
           "search": "  \"post-link.newTab\": () => true,\n",
           "replace": ""
         }
@@ -36990,7 +36990,7 @@
       "description": "A link bound to live data hides the new-tab switch",
       "edits": [
         {
-          "file": "packages/emvb/src/admin/editor/panels/ElementPanel.tsx",
+          "file": "packages/emvb/src/admin/editor/panels/element-panel-model.ts",
           "search": "  return (props[parent] !== undefined && props[parent] !== \"\") || bound;\n",
           "replace": "  return props[parent] !== undefined && props[parent] !== \"\";\n"
         }
@@ -37050,7 +37050,7 @@
       "description": "Mobile tracks show on every device again",
       "edits": [
         {
-          "file": "packages/emvb/src/admin/editor/panels/ElementPanel.tsx",
+          "file": "packages/emvb/src/admin/editor/panels/element-panel-model.ts",
           "search": "  \"grid.columnTracksMobile\": (_props, device) => device === \"mobile\",\n",
           "replace": ""
         }
@@ -37091,8 +37091,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/settings/EffectsControls.tsx",
-          "search": "              label=\"Animation\"\n",
-          "replace": "              label=\"Entrance\"\n"
+          "search": "              label={t(\"Animation\")}\n",
+          "replace": "              label={t(\"Entrance\")}\n"
         }
       ],
       "command": [
@@ -37111,8 +37111,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/settings/MotionControl.tsx",
-          "search": "            Turn off scroll motion\n",
-          "replace": "            Turn off here\n"
+          "search": "            {t(\"Turn off scroll motion\")}\n",
+          "replace": "            {t(\"Turn off here\")}\n"
         }
       ],
       "command": [
@@ -37151,7 +37151,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/settings/QueryStyleRows.tsx",
-          "search": "        {styleName(styleKey)}\n",
+          "search": "        {styleName(styleKey, t)}\n",
           "replace": "        {styleKey}\n"
         }
       ],
@@ -37171,7 +37171,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/settings/AdvancedFields.tsx",
-          "search": "      renderValue={(value: unknown) => DIR_NAMES[String(value)] ?? String(value)}\n",
+          "search": "      renderValue={(value: unknown) => t(DIR_NAMES[String(value)] ?? String(value))}\n",
           "replace": ""
         }
       ],
@@ -37191,7 +37191,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/settings/BackgroundControls.tsx",
-          "search": "          renderValue={(v: unknown) => sentence(String(v))}\n",
+          "search": "          renderValue={(v: unknown) => t(sentence(String(v)))}\n",
           "replace": ""
         }
       ],
@@ -37211,8 +37211,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/useEditorCommands.ts",
-          "search": "\"View page\",\n",
-          "replace": "\"View page \u2197\",\n"
+          "search": "messageText(\"View page\"),\n",
+          "replace": "messageText(\"View page ↗\"),\n"
         }
       ],
       "command": [
@@ -37231,7 +37231,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/TopBar.tsx",
-          "search": "                <span className=\"emvb-sr-only\"> (opens in a new tab)</span>\n",
+          "search": "                  <span className=\"emvb-sr-only\">{t(\" (opens in a new tab)\")}</span>\n",
           "replace": ""
         }
       ],
@@ -37351,8 +37351,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/dialogs.tsx",
-          "search": "<Dialog.Title>This {noun} was changed somewhere else</Dialog.Title>",
-          "replace": "<Dialog.Title>This page was changed somewhere else</Dialog.Title>"
+          "search": "t(\"This {noun} was changed somewhere else\", { noun: t(noun) })",
+          "replace": "t(\"This page was changed somewhere else\")"
         }
       ],
       "command": [
@@ -37371,7 +37371,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/Timeline.tsx",
-          "search": "saved versions of this ${noun}, so",
+          "search": "saved versions of this {noun}, so",
           "replace": "saved versions of this page, so"
         }
       ],
@@ -37447,7 +37447,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/pages/NewThemePartDialog.tsx",
-          "search": "submitLabel=\"Create theme part\"",
+          "search": "submitLabel={t(\"Create theme part\")}",
           "replace": "submitLabel=\"Create\""
         }
       ],
@@ -37467,8 +37467,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/PageSettings.tsx",
-          "search": "            <span className=\"emvb-part-type-value\">\n              {THEME_PART_TYPE_LABELS[page.partType ?? \"header\"]}\n            </span>",
-          "replace": "            <input\n              className=\"emvb-part-type-value\"\n              disabled\n              value={THEME_PART_TYPE_LABELS[page.partType ?? \"header\"]}\n            />"
+          "search": "            <span className=\"emvb-part-type-value\">\n              {t(THEME_PART_TYPE_LABELS[page.partType ?? \"header\"])}\n            </span>",
+          "replace": "            <input\n              className=\"emvb-part-type-value\"\n              disabled\n              value={t(THEME_PART_TYPE_LABELS[page.partType ?? \"header\"])}\n            />"
         }
       ],
       "command": [
@@ -37859,8 +37859,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/ConditionsEditor.tsx",
-          "search": "className=\"emvb-icon-btn\"\n              aria-label=\"Remove condition\"",
-          "replace": "className={BUTTON}\n              aria-label=\"Remove condition\""
+          "search": "className=\"emvb-icon-btn\"\n              aria-label={t(\"Remove condition\")}",
+          "replace": "className={BUTTON}\n              aria-label={t(\"Remove condition\")}"
         }
       ],
       "command": ["bun", "run", "e2e", "e2e/theme-s8.e2e.ts", "--project=node", "-g", "W-767"],
@@ -37976,11 +37976,11 @@
     {
       "id": "W-774-a",
       "requirement": "W-774",
-      "description": "list search stops folding \u00df",
+      "description": "list search stops folding ß",
       "edits": [
         {
           "file": "packages/emvb/src/admin/search.ts",
-          "search": ".toLocaleLowerCase().replace(/\u00df/g, \"ss\");",
+          "search": ".toLocaleLowerCase().replace(/ß/g, \"ss\");",
           "replace": ".toLocaleLowerCase();"
         }
       ],
@@ -38034,8 +38034,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/pages/AgentsPage.tsx",
-          "search": "copied === \"no\" ? \"Couldn't copy\" : \"Copy\"}",
-          "replace": "\"Copy\"}"
+          "search": "copied === \"no\" ? t(\"Couldn't copy\") : t(\"Copy\")}",
+          "replace": "t(\"Copy\")}"
         }
       ],
       "command": ["bun", "test", "./packages/emvb/src/admin/pages/agents.test.tsx", "-t", "W-777"],
@@ -38700,7 +38700,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/pages/AgentsPage.tsx",
-          "search": " labels={{ copyAction: \"Copy endpoint URL\" }}",
+          "search": " labels={{ copyAction: t(\"Copy endpoint URL\") }}",
           "replace": ""
         }
       ],
@@ -38734,8 +38734,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/pages/AgentsPage.tsx",
-          "search": "            label=\"Let AI agents edit EmVB pages\"",
-          "replace": "            label=\"Let AI agents edit EmVB pages\"\n            disabled={saving}"
+          "search": "            label={t(\"Let AI agents edit EmVB pages\")}",
+          "replace": "            label={t(\"Let AI agents edit EmVB pages\")}\n            disabled={saving}"
         }
       ],
       "command": ["bun", "test", "./packages/emvb/src/admin/pages/agents.test.tsx", "-t", "W-814"],
@@ -38748,7 +38748,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/pages/AgentsPage.tsx",
-          "search": "<div className=\"emvb-agents-table\" {...SCROLLABLE} aria-label=\"Recent agent activity\">",
+          "search": "<div\n            className=\"emvb-agents-table\"\n            {...SCROLLABLE}\n            aria-label={t(\"Recent agent activity\")}\n          >",
           "replace": "<div className=\"emvb-agents-table\">"
         }
       ],
@@ -39796,8 +39796,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/SiteStylesDrawer.tsx",
-          "search": "? \"Classes manager\"",
-          "replace": "? \"Classes Manager\""
+          "search": "? t(\"Classes manager\")",
+          "replace": "? t(\"Classes Manager\")"
         }
       ]
     },
@@ -39854,7 +39854,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/image-editor/parts.tsx",
-          "search": "<Tooltip key={tool.id} content={tool.label} side=\"bottom\" asChild>",
+          "search": "<Tooltip key={tool.id} content={t(tool.label)} side=\"bottom\" asChild>",
           "replace": "<React.Fragment key={tool.id}>"
         },
         {
@@ -39915,9 +39915,9 @@
       "description": "Loading a recipe file never applies it.",
       "edits": [
         {
-          "file": "packages/emvb/src/admin/image-editor/ImageEditorDialog.tsx",
-          "search": "    await editor.recipes.apply(result.recipe as",
-          "replace": "    void (result.recipe as"
+          "file": "packages/emvb/src/admin/image-editor/editor-layouts.tsx",
+          "search": "      await editor.recipes.apply(result.recipe as",
+          "replace": "      void (result.recipe as"
         }
       ]
     },
@@ -40129,7 +40129,7 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/AddPanel.tsx",
-          "search": "(!saved || matchingSections(saved, query).length === 0) ? (",
+          "search": "(!saved || matchingSections(saved, query, t).length === 0) ? (",
           "replace": "true ? ("
         }
       ]
@@ -40285,7 +40285,7 @@
       "description": "Load recipe reads any file into memory, however large, and calls it not a recipe.",
       "edits": [
         {
-          "file": "packages/emvb/src/admin/image-editor/ImageEditorDialog.tsx",
+          "file": "packages/emvb/src/admin/image-editor/editor-layouts.tsx",
           "search": "if (file.size > RECIPE_FILE_MAX_BYTES) {",
           "replace": "if (file.size < 0) {"
         }
@@ -40302,7 +40302,7 @@
       "description": "A recipe that fails to apply shows nothing.",
       "edits": [
         {
-          "file": "packages/emvb/src/admin/image-editor/ImageEditorDialog.tsx",
+          "file": "packages/emvb/src/admin/image-editor/editor-layouts.tsx",
           "search": "setError(\"This recipe couldn't be applied to this picture.\");",
           "replace": "setError(null);"
         }
@@ -40346,8 +40346,8 @@
       "edits": [
         {
           "file": "packages/emvb/src/admin/editor/panels/settings/IconControls.tsx",
-          "search": "{from.loop ? \", loops forever\" : \"\"}",
-          "replace": "{\"\"}"
+          "search": "loop: from.loop ? t(\", loops forever\") : \"\",",
+          "replace": "loop: \"\","
         }
       ]
     },
@@ -40375,7 +40375,7 @@
       "description": "The phone (compact) image editor has no way to download or load a recipe.",
       "edits": [
         {
-          "file": "packages/emvb/src/admin/image-editor/ImageEditorDialog.tsx",
+          "file": "packages/emvb/src/admin/image-editor/editor-layouts.tsx",
           "search": "              <RecipeItems recipe={recipe} />\n",
           "replace": "\n"
         }
@@ -40392,7 +40392,7 @@
       "description": "A bad recipe file loaded in the compact layout shows no error.",
       "edits": [
         {
-          "file": "packages/emvb/src/admin/image-editor/ImageEditorDialog.tsx",
+          "file": "packages/emvb/src/admin/image-editor/editor-layouts.tsx",
           "search": "{recipe.errorNote ? <div className=\"emvb-ie-compact-note\">{recipe.errorNote}</div> : null}",
           "replace": "{null}"
         }
@@ -40535,6 +40535,76 @@
       ],
       "command": ["bun", "test", "packages/emvb/test/server/host-fields.test.ts"],
       "expect": "MCP publish policy"
+    },
+    {
+      "id": "i18n/simplified-language-disabled",
+      "requirement": "简体中文界面边界",
+      "description": "简体中文语言标识被忽略，中文后台回退英文",
+      "edits": [
+        {
+          "file": "packages/emvb/src/admin/i18n/index.ts",
+          "search": "return /^(?:zh|zh-cn|zh-sg|zh-hans(?:-[a-z0-9]+)*)$/.test(code) ? \"zh-CN\" : \"en\";",
+          "replace": "return /^(?:zh|zh-cn|zh-sg|zh-hans(?:-[a-z0-9]+)*)$/.test(code) ? \"en\" : \"en\";"
+        }
+      ],
+      "command": ["bun", "test", "packages/emvb/src/admin/i18n/index.test.tsx"],
+      "expect": "\\(fail\\).*只将简体中文语言标识映射至中文"
+    },
+    {
+      "id": "i18n/missing-message-loses-fallback",
+      "requirement": "简体中文界面边界",
+      "description": "缺少中文词条时显示空白，而非保留英文原文",
+      "edits": [
+        {
+          "file": "packages/emvb/src/admin/i18n/index.ts",
+          "search": "? (messages[message] ?? message)\n          : message;",
+          "replace": "? (messages[message] ?? message)\n          : language === \"zh-CN\" ? \"\" : message;"
+        }
+      ],
+      "command": ["bun", "test", "packages/emvb/src/admin/i18n/index.test.tsx"],
+      "expect": "\\(fail\\).*英文、未知语言及缺少词条返回原文"
+    },
+    {
+      "id": "i18n/cancel-translation-missing",
+      "requirement": "简体中文界面边界",
+      "description": "取消操作的中文译文消失，退回英文按钮文案",
+      "edits": [
+        {
+          "file": "packages/emvb/src/admin/i18n/zh-chrome.ts",
+          "search": "  Cancel: \"取消\",",
+          "replace": "  Cancel: \"Cancel\","
+        }
+      ],
+      "command": ["bun", "test", "packages/emvb/src/admin/i18n/index.test.tsx"],
+      "expect": "\\(fail\\).*英文、未知语言及缺少词条返回原文"
+    },
+    {
+      "id": "i18n/user-values-not-interpolated",
+      "requirement": "简体中文界面边界",
+      "description": "用户原值和零值没有代入界面文案占位参数",
+      "edits": [
+        {
+          "file": "packages/emvb/src/admin/i18n/index.ts",
+          "search": "Object.hasOwn(values, key) ? String(values[key]) : token,",
+          "replace": "Object.hasOwn(values, key) ? token : token,"
+        }
+      ],
+      "command": ["bun", "test", "packages/emvb/src/admin/i18n/index.test.tsx"],
+      "expect": "\\(fail\\).*插值保留零、用户原文和未提供的参数"
+    },
+    {
+      "id": "i18n/root-language-subscription-lost",
+      "requirement": "简体中文界面边界",
+      "description": "后台根 lang 改变不再通知共享订阅，编辑器语言停留原值",
+      "edits": [
+        {
+          "file": "packages/emvb/src/admin/i18n/index.ts",
+          "search": "observer.observe(document.documentElement, { attributes: true, attributeFilter: [\"lang\"] });",
+          "replace": "observer.observe(document.documentElement, { attributes: true, attributeFilter: [\"dir\"] });"
+        }
+      ],
+      "command": ["bun", "test", "packages/emvb/src/admin/i18n/index.test.tsx"],
+      "expect": "\\(fail\\).*共享订阅切换语言且不重挂输入，卸载后能重新订阅"
     }
   ]
 }

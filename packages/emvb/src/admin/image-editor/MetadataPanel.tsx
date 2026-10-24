@@ -1,4 +1,10 @@
 /**
+ * [INPUT]: 依赖图片引擎文件信息、EXIF 与媒体显示名。
+ * [OUTPUT]: 提供MetadataPanel、metadataRows 与格式化函数。
+ * [POS]: 媒体信息视图，仅翻译字段标签并保留元数据值。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+/**
  * The Metadata tool (W-486): photocn's `metadata-panel.tsx`
  * (https://github.com/rbbydotdev/photocn, apps/www/src/registry/image-editor), MIT License,
  * Copyright (c) 2026 rbbydotdev: a title with the EXIF status badge, an alert when EXIF can't be
@@ -6,6 +12,7 @@
  * Lens and GPS. Rebuilt with Kumo and EmVB tokens. EmVB adds what a saved copy keeps (D-060): a
  * photo with a location gets a note that JPEG copies drop it and WebP/PNG copies carry no EXIF.
  */
+import { useI18n } from "../i18n/index.ts";
 import { Badge } from "@cloudflare/kumo";
 import { MapPinIcon } from "@phosphor-icons/react";
 import * as React from "react";
@@ -127,6 +134,7 @@ function errorText(error: unknown): string {
 export const ImageNameContext = React.createContext<string | undefined>(undefined);
 
 export function MetadataPanel() {
+  const t = useI18n();
   const displayName = React.useContext(ImageNameContext);
   const editor = useImageEditor();
   const engine = editor.engine as unknown as Engine;
@@ -148,17 +156,17 @@ export function MetadataPanel() {
         ? { text: "EXIF ready", variant: "secondary" }
         : { text: "File", variant: "outline" };
   return (
-    <section aria-label="Metadata" className="emvb-ie-panel" data-emvb-image-panel="metadata">
+    <section aria-label={t("Metadata")} className="emvb-ie-panel" data-emvb-image-panel="metadata">
       <div className="emvb-ie-meta" data-slot="metadata-panel">
         <div className="emvb-ie-meta-head">
-          <h2>Metadata</h2>
+          <h2>{t("Metadata")}</h2>
           <span data-emvb-image-exif={status}>
-            <Badge variant={badge.variant}>{badge.text}</Badge>
+            <Badge variant={badge.variant}>{t(badge.text)}</Badge>
           </span>
         </div>
         {status === "error" ? (
           <div className="emvb-ie-alert emvb-ie-alert-neutral" role="status">
-            <span>{errorText(error)}</span>
+            <span>{t(errorText(error))}</span>
           </div>
         ) : null}
         <hr className="emvb-ie-rule" />
@@ -167,24 +175,25 @@ export function MetadataPanel() {
             <tbody>
               {rows.map((row) => (
                 <tr key={row.label} data-emvb-image-meta={row.label}>
-                  <th scope="row">{row.label}</th>
+                  <th scope="row">{t(row.label)}</th>
                   <td>{row.value}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         ) : (
-          <p className="emvb-ie-subtle">No image metadata loaded.</p>
+          <p className="emvb-ie-subtle">{t("No image metadata loaded.")}</p>
         )}
         <p className="emvb-ie-meta-edits" data-emvb-image-meta-edits="">
-          <span className="emvb-ie-subtle">Edits</span> {edits}
+          <span className="emvb-ie-subtle">{t("Edits")}</span> {edits}
         </p>
         {hasGps ? (
           <p className="emvb-ie-meta-gps" data-emvb-image-meta-gps="">
             <MapPinIcon aria-hidden="true" />
             <span>
-              This photo has a location. A JPEG copy has it removed unless you turn that off when
-              saving; WebP and PNG copies keep no camera data.
+              {t(
+                "This photo has a location. A JPEG copy has it removed unless you turn that off when saving; WebP and PNG copies keep no camera data.",
+              )}
             </span>
           </p>
         ) : null}

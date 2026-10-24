@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖设备枚举、画布缩放设置与后台语言。
+ * [OUTPUT]: 提供DeviceBar。
+ * [POS]: 画布视口切换入口，设备标识保持原值。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { useI18n } from "../../i18n/index.ts";
 import { Button, Tabs } from "@cloudflare/kumo";
 import { DesktopIcon, DeviceMobileIcon, DeviceTabletIcon, type Icon } from "@phosphor-icons/react";
 import * as React from "react";
@@ -17,11 +24,12 @@ const ICONS: Record<PopupDevice, Icon> = {
 
 /** The device's icon (decorative) and its name, which stays the tab's accessible name (W-127). */
 function DeviceLabel({ device }: { device: PopupDevice }) {
+  const t = useI18n();
   const DeviceIcon = ICONS[device];
   return (
     <span className="emvb-device-label">
       <DeviceIcon aria-hidden="true" size={14} />
-      {LABELS[device]}
+      {t(LABELS[device])}
     </span>
   );
 }
@@ -51,9 +59,10 @@ export function DeviceBar({
   scale?: number;
   onZoom?: (zoom: "fit" | "actual") => void;
 }) {
+  const t = useI18n();
   const ref = React.useRef<HTMLDivElement>(null);
   React.useEffect(() => {
-    ref.current?.querySelector('[role="tablist"]')?.setAttribute("aria-label", "Device");
+    ref.current?.querySelector('[role="tablist"]')?.setAttribute("aria-label", t("Device"));
   });
   return (
     <div className="emvb-device-bar" data-emvb-device={device}>
@@ -82,11 +91,11 @@ export function DeviceBar({
           size="sm"
           className="emvb-zoom"
           aria-pressed={zoom === "fit"}
-          aria-label={`Fit to canvas (${Math.round(scale * 100)}%)`}
-          title={zoom === "fit" ? "Scaled to fit. Show at 100%" : "At 100%. Scale to fit"}
+          aria-label={t("Fit to canvas ({percent}%)", { percent: Math.round(scale * 100) })}
+          title={t(zoom === "fit" ? "Scaled to fit. Show at 100%" : "At 100%. Scale to fit")}
           onClick={() => onZoom(zoom === "fit" ? "actual" : "fit")}
         >
-          {zoom === "fit" ? `Fit · ${Math.round(scale * 100)}%` : "100%"}
+          {zoom === "fit" ? t("Fit · {percent}%", { percent: Math.round(scale * 100) }) : "100%"}
         </Button>
       )}
     </div>

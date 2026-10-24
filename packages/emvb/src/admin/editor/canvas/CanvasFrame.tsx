@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖核心 VNode、画布会话与后台语言。
+ * [OUTPUT]: 提供CanvasFrame、缩放函数与画布几何类型。
+ * [POS]: 沙箱预览边界，仅翻译编辑提示并原样渲染用户内容。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { useI18n, type Translate } from "../../i18n/index.ts";
 import { createPortal } from "react-dom";
 import { isMultilineText, type Layout, type PopupDevice, type VNode } from "../../../core/index.ts";
 import type { PasteRefusal } from "../useClipboardActions.ts";
@@ -34,20 +41,20 @@ const HINT = "color:#64748b;font:13px/1.4 system-ui,sans-serif;pointer-events:no
  * Canvas-only: empty containers are droppable and say so (W-128). Never emitted into the saved
  * page CSS.
  */
-const EDITOR_CANVAS_CSS =
+const editorCanvasCss = (t: Translate) =>
   // The 48 px floor is in :where() so a min-height the user set always wins (W-145).
   `:where(${DROP_BOXES}){min-height:48px}` +
   `:is(${DROP_BOXES}){outline:1px dashed #94a3b8;outline-offset:-1px;display:flex;align-items:center;justify-content:center}` +
-  `:is(${DROP_BOXES})::after{content:"Drop elements here";${HINT}}` +
+  `:is(${DROP_BOXES})::after{content:${JSON.stringify(t("Drop elements here"))};${HINT}}` +
   // UX-019: an empty page fills the canvas, so the whole stage takes a drop and says how to start.
   ":where(.emvb-root:empty){min-height:100vh}" +
-  '.emvb-root:empty::after{content:"Drag an element here from Add to start building";font-size:18px}' +
+  `.emvb-root:empty::after{content:${JSON.stringify(t("Drag an element here from Add to start building"))};font-size:18px}` +
   `:where(${DROP_BODIES}){min-height:48px}` +
   `:is(${DROP_BODIES}){outline:1px dashed #94a3b8;outline-offset:-1px}` +
-  `:is(${DROP_BODIES})::after{content:"Drop elements here";display:block;line-height:48px;text-align:center;${HINT}}` +
+  `:is(${DROP_BODIES})::after{content:${JSON.stringify(t("Drop elements here"))};display:block;line-height:48px;text-align:center;${HINT}}` +
   `:where(${NO_ITEMS}){min-height:48px}` +
   `:is(${NO_ITEMS}){outline:1px dashed #94a3b8;outline-offset:-1px}` +
-  `:is(${NO_ITEMS})::after{content:"No items yet: add them in this element's Content settings";display:block;line-height:48px;text-align:center;${HINT}}` +
+  `:is(${NO_ITEMS})::after{content:${JSON.stringify(t("No items yet: add them in this element's Content settings"))};display:block;line-height:48px;text-align:center;${HINT}}` +
   ".emvb-image-missing{display:inline-block;min-width:48px;min-height:48px;background:var(--color-kumo-tint, #eee)}[data-emvb-editing]{color:transparent !important}" +
   // W-307: a bound element shows a thin violet underline so live values read as live.
   "[data-emvb-bound]{text-decoration-line:underline;text-decoration-style:dotted;text-decoration-color:#7c3aed;text-underline-offset:3px}" +
@@ -57,7 +64,7 @@ const EDITOR_CANVAS_CSS =
   "[data-emvb-audience]{outline:1px dashed #0d9488;outline-offset:2px}" +
   // W-308: the Loop's Empty state shows under its items in the editor, marked as such.
   ".emvb-loop-item~.emvb-loop-empty{outline:1px dashed #94a3b8;outline-offset:2px;position:relative}" +
-  `.emvb-loop-item~.emvb-loop-empty::before{content:"Empty state: shown when there are no entries";display:block;${HINT}}`;
+  `.emvb-loop-item~.emvb-loop-empty::before{content:${JSON.stringify(t("Empty state: shown when there are no entries"))};display:block;${HINT}}`;
 
 /**
  * Tablet and Mobile previews scroll without a visible scrollbar (W-140), as phones and tablets
@@ -124,6 +131,7 @@ export function CanvasFrame({
   /** Stores a canvas plain-text edit (W-097). */
   onCommitText: (id: string, text: string) => void;
 }) {
+  const t = useI18n();
   const session = useCanvasSession({
     vnode,
     canvasStyles,
@@ -186,7 +194,7 @@ export function CanvasFrame({
         >
           <iframe
             ref={frame}
-            title="Page canvas"
+            title={t("Page canvas")}
             data-emvb-canvas=""
             srcDoc={SRCDOC}
             sandbox="allow-same-origin"
@@ -227,7 +235,7 @@ export function CanvasFrame({
       </div>
       {doc && createPortal(<style data-emvb-canvas-css="">{css}</style>, doc.head)}
       {doc &&
-        createPortal(<style data-emvb-editor-canvas-css="">{EDITOR_CANVAS_CSS}</style>, doc.head)}
+        createPortal(<style data-emvb-editor-canvas-css="">{editorCanvasCss(t)}</style>, doc.head)}
       {doc &&
         device !== "desktop" &&
         createPortal(<style data-emvb-preview-css="">{PREVIEW_SCROLL_CSS}</style>, doc.head)}

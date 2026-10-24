@@ -1,10 +1,17 @@
 /**
+ * [INPUT]: 依赖模糊中心坐标与 React 指针、键盘事件。
+ * [OUTPUT]: 提供BlurFocus 二维滑块组件。
+ * [POS]: 模糊工具的无障碍坐标输入，不更改数值单位。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+/**
  * The blur tool's sharp spot on the image (W-484): drag it, or focus it and use the arrow keys.
  *
  * Follows photocn's `blur-center-overlay.tsx` (https://github.com/rbbydotdev/photocn,
  * apps/www/src/registry/image-editor), MIT License, Copyright (c) 2026 rbbydotdev. The keyboard
  * control is EmVB's.
  */
+import { useI18n } from "../i18n/index.ts";
 import * as React from "react";
 
 type Center = { centerX: number; centerY: number };
@@ -22,6 +29,7 @@ export function BlurFocus({
   onChange: (next: Center) => void;
   onCommit: (next: Center) => void;
 }) {
+  const t = useI18n();
   const ref = React.useRef<HTMLDivElement | null>(null);
   const [dragging, setDragging] = React.useState(false);
   const at = (event: { clientX: number; clientY: number }): Center | null => {
@@ -70,11 +78,11 @@ export function BlurFocus({
         data-emvb-image-blur-focus=""
         role="slider"
         tabIndex={disabled ? -1 : 0}
-        aria-label="Sharp spot (blur center)"
+        aria-label={t("Sharp spot (blur center)")}
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={pct(centerX)}
-        aria-valuetext={`${pct(centerX)}% across, ${pct(centerY)}% down`}
+        aria-valuetext={t("{x}% across, {y}% down", { x: pct(centerX), y: pct(centerY) })}
         aria-disabled={disabled || undefined}
         style={{ left: `${centerX * 100}%`, top: `${centerY * 100}%` }}
         onPointerDown={(event) => event.currentTarget.focus({ preventScroll: true })}

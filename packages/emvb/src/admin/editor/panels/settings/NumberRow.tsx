@@ -1,8 +1,16 @@
+/**
+ * [INPUT]: 依赖 Kumo 输入、数值范围与按当前语言格式化的错误。
+ * [OUTPUT]: 导出 NumberField、NumberRow、ResetButton 与 NumberSpec。
+ * [POS]: 数值与重置控件；错误保留输入和范围快照，标签跟随界面语言。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { useI18n, type Translate } from "../../../i18n/index.ts";
 import { Button, Input } from "@cloudflare/kumo";
 import { ArrowCounterClockwiseIcon } from "@phosphor-icons/react";
 import * as React from "react";
 import { BUTTON, FIELD } from "../../../ui.ts";
 import { isCommitEnter } from "../../ime.ts";
+import { formatError, type LocalizedError } from "./localized-error.ts";
 
 /** Range and scale of a plain number field; `scale` converts stored to shown (opacity 0–1 → %). */
 export type NumberSpec = {
@@ -20,17 +28,28 @@ function parseNumberDraft(
   draft: string,
   label: string,
   spec: NumberSpec,
+  t: Translate,
 ): { ok: true; value: number | undefined } | { ok: false; message: string } {
   const text = draft.trim();
   if (text === "") return { ok: true, value: undefined };
   const n = /^-?(?:\d+(?:\.\d*)?|\.\d+)$/.test(text) ? Number(text) : Number.NaN;
   if (!Number.isFinite(n))
-    return { ok: false, message: `Enter a number, such as ${spec.example}.` };
+    return {
+      ok: false,
+      message: t("Enter a number, such as {example}.", { example: spec.example }),
+    };
   if (spec.integer && !Number.isInteger(n)) {
-    return { ok: false, message: `${label} must be a whole number.` };
+    return { ok: false, message: t("{label} must be a whole number.", { label }) };
   }
   if (n < spec.min || n > spec.max) {
-    return { ok: false, message: `${label} can be from ${spec.min} to ${spec.max}.` };
+    return {
+      ok: false,
+      message: t("{label} can be from {min} to {max}.", {
+        label,
+        min: spec.min,
+        max: spec.max,
+      }),
+    };
   }
   const scale = spec.scale ?? 1;
   return { ok: true, value: scale === 1 ? n : Math.round((n / scale) * 1000) / 1000 };
@@ -56,8 +75,13 @@ export function NumberField({
   inherited?: number;
   onCommit: (next: number | undefined) => void;
 }) {
+  const t = useI18n();
+  const shownLabel = t(label);
+  const labelRef = React.useRef(shownLabel);
+  labelRef.current = shownLabel;
   const [draft, setDraft] = React.useState(shown(value, spec));
-  const [error, setError] = React.useState<string | null>(null);
+  const [error, setError] = React.useState<LocalizedError | null>(null);
+  const errorText = formatError(error, t);
   // W-604: keyed on the spec's contents, not its identity; callers that build a spec per render
   // (Transition's Delay, Motion's fields) reset the draft whenever the panel re-rendered.
   const specKey = JSON.stringify(spec);
@@ -69,9 +93,15 @@ export function NumberField({
   }, [value, specKey]);
 
   const commit = () => {
-    const parsed = parseNumberDraft(draft, label, spec);
+    const parsed = parseNumberDraft(draft, shownLabel, spec, t);
     if (!parsed.ok) {
-      setError(parsed.message);
+      const capturedSpec = { ...spec };
+      setError({
+        format: (tr) => {
+          const again = parseNumberDraft(draft, labelRef.current, capturedSpec, tr);
+          return again.ok ? "" : again.message;
+        },
+      });
       return;
     }
     setError(null);
@@ -80,12 +110,12 @@ export function NumberField({
 
   return (
     <Input
-      label={spec.suffix ? `${label} (${spec.suffix})` : label}
+      label={spec.suffix ? `${shownLabel} (${spec.suffix})` : shownLabel}
       className={`${FIELD} emvb-mono emvb-number`}
       inputMode="decimal"
       value={draft}
       placeholder={inherited === undefined ? spec.placeholder : shown(inherited, spec)}
-      error={error ?? undefined}
+      error={errorText ?? undefined}
       aria-invalid={error ? true : undefined}
       data-emvb-number={fieldKey}
       onChange={(event) => setDraft(event.target.value)}
@@ -107,13 +137,14 @@ export function ResetButton({
   set: boolean;
   onReset: () => void;
 }) {
+  const t = useI18n();
   return (
     <Button
       type="button"
       variant="ghost"
       className={`${BUTTON} emvb-reset-btn`}
-      aria-label={`Reset ${label} to default`}
-      title="Reset to default"
+      aria-label={t("Reset {label} to default", { label: t(label) })}
+      title={t("Reset to default")}
       disabled={!set}
       onClick={onReset}
     >

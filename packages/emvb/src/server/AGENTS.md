@@ -15,7 +15,7 @@ hooks.ts：校验画布与主题文档，拒绝无权或非法保存。
 icon-routes.ts：清洗上传 SVG，提供列举与重命名路由。
 logging.test.ts：验证日志含错误码，不泄漏布局或凭据。
 mcp-routes.ts：桥接 MCP 与内容接口，施加权限和速率限制。
-plugin.ts：装配插件、字段组件、配置集合与可信 hooks。
+plugin.ts：装配插件、双语静态入口、字段组件与可信 hooks。
 saved-sections.ts：持久化可复用区块，向 MCP 暴露存储端口。
 
 ## 宿主字段配置

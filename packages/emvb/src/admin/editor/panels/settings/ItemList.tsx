@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖布局节点、后台界面翻译与同目录字段控件。
+ * [OUTPUT]: 子项目编辑；增删、排序与选择折叠项或选项卡。
+ * [POS]: 元素设置面板的 ItemList；不拥有页面保存与发布。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { useI18n } from "../../../i18n/index.ts";
 import { Button } from "@cloudflare/kumo";
 import * as React from "react";
 import {
@@ -99,6 +106,7 @@ export function ItemList({
   onSelect: (id: string) => void;
   actions?: ItemActions;
 }) {
+  const t = useI18n();
   const kind = KINDS[node.type];
   const kids = childrenOf(node);
   // An added item's title field takes focus with its text selected, so typing names it (W-154).
@@ -117,16 +125,16 @@ export function ItemList({
   }, [ids]);
   if (!kind) return null;
   const run = actions ?? localActions(node, onChange);
-  const Noun = kind.noun === "tab" ? "Tab" : "Item";
+  const noun = t(kind.noun);
   const full = kind.max !== undefined && kids.length >= kind.max;
   return (
     <div className="emvb-item-list" data-emvb-item-list={node.type} ref={listRef}>
-      <h3 className="emvb-section-label">{kind.noun === "tab" ? "Tabs" : "Items"}</h3>
+      <h3 className="emvb-section-label">{t(kind.noun === "tab" ? "Tabs" : "Items")}</h3>
       {kids.length === 0 ? (
         <p className="emvb-helper" data-emvb-item-empty="">
           {kind.noun === "tab"
-            ? "No tabs yet. Add a tab, then put elements in its panel on the canvas."
-            : "No items yet. Add an item, then put elements in its body on the canvas."}
+            ? t("No tabs yet. Add a tab, then put elements in its panel on the canvas.")
+            : t("No items yet. Add an item, then put elements in its body on the canvas.")}
         </p>
       ) : (
         <ol className="emvb-trigger-list">
@@ -163,7 +171,12 @@ export function ItemList({
                 }}
               >
                 <DraftTextField
-                  field={kind.field(n)}
+                  field={{
+                    ...kind.field(n),
+                    label: t(kind.noun === "tab" ? "Tab {count} label" : "Item {count} title", {
+                      count: n,
+                    }),
+                  }}
                   node={child}
                   onChange={(next) =>
                     onChange({
@@ -178,8 +191,11 @@ export function ItemList({
                     variant="ghost"
                     shape="square"
                     className={BUTTON}
-                    aria-label={`Edit ${kind.noun} ${n}`}
-                    title={`Select ${kind.noun} ${n} to edit its settings and content`}
+                    aria-label={t("Edit {name} {count}", { name: noun, count: n })}
+                    title={t("Select {name} {count} to edit its settings and content", {
+                      name: noun,
+                      count: n,
+                    })}
                     icon={<PencilSimpleIcon aria-hidden="true" />}
                     onClick={() => onSelect(child.id)}
                   />
@@ -188,8 +204,8 @@ export function ItemList({
                     variant="ghost"
                     shape="square"
                     className={BUTTON}
-                    aria-label={`Move ${kind.noun} ${n} up`}
-                    title={`Move ${kind.noun} ${n} up`}
+                    aria-label={t("Move {name} {count} up", { name: noun, count: n })}
+                    title={t("Move {name} {count} up", { name: noun, count: n })}
                     disabled={index === 0}
                     icon={<ArrowUpIcon aria-hidden="true" />}
                     onClick={() => run.move(child.id, "up")}
@@ -199,8 +215,8 @@ export function ItemList({
                     variant="ghost"
                     shape="square"
                     className={BUTTON}
-                    aria-label={`Move ${kind.noun} ${n} down`}
-                    title={`Move ${kind.noun} ${n} down`}
+                    aria-label={t("Move {name} {count} down", { name: noun, count: n })}
+                    title={t("Move {name} {count} down", { name: noun, count: n })}
                     disabled={index === kids.length - 1}
                     icon={<ArrowDownIcon aria-hidden="true" />}
                     onClick={() => run.move(child.id, "down")}
@@ -210,8 +226,8 @@ export function ItemList({
                     variant="ghost"
                     shape="square"
                     className={BUTTON}
-                    aria-label={`Delete ${kind.noun} ${n}`}
-                    title={`Delete ${kind.noun} ${n}`}
+                    aria-label={t("Delete {name} {count}", { name: noun, count: n })}
+                    title={t("Delete {name} {count}", { name: noun, count: n })}
                     icon={<TrashIcon aria-hidden="true" />}
                     onClick={() => run.remove(child.id)}
                   />
@@ -233,11 +249,16 @@ export function ItemList({
           run.add(node.id, fresh);
         }}
       >
-        {`Add ${kind.noun}`}
+        {t("Add {name}", { name: noun })}
       </Button>
       {full && (
         <p className="emvb-helper">
-          {Noun}s can show up to {kind.max} {kind.noun}s.
+          {t(
+            kind.noun === "tab"
+              ? "Tabs can show up to {count} tabs."
+              : "Items can show up to {count} items.",
+            { count: kind.max ?? 0 },
+          )}
         </p>
       )}
     </div>

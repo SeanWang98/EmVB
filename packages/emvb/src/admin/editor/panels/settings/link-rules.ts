@@ -1,3 +1,9 @@
+/**
+ * [INPUT]: 依赖布局字段与设置面板的调用参数。
+ * [OUTPUT]: 区分空格、协议与一般 URL 校验错误。
+ * [POS]: 元素设置面板的 link-rules 边界。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
 import { sanitizeHref } from "../../../../core/index.ts";
 
 const GENERIC = "Use a full URL such as https://example.com or a path such as /pricing.";

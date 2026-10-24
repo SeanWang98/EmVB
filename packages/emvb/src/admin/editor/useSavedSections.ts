@@ -1,8 +1,20 @@
+/**
+ * [INPUT]: 依赖共享区块 API、布局快照与延迟消息适配。
+ * [OUTPUT]: 提供共享区块读取、保存、插入和删除动作。
+ * [POS]: 共享资源会话；状态与通知随语言更新，API 原文和名称保持原值。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { localizedClassMergeNotice, localizedDroppedNotice } from "./action-notices.ts";
+import { translate, useI18n } from "../i18n/index.ts";
+import {
+  formatMessage,
+  literalMessage,
+  LocalizedMessageText,
+  type LocalizedMessage,
+} from "./localized-message.ts";
 import * as React from "react";
 import type { createKumoToastManager } from "@cloudflare/kumo";
 import {
-  classMergeNotice,
-  droppedNotice,
   insertSavedSection,
   LAYOUT_SCHEMA_VERSION,
   newNodeId,
@@ -35,15 +47,15 @@ export type SavedSectionActions = {
   loaded: boolean;
   refresh: () => void;
   /** Resolves to null when saved, or the reason it wasn't. */
-  save: (nodeId: string, name: string, mode: SaveMode) => Promise<string | null>;
+  save: (nodeId: string, name: string, mode: SaveMode) => Promise<LocalizedMessage | null>;
   insert: (id: string) => Promise<void>;
-  rename: (id: string, name: string) => Promise<string | null>;
-  remove: (id: string) => Promise<string | null>;
+  rename: (id: string, name: string) => Promise<LocalizedMessage | null>;
+  remove: (id: string) => Promise<LocalizedMessage | null>;
 };
 
 const NOTICE_MS = 5000;
-const messageOf = (error: unknown, fallback: string) =>
-  error instanceof Error && error.message ? error.message : fallback;
+const messageOf = (error: unknown, fallback: string): LocalizedMessage =>
+  error instanceof Error && error.message ? literalMessage(error.message) : fallback;
 
 /**
  * Saved sections in the editor (W-876, D-060). Copies go to `emvb_saved_sections`; Synced makes a
@@ -65,13 +77,23 @@ export function useSavedSections({
   announce: (message: string) => void;
   toasts: ReturnType<typeof createKumoToastManager>;
 }): SavedSectionActions {
+  const t = useI18n();
   const [list, setList] = React.useState<SavedSectionSummary[]>([]);
   const [loaded, setLoaded] = React.useState(false);
-  const [loadError, setLoadError] = React.useState<string | null>(null);
+  const [loadError, setLoadError] = React.useState<LocalizedMessage | null>(null);
   const tell = React.useCallback(
-    (title: string, description?: string) => {
-      announce(description ? `${title}. ${description}` : title);
-      toasts.add({ title, ...(description ? { description } : {}), timeout: NOTICE_MS });
+    (title: LocalizedMessage, description?: LocalizedMessage) => {
+      const spokenTitle = formatMessage(title, translate);
+      announce(
+        description ? `${spokenTitle}. ${formatMessage(description, translate)}` : spokenTitle,
+      );
+      toasts.add({
+        title: React.createElement(LocalizedMessageText, { message: title }),
+        ...(description
+          ? { description: React.createElement(LocalizedMessageText, { message: description }) }
+          : {}),
+        timeout: NOTICE_MS,
+      });
     },
     [announce, toasts],
   );
@@ -91,7 +113,11 @@ export function useSavedSections({
   }, [fetcher]);
   React.useEffect(refresh, [refresh]);
 
-  const saveCopy = async (layout: Layout, nodeId: string, name: string) => {
+  const saveCopy = async (
+    layout: Layout,
+    nodeId: string,
+    name: string,
+  ): Promise<LocalizedMessage | null> => {
     const snap = snapshotSection(
       layout,
       nodeId,
@@ -102,11 +128,17 @@ export function useSavedSections({
     if (!snap.ok) return snap.reason;
     await saveSavedSection(fetcher, snap.record);
     refresh();
-    tell(`Saved "${snap.record.name}" to My sections`);
+    tell({
+      format: (currentT) => currentT('Saved "{name}" to My sections', { name: snap.record.name }),
+    });
     return null;
   };
 
-  const saveSynced = async (layout: Layout, nodeId: string, name: string) => {
+  const saveSynced = async (
+    layout: Layout,
+    nodeId: string,
+    name: string,
+  ): Promise<LocalizedMessage | null> => {
     const partLayout = syncedPartLayout(layout, nodeId);
     const title = name.trim();
     if (!title) return "Give the section a name.";
@@ -125,11 +157,18 @@ export function useSavedSections({
     const now = latest.current.page.layout;
     const wrapped = now ? wrapInThemeSection(now, nodeId, partId) : null;
     if (!wrapped?.ok) {
-      return `The theme section "${title}" was made, but this element couldn't be linked to it. ${wrapped?.reason ?? ""}`.trim();
+      const reason = wrapped?.reason ?? "";
+      return {
+        format: (currentT) =>
+          currentT(
+            'The theme section "{name}" was made, but this element couldn\'t be linked to it. {reason}',
+            { name: title, reason: currentT(reason) },
+          ).trim(),
+      };
     }
     dispatch({ type: "apply-arranged", layout: wrapped.layout, selected: wrapped.selected });
     tell(
-      `Made the synced section "${title}"`,
+      { format: (currentT) => currentT('Made the synced section "{name}"', { name: title }) },
       "Edit it in Theme Builder; publish it there to use it on the site.",
     );
     return null;
@@ -158,14 +197,22 @@ export function useSavedSections({
         tell(result.reason);
         return;
       }
-      const classes = classMergeNotice(result.merge);
+      const classes = localizedClassMergeNotice(result.merge);
       // Classes first: an inserted copy never points at a class Site styles failed to save.
       if (classes) await changeDesign(result.design);
       dispatch({ type: "apply-arranged", layout: result.layout, selected: result.selected });
-      const left = droppedNotice(result.dropped);
-      const extra = [classes, left].filter(Boolean).join(" ");
-      if (extra) tell(`Inserted "${section.name}"`, extra);
-      else announce(`Inserted "${section.name}"`);
+      const extra = [classes, localizedDroppedNotice(result.dropped)].filter(Boolean).join(" ");
+      if (extra)
+        tell(
+          { format: (currentT) => currentT('Inserted "{name}"', { name: section.name }) },
+          {
+            format: () =>
+              [localizedClassMergeNotice(result.merge), localizedDroppedNotice(result.dropped)]
+                .filter(Boolean)
+                .join(" "),
+          },
+        );
+      else announce(translate('Inserted "{name}"', { name: section.name }));
     } catch (error) {
       tell(messageOf(error, "Couldn't insert the section."));
     }
@@ -175,7 +222,7 @@ export function useSavedSections({
     try {
       const item = await renameSavedSection(fetcher, id, name);
       setList((items) => items.map((entry) => (entry.id === id ? item : entry)));
-      announce(`Renamed to "${item.name}"`);
+      announce(translate('Renamed to "{name}"', { name: item.name }));
       return null;
     } catch (error) {
       return messageOf(error, "Couldn't rename the section.");
@@ -186,12 +233,21 @@ export function useSavedSections({
     try {
       await deleteSavedSection(fetcher, id);
       setList((items) => items.filter((entry) => entry.id !== id));
-      announce("Section deleted. Pages that use a copy keep it.");
+      announce(translate("Section deleted. Pages that use a copy keep it."));
       return null;
     } catch (error) {
       return messageOf(error, "Couldn't delete the section.");
     }
   };
 
-  return { list, loaded, loadError, refresh, save, insert, rename, remove };
+  return {
+    list,
+    loaded,
+    loadError: loadError ? formatMessage(loadError, t) : null,
+    refresh,
+    save,
+    insert,
+    rename,
+    remove,
+  };
 }

@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖布局节点、后台界面翻译与同目录字段控件。
+ * [OUTPUT]: 高级属性编辑；校验 CSS id、方向、容器查询与自定义属性。
+ * [POS]: 元素设置面板的 AdvancedFields；不拥有页面保存与发布。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { useI18n } from "../../../i18n/index.ts";
 import { Button, Input, Select } from "@cloudflare/kumo";
 import * as React from "react";
 import type { Layout, LayoutNode } from "../../../../core/index.ts";
@@ -25,6 +32,7 @@ export function HtmlIdField({
   layout: Layout | null;
   onChange: (node: LayoutNode) => void;
 }) {
+  const t = useI18n();
   const stored = node.htmlId ?? "";
   const [draft, setDraft] = React.useState(stored);
   React.useEffect(() => {
@@ -34,10 +42,10 @@ export function HtmlIdField({
   const error = htmlIdError(draft, layout, node.id);
   return (
     <Input
-      label="CSS id"
+      label={t("CSS id")}
       className={`${FIELD} emvb-mono`}
       value={draft}
-      error={error ?? undefined}
+      error={error ? t(error) : undefined}
       aria-invalid={error ? true : undefined}
       onChange={(event) => {
         const next = event.target.value.trim();
@@ -64,23 +72,24 @@ export function DirectionField({
   node: LayoutNode;
   onChange: (node: LayoutNode) => void;
 }) {
+  const t = useI18n();
   return (
     <Select
-      label="Text direction"
+      label={t("Text direction")}
       className={FIELD}
       data-emvb-dir=""
       value={node.dir ?? "site"}
       // UX-080: the trigger shows the option's name ("Site default"), not its value ("site").
-      renderValue={(value: unknown) => DIR_NAMES[String(value)] ?? String(value)}
+      renderValue={(value: unknown) => t(DIR_NAMES[String(value)] ?? String(value))}
       onValueChange={(value) => {
         const dir = value === "ltr" || value === "rtl" || value === "auto" ? value : undefined;
         onChange({ ...node, dir });
       }}
     >
-      <Select.Option value="site">Site default</Select.Option>
-      <Select.Option value="ltr">Left to right</Select.Option>
-      <Select.Option value="rtl">Right to left</Select.Option>
-      <Select.Option value="auto">Auto</Select.Option>
+      <Select.Option value="site">{t("Site default")}</Select.Option>
+      <Select.Option value="ltr">{t("Left to right")}</Select.Option>
+      <Select.Option value="rtl">{t("Right to left")}</Select.Option>
+      <Select.Option value="auto">{t("Auto")}</Select.Option>
     </Select>
   );
 }
@@ -93,6 +102,7 @@ export function ContainerQueryFields({
   node: LayoutNode;
   onChange: (node: LayoutNode) => void;
 }) {
+  const t = useI18n();
   // W-401: a draft committed on blur or Enter. Clearing the field while retyping a width used to
   // delete the query and every style in it on the first keystroke.
   const stored = node.query ? String(node.query.min) : "";
@@ -140,15 +150,15 @@ export function ContainerQueryFields({
               onChange({ ...node, container: event.target.checked ? true : undefined })
             }
           />
-          Query container
+          {t("Query container")}
         </label>
       )}
       <Input
-        label="Styles from container width (px)"
+        label={t("Styles from container width (px)")}
         className={FIELD}
         inputMode="numeric"
         value={draft}
-        error={error ?? undefined}
+        error={error ? t(error) : undefined}
         data-emvb-query-min=""
         onChange={(event) => setDraft(event.target.value)}
         onBlur={commitMin}
@@ -169,16 +179,17 @@ export function ContainerQueryFields({
           else copyStyle();
         }}
       >
-        Use current style at that width
+        {t("Use current style at that width")}
       </Button>
       {confirming && (
         <div className="emvb-query-confirm" role="alert" data-emvb-query-confirm="">
           <p className="emvb-helper">
-            Replace the {Object.keys(node.query?.style ?? {}).length} styles set for this width with
-            the current style?
+            {t("Replace the {count} styles set for this width with the current style?", {
+              count: Object.keys(node.query?.style ?? {}).length,
+            })}
           </p>
           <Button type="button" variant="destructive" className={BUTTON} onClick={copyStyle}>
-            Replace styles
+            {t("Replace styles")}
           </Button>
           <Button
             type="button"
@@ -186,14 +197,15 @@ export function ContainerQueryFields({
             className={BUTTON}
             onClick={() => setConfirming(false)}
           >
-            Keep them
+            {t("Keep them")}
           </Button>
         </div>
       )}
       <QueryStyleRows node={node} onChange={onChange} />
       <p className="emvb-helper">
-        Query container makes this box the size children measure. The styles listed here apply
-        inside @container once the container is at least that wide, not the viewport.
+        {t(
+          "Query container makes this box the size children measure. The styles listed here apply inside @container once the container is at least that wide, not the viewport.",
+        )}
       </p>
     </div>
   );
@@ -213,6 +225,7 @@ export function AttributesEditor({
   attributes: LayoutNode["attributes"];
   onChange: (next: LayoutNode["attributes"]) => void;
 }) {
+  const t = useI18n();
   const [rows, setRows] = React.useState<AttributeRow[]>(() => [...(attributes ?? [])]);
   React.useEffect(() => {
     // Undo, redo or another element: show the stored rows unless they are what these rows save.
@@ -220,7 +233,7 @@ export function AttributesEditor({
       sameRows(savableAttributes(current), attributes) ? current : [...(attributes ?? [])],
     );
   }, [attributes]);
-  const errors = attributeErrors(rows);
+  const errors = attributeErrors(rows, t);
   const change = (next: AttributeRow[]) => {
     setRows(next);
     const keep = savableAttributes(next);
@@ -230,19 +243,19 @@ export function AttributesEditor({
     change(rows.map((item, i) => (i === index ? { ...item, ...patch } : item)));
   return (
     <div className="emvb-field-group" data-emvb-attributes="">
-      <span className="emvb-var-field-label">Attributes</span>
+      <span className="emvb-var-field-label">{t("Attributes")}</span>
       {rows.map((item, index) => (
         <div key={index} className="emvb-style-row">
           <Input
-            label="Name"
+            label={t("Name")}
             className={`${FIELD} emvb-mono`}
             value={item.name}
-            error={errors[index] ?? undefined}
+            error={errors[index] ? t(errors[index] ?? "") : undefined}
             aria-invalid={errors[index] ? true : undefined}
             onChange={(event) => update(index, { name: event.target.value.trim().toLowerCase() })}
           />
           <Input
-            label="Value"
+            label={t("Value")}
             className={FIELD}
             value={item.value}
             maxLength={MAX_ATTR_VALUE}
@@ -253,7 +266,7 @@ export function AttributesEditor({
             variant="ghost"
             onClick={() => change(rows.filter((_, i) => i !== index))}
           >
-            Remove
+            {t("Remove")}
           </Button>
         </div>
       ))}
@@ -263,9 +276,11 @@ export function AttributesEditor({
         className={BUTTON}
         onClick={() => setRows([...rows, { name: "data-", value: "" }])}
       >
-        Add attribute
+        {t("Add attribute")}
       </Button>
-      <p className="emvb-helper">data-* and aria-* names only. Event handlers are refused.</p>
+      <p className="emvb-helper">
+        {t("data-* and aria-* names only. Event handlers are refused.")}
+      </p>
     </div>
   );
 }

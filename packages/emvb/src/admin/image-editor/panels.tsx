@@ -1,4 +1,10 @@
 /**
+ * [INPUT]: 依赖图片引擎工具状态、通用控件与色调面板。
+ * [OUTPUT]: 提供ToolPanel。
+ * [POS]: 工具面板分派与裁剪界面，配方枚举保持原值。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+/**
  * The sidebar panels: the crop tool's controls (W-483), the tone tools (W-484, in tone-panels.tsx
  * CurvesPanel.tsx and MetadataPanel.tsx), and a placeholder for the blender tool.
  *
@@ -6,6 +12,7 @@
  * apps/www/src/registry/image-editor), MIT License, Copyright (c) 2026 rbbydotdev, rebuilt with
  * Kumo components and EmVB tokens.
  */
+import { useI18n, type Translate } from "../i18n/index.ts";
 import { Button, Select } from "@cloudflare/kumo";
 import {
   ArrowCounterClockwiseIcon,
@@ -46,32 +53,38 @@ const CROP_SHORTCUTS: readonly [keys: string, action: string][] = [
 const degrees = (v: number) => `${v > 0 ? "+" : ""}${v.toFixed(1)}°`;
 const percent = (v: number) => `${v > 0 ? "+" : ""}${Math.round(v * 100)}`;
 
+function aspectLabel(label: string, t: Translate): string {
+  const fit = /^Fit this element \((.+)\)$/.exec(label);
+  return fit ? t("Fit this element ({size})", { size: fit[1] ?? "" }) : t(label);
+}
+
 /** Quarter turns, flips, ratio, straighten and perspective. Cropping happens on the canvas. */
 function CropPanel() {
+  const t = useI18n();
   const editor = useImageEditor();
   const g = editor.geometry;
   const disabled = editor.disabled || !editor.hasImage;
   const canToggleOrientation = g.aspectRatio !== "1:1";
   const ratioId = React.useId();
   return (
-    <section aria-label="Crop" className="emvb-ie-panel" data-emvb-image-panel="compose">
+    <section aria-label={t("Crop")} className="emvb-ie-panel" data-emvb-image-panel="compose">
       <PanelHeader
-        title="Crop"
-        description="Drag the frame on the image to crop"
+        title={t("Crop")}
+        description={t("Drag the frame on the image to crop")}
         onReset={() => g.reset()}
         resetDisabled={disabled || g.isDefault}
       />
       <div className="emvb-ie-group">
-        <div className="emvb-ie-row" role="group" aria-label="Rotate and flip">
+        <div className="emvb-ie-row" role="group" aria-label={t("Rotate and flip")}>
           <IconButton
-            label="Rotate left"
+            label={t("Rotate left")}
             icon={<RotateSquareIcon direction="left" />}
             disabled={disabled}
             onClick={() => g.rotate(-1)}
             data-emvb-image-rotate="left"
           />
           <IconButton
-            label="Rotate right"
+            label={t("Rotate right")}
             icon={<RotateSquareIcon direction="right" />}
             disabled={disabled}
             onClick={() => g.rotate(1)}
@@ -79,14 +92,14 @@ function CropPanel() {
           />
           <span className="emvb-ie-vsep" aria-hidden="true" />
           <IconButton
-            label="Flip horizontal"
+            label={t("Flip horizontal")}
             icon={<FlipHorizontalIcon aria-hidden="true" />}
             disabled={disabled}
             onClick={() => g.flip("horizontal")}
             data-emvb-image-flip="horizontal"
           />
           <IconButton
-            label="Flip vertical"
+            label={t("Flip vertical")}
             icon={<FlipVerticalIcon aria-hidden="true" />}
             disabled={disabled}
             onClick={() => g.flip("vertical")}
@@ -95,7 +108,7 @@ function CropPanel() {
         </div>
         <div className="emvb-ie-field">
           <span className="emvb-ie-label" id={ratioId}>
-            Aspect ratio
+            {t("Aspect ratio")}
           </span>
           <div className="emvb-ie-row emvb-ie-row-fill">
             <Select
@@ -103,20 +116,22 @@ function CropPanel() {
               className="emvb-ie-select"
               disabled={disabled}
               value={g.aspectRatio}
-              items={Object.fromEntries(g.aspectRatioOptions.map((o) => [o.value, o.label]))}
+              items={Object.fromEntries(
+                g.aspectRatioOptions.map((o) => [o.value, aspectLabel(o.label, t)]),
+              )}
               onValueChange={(next) => {
                 if (typeof next === "string" && next) g.setAspectRatio(next);
               }}
             >
               {g.aspectRatioOptions.map((option) => (
                 <Select.Option key={option.value} value={option.value}>
-                  {option.label}
+                  {aspectLabel(option.label, t)}
                 </Select.Option>
               ))}
             </Select>
             <IconButton
               variant="outline"
-              label={g.portrait ? "Switch to landscape" : "Switch to portrait"}
+              label={t(g.portrait ? "Switch to landscape" : "Switch to portrait")}
               icon={
                 <RectangleIcon
                   aria-hidden="true"
@@ -131,7 +146,7 @@ function CropPanel() {
         </div>
         <CenteredSlider
           name="straighten"
-          label="Straighten"
+          label={t("Straighten")}
           min={-45}
           max={45}
           step={0.1}
@@ -145,7 +160,7 @@ function CropPanel() {
       <hr className="emvb-ie-sep" />
       <fieldset className="emvb-ie-group">
         <div className="emvb-ie-row emvb-ie-row-between">
-          <legend className="emvb-ie-label">Perspective</legend>
+          <legend className="emvb-ie-label">{t("Perspective")}</legend>
           <div className="emvb-ie-row">
             {g.value.corners ? (
               <Button
@@ -157,12 +172,12 @@ function CropPanel() {
                 disabled={disabled}
                 onClick={() => g.resetCorners()}
               >
-                Corners
+                {t("Corners")}
               </Button>
             ) : null}
             <IconButton
               variant="outline"
-              label="Adjust corners"
+              label={t("Adjust corners")}
               icon={<SkewIcon />}
               aria-pressed={g.editingCorners}
               disabled={disabled}
@@ -173,7 +188,7 @@ function CropPanel() {
         </div>
         <CenteredSlider
           name="perspective-y"
-          label="Vertical"
+          label={t("Vertical")}
           min={-1}
           max={1}
           step={0.01}
@@ -185,7 +200,7 @@ function CropPanel() {
         />
         <CenteredSlider
           name="perspective-x"
-          label="Horizontal"
+          label={t("Horizontal")}
           min={-1}
           max={1}
           step={0.01}
@@ -208,17 +223,17 @@ function CropPanel() {
           onClick={() => g.done()}
           data-emvb-image-crop-done=""
         >
-          Done
+          {t("Done")}
         </Button>
         <details className="emvb-ie-shortcuts">
-          <summary>Keyboard shortcuts</summary>
+          <summary>{t("Keyboard shortcuts")}</summary>
           <dl>
             {CROP_SHORTCUTS.map(([keys, action]) => (
               <div key={keys}>
                 <dt>
                   <kbd>{keys}</kbd>
                 </dt>
-                <dd>{action}</dd>
+                <dd>{t(action)}</dd>
               </div>
             ))}
           </dl>
@@ -230,11 +245,12 @@ function CropPanel() {
 
 /** A tool whose controls arrive in a later update: its header and what it will do. */
 function ComingSoonPanel({ tool }: { tool: keyof typeof COMING_SOON }) {
-  const meta = IMAGE_EDITOR_TOOLS.find((t) => t.id === tool) ?? IMAGE_EDITOR_TOOLS[0];
+  const t = useI18n();
+  const meta = IMAGE_EDITOR_TOOLS.find((item) => item.id === tool) ?? IMAGE_EDITOR_TOOLS[0];
   const ToolIcon = TOOL_ICONS[tool];
   return (
-    <section aria-label={meta.label} className="emvb-ie-panel" data-emvb-image-panel={tool}>
-      <PanelHeader title={meta.label} description={meta.blurb} />
+    <section aria-label={t(meta.label)} className="emvb-ie-panel" data-emvb-image-panel={tool}>
+      <PanelHeader title={t(meta.label)} description={t(meta.blurb)} />
       <div className="emvb-ie-group">
         <div className="emvb-ie-soon">
           <span className="emvb-ie-soon-icon" aria-hidden="true">
@@ -242,18 +258,20 @@ function ComingSoonPanel({ tool }: { tool: keyof typeof COMING_SOON }) {
           </span>
           <div>
             <p className="emvb-ie-soon-title">
-              <ClockCountdownIcon aria-hidden="true" /> Coming in the next update
+              <ClockCountdownIcon aria-hidden="true" />
+              {t("Coming in the next update")}
             </p>
             <ul>
               {COMING_SOON[tool].map((line) => (
-                <li key={line}>{line}</li>
+                <li key={line}>{t(line)}</li>
               ))}
             </ul>
           </div>
         </div>
         <p className="emvb-ie-note">
-          Saving makes a new copy in the media library; the picture you started from is never
-          changed.
+          {t(
+            "Saving makes a new copy in the media library; the picture you started from is never changed.",
+          )}
         </p>
       </div>
     </section>

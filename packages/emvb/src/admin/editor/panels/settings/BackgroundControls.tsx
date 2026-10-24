@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖媒体 API、颜色字段与本地和外部错误边界
+ * [OUTPUT]: 提供背景图片、渐变和遮罩控件
+ * [POS]: 背景字段适配层；切语言保留错误且不重载媒体库
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { useI18n } from "../../../i18n/index.ts";
 import { Button, Input, Select } from "@cloudflare/kumo";
 import { PlusIcon } from "@phosphor-icons/react";
 import * as React from "react";
@@ -8,6 +15,8 @@ import { BUTTON, FIELD } from "../../../ui.ts";
 import { ColorControl } from "../ColorControl.tsx";
 import { NumberField, type NumberSpec } from "./NumberRow.tsx";
 import { isCommitEnter } from "../../ime.ts";
+import { formatError, type LocalizedError } from "./localized-error.ts";
+import { errorMessage } from "../../localized-message.ts";
 
 type Gradient = NonNullable<StyleProps["gradient"]>;
 type Overlay = NonNullable<StyleProps["overlay"]>;
@@ -45,6 +54,7 @@ export function BackgroundImageControl({
   onChange: (next: string | undefined) => void;
   reset: React.ReactNode;
 }) {
+  const t = useI18n();
   const src = value ?? "";
   const [open, setOpen] = React.useState(false);
   const [items, setItems] = React.useState<MediaLibraryItem[]>([]);
@@ -56,7 +66,7 @@ export function BackgroundImageControl({
     busyRef.current = next;
     setBusyState(next);
   }, []);
-  const [error, setError] = React.useState<string | null>(null);
+  const [error, setError] = React.useState<LocalizedError | null>(null);
   const [urlDraft, setUrlDraft] = React.useState(src);
   const fileRef = React.useRef<HTMLInputElement>(null);
   // W-823: the background Media library didn't take focus, ignored Escape and dropped focus to
@@ -78,7 +88,7 @@ export function BackgroundImageControl({
     try {
       setItems(await listImages(fetcher, { limit: 40 }));
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Couldn't load the media library.");
+      setError(errorMessage(caught, "Couldn't load the media library."));
       setItems([]);
     } finally {
       setBusy(false);
@@ -123,14 +133,14 @@ export function BackgroundImageControl({
       data-set={value ? "true" : undefined}
     >
       <div className="emvb-field-group" data-emvb-background-image="">
-        <span className="emvb-var-field-label">Image</span>
+        <span className="emvb-var-field-label">{t("Image")}</span>
         {src ? (
           <div className="emvb-media-preview">
             <img src={src} alt="" className="emvb-media-thumb" />
             <span className="emvb-helper emvb-mono">{src}</span>
           </div>
         ) : (
-          <p className="emvb-helper">No image yet, so this element has no background.</p>
+          <p className="emvb-helper">{t("No image yet, so this element has no background.")}</p>
         )}
         {fetcher && (
           <div className="emvb-media-actions">
@@ -144,7 +154,7 @@ export function BackgroundImageControl({
               ref={libraryOpenerRef}
               data-emvb-bg-library=""
             >
-              Choose from library
+              {t("Choose from library")}
             </Button>
             <Button
               type="button"
@@ -156,7 +166,7 @@ export function BackgroundImageControl({
               aria-disabled={busy}
               data-emvb-bg-upload-btn=""
             >
-              Upload
+              {t("Upload")}
             </Button>
             <input
               ref={fileRef}
@@ -173,7 +183,7 @@ export function BackgroundImageControl({
                 void uploadImage(fetcher, file)
                   .then((item) => applyUrl(item.url))
                   .catch((caught: unknown) => {
-                    setError(caught instanceof Error ? caught.message : "Upload failed.");
+                    setError(errorMessage(caught, "Upload failed."));
                   })
                   .finally(() => {
                     setBusy(false);
@@ -184,10 +194,10 @@ export function BackgroundImageControl({
           </div>
         )}
         <Input
-          label="Image URL"
+          label={t("Image URL")}
           className={FIELD}
           value={urlDraft}
-          error={error ?? undefined}
+          error={formatError(error, t) ?? undefined}
           data-emvb-bg-url=""
           onChange={(event) => setUrlDraft(event.target.value)}
           onBlur={() => commitUrl(false)}
@@ -199,7 +209,7 @@ export function BackgroundImageControl({
           <div
             className="emvb-media-dialog"
             role="dialog"
-            aria-label="Media library"
+            aria-label={t("Media library")}
             onKeyDown={(event) => {
               if (event.key !== "Escape" || event.defaultPrevented) return;
               event.preventDefault();
@@ -208,7 +218,7 @@ export function BackgroundImageControl({
             }}
           >
             <div className="emvb-media-dialog-head">
-              <h3 className="emvb-panel-title">Media library</h3>
+              <h3 className="emvb-panel-title">{t("Media library")}</h3>
               <Button
                 type="button"
                 className={BUTTON}
@@ -216,11 +226,11 @@ export function BackgroundImageControl({
                 autoFocus
                 onClick={closeLibrary}
               >
-                Close
+                {t("Close")}
               </Button>
             </div>
-            {busy && <p className="emvb-helper">Loading…</p>}
-            {!busy && items.length === 0 && <p className="emvb-helper">No images yet.</p>}
+            {busy && <p className="emvb-helper">{t("Loading…")}</p>}
+            {!busy && items.length === 0 && <p className="emvb-helper">{t("No images yet.")}</p>}
             <ul className="emvb-media-grid">
               {items.map((item) => (
                 <li key={item.id}>
@@ -280,6 +290,7 @@ export function GradientControl({
   onChange: (next: Gradient) => void;
   onDesignChange: (design: DesignSystem) => Promise<void>;
 }) {
+  const t = useI18n();
   const stops = value.stops;
   const defaultAngle = value.type === "conic" ? 0 : 180;
   // An emptied angle goes back to the type's default instead of 0 (W-180).
@@ -304,12 +315,12 @@ export function GradientControl({
   return (
     <div className="emvb-field-group" data-emvb-gradient="">
       <Select
-        label="Gradient type"
+        label={t("Gradient type")}
         className={FIELD}
         value={value.type}
         // UX-081: triggers show option names ("Linear", "Top left"), not raw values.
         renderValue={(v: unknown) =>
-          GRADIENT_TYPES.find((option) => option.value === v)?.label ?? String(v)
+          t(GRADIENT_TYPES.find((option) => option.value === v)?.label ?? String(v))
         }
         onValueChange={(next) => {
           const type = GRADIENT_TYPES.find((option) => option.value === next)?.value;
@@ -318,16 +329,16 @@ export function GradientControl({
       >
         {GRADIENT_TYPES.map((option) => (
           <Select.Option key={option.value} value={option.value}>
-            {option.label}
+            {t(option.label)}
           </Select.Option>
         ))}
       </Select>
       {value.type === "radial" ? (
         <Select
-          label="Position"
+          label={t("Position")}
           className={FIELD}
           value={value.position ?? "center"}
-          renderValue={(v: unknown) => sentence(String(v))}
+          renderValue={(v: unknown) => t(sentence(String(v)))}
           onValueChange={(next) => {
             const position = RADIAL_AT.find((option) => option === next);
             if (position) onChange({ ...value, position });
@@ -335,7 +346,7 @@ export function GradientControl({
         >
           {RADIAL_AT.map((option) => (
             <Select.Option key={option} value={option}>
-              {sentence(option)}
+              {t(sentence(option))}
             </Select.Option>
           ))}
         </Select>
@@ -343,7 +354,7 @@ export function GradientControl({
         <div className="emvb-angle">
           <NumberField
             fieldKey="gradient.angle"
-            label="Angle"
+            label={t("Angle")}
             value={value.angle}
             inherited={defaultAngle}
             spec={ANGLE}
@@ -354,7 +365,7 @@ export function GradientControl({
             className="emvb-angle-slider"
             min={0}
             max={360}
-            aria-label="Angle slider"
+            aria-label={t("Angle slider")}
             value={value.angle ?? defaultAngle}
             onChange={(event) => onChange({ ...value, angle: Number(event.target.value) })}
           />
@@ -363,7 +374,7 @@ export function GradientControl({
       {stops.map((stop, index) => (
         <div className="emvb-gradient-stop" key={index} data-emvb-gradient-stop={index}>
           <ColorControl
-            label={`Color ${index + 1}`}
+            label={t("Color {count}", { count: index + 1 })}
             value={stop.color}
             design={design}
             onChange={(color) => color && setStop(index, { color })}
@@ -371,7 +382,7 @@ export function GradientControl({
           />
           <NumberField
             fieldKey={`gradient.stop.${index}`}
-            label={`Location ${index + 1}`}
+            label={t("Location {count}", { count: index + 1 })}
             value={stop.at}
             inherited={autoStopAt(index, stops.length)}
             spec={STOP_AT}
@@ -384,7 +395,7 @@ export function GradientControl({
               className={BUTTON}
               onClick={() => onChange({ ...value, stops: stops.filter((_, i) => i !== index) })}
             >
-              Remove color {index + 1}
+              {t("Remove color {count}", { count: index + 1 })}
             </Button>
           )}
         </div>
@@ -398,7 +409,7 @@ export function GradientControl({
           icon={PlusIcon}
           onClick={addStop}
         >
-          Add location
+          {t("Add location")}
         </Button>
       )}
     </div>
@@ -418,6 +429,7 @@ export function OverlayControl({
   onDesignChange: (design: DesignSystem) => Promise<void>;
   reset: React.ReactNode;
 }) {
+  const t = useI18n();
   const patch = (part: Partial<Overlay>) => {
     if (!value) return;
     onChange({ ...value, ...part });
@@ -425,11 +437,11 @@ export function OverlayControl({
   return (
     <div className="emvb-style-row" data-emvb-style="overlay" data-set={value ? "true" : undefined}>
       <div className="emvb-field-group">
-        <span className="emvb-var-field-label">Overlay</span>
+        <span className="emvb-var-field-label">{t("Overlay")}</span>
         {value ? (
           <>
             <ColorControl
-              label="Overlay color"
+              label={t("Overlay color")}
               value={value.color}
               design={design}
               onChange={(color) => color && patch({ color })}
@@ -437,7 +449,7 @@ export function OverlayControl({
             />
             <NumberField
               fieldKey="overlay.opacity"
-              label="Overlay opacity"
+              label={t("Overlay opacity")}
               value={value.opacity}
               spec={OVERLAY_OPACITY}
               onCommit={(n) => patch({ opacity: n ?? 0 })}
@@ -452,7 +464,7 @@ export function OverlayControl({
             data-emvb-add-overlay=""
             onClick={() => onChange(NEW_OVERLAY)}
           >
-            Add overlay
+            {t("Add overlay")}
           </Button>
         )}
       </div>

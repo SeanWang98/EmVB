@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖集合规格与可选的界面翻译函数。
+ * [OUTPUT]: 提供纯初始化计划和字段冲突说明。
+ * [POS]: 只比较稳定字段身份；翻译仅作用于冲突说明。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import type { Translate } from "../i18n/index.ts";
 import {
   COLLECTION_SPEC,
   FIELD_SPECS,
@@ -79,11 +86,19 @@ function fieldPlan(
   collection: string,
   state: FieldState | undefined,
   spec: FieldSpec,
+  t?: Translate,
 ): { step?: SetupStep; conflict?: string } {
   if (!state) return { step: { kind: "create-field", collection, body: spec } };
   if (state.type !== spec.type) {
     return {
-      conflict: `Field "${spec.slug}" on ${collection} is ${state.type}; EmVB needs ${spec.type}.`,
+      conflict: t
+        ? t('Field "{field}" on {collection} is {actual}; EmVB needs {expected}.', {
+            field: spec.slug,
+            collection,
+            actual: state.type,
+            expected: spec.type,
+          })
+        : `Field "${spec.slug}" on ${collection} is ${state.type}; EmVB needs ${spec.type}.`,
     };
   }
   if (fieldMatches(state, spec)) return {};
@@ -99,6 +114,7 @@ function planCollectionSetup(
   current: CollectionState | null,
   collectionSpec: CollectionSpec,
   fieldSpecs: readonly FieldSpec[],
+  t?: Translate,
 ): { steps: SetupStep[]; conflicts: string[] } {
   const collection = collectionSpec.slug;
   if (!current) {
@@ -116,6 +132,7 @@ function planCollectionSetup(
       collection,
       current.fields.find((f) => f.slug === spec.slug),
       spec,
+      t,
     ),
   );
   return {
@@ -136,12 +153,14 @@ function planCollectionSetup(
 export function planSetup(
   pages: CollectionState | null,
   themeParts: CollectionState | null = null,
+  t?: Translate,
 ): { steps: SetupStep[]; conflicts: string[] } {
-  const pagesPlan = planCollectionSetup(pages, COLLECTION_SPEC, FIELD_SPECS);
+  const pagesPlan = planCollectionSetup(pages, COLLECTION_SPEC, FIELD_SPECS, t);
   const themePlan = planCollectionSetup(
     themeParts,
     THEME_PARTS_COLLECTION_SPEC,
     THEME_PARTS_FIELD_SPECS,
+    t,
   );
   return {
     steps: [...pagesPlan.steps, ...themePlan.steps],

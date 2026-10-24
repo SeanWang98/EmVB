@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖核心 StyleProps schema 与可注入翻译器。
+ * [OUTPUT]: 导出样式格式化、属性清单与可注入翻译的 parseStyleValue。
+ * [POS]: 元素设置面板的容器查询样式解析器，翻译展示文案并保留存储值。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { createTranslator, type Translate } from "../../../i18n/index.ts";
 import { StyleProps } from "../../../../core/index.ts";
 
 /** Style keys a container-query style may set (W-398). */
@@ -75,20 +82,26 @@ function candidates(text: string, key: string): unknown[] {
 }
 
 /** The value `key` would store for `text`, or why it can't (W-398). */
-export function parseStyleValue(key: string, text: string): { value: unknown } | { error: string } {
+export function parseStyleValue(
+  key: string,
+  text: string,
+  t: Translate = createTranslator("en"),
+): { value: unknown } | { error: string } {
   // W-542: an inherited name ("constructor") is not a style property; it used to throw.
   const shape = StyleProps.shape as Record<
     string,
     { safeParse: (v: unknown) => { success: boolean } }
   >;
   const schema = Object.hasOwn(shape, key) ? shape[key] : undefined;
-  if (!schema) return { error: `${key} isn't a style property.` };
+  if (!schema) return { error: t("{key} isn't a style property.", { key }) };
   const trimmed = text.trim();
-  if (trimmed === "") return { error: "Enter a value." };
+  if (trimmed === "") return { error: t("Enter a value.") };
   if (/^[+-]?\d*,\d+\s*[a-z%]*$/i.test(trimmed))
-    return { error: "Use a dot for decimals, such as 1.5." };
+    return { error: t("Use a dot for decimals, such as 1.5.") };
   for (const candidate of candidates(trimmed, key)) {
     if (candidate !== undefined && schema.safeParse(candidate).success) return { value: candidate };
   }
-  return { error: `"${trimmed.slice(0, 40)}" isn't a value ${key} accepts.` };
+  return {
+    error: t('"{value}" isn\'t a value {key} accepts.', { value: trimmed.slice(0, 40), key }),
+  };
 }

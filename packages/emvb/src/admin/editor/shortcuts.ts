@@ -1,3 +1,9 @@
+/**
+ * [INPUT]: 依赖浏览器键盘事件的按键与位置。
+ * [OUTPUT]: 提供快捷键英文源文案、组合拆分与事件判定。
+ * [POS]: 编辑器键盘契约；显示层翻译动作与连接词。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
 /** The editor's keyboard shortcuts (DESIGN_BRIEF), shown in the Shortcuts dialog. */
 export const SHORTCUTS: readonly { action: string; keys: string }[] = [
   { action: "Command palette: insert, jump, apply a class, run an action", keys: "Ctrl/Cmd+K" },

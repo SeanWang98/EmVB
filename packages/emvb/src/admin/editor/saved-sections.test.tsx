@@ -1,3 +1,9 @@
+/**
+ * [INPUT]: 依赖区块弹窗、共享区块会话与独立通知层。
+ * [OUTPUT]: 验证区块复用、延迟翻译与语言切换输入保护。
+ * [POS]: 区块回归测试；界面刷新不得改写用户名称与 API 原文。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
 import { afterEach, describe, expect, test } from "bun:test";
 import { act } from "react";
 import * as React from "react";
@@ -10,7 +16,10 @@ import {
   type Layout,
   type SavedSection,
 } from "../../core/index.ts";
-import { cleanup, mount, settle } from "../../../test/dom/mount.ts";
+import { cleanup, mount, rerender, settle } from "../../../test/dom/mount.ts";
+import { useI18n } from "../i18n/index.ts";
+import { ELEMENT_NAMES } from "./element-chrome.ts";
+import { EditorToasts } from "./EditorToasts.tsx";
 import type { Fetcher } from "../api.ts";
 import { editorCommands, runCommand } from "./editor-commands.ts";
 import { paletteItems } from "./palette-items.ts";
@@ -18,6 +27,7 @@ import { AddPanel } from "./panels/AddPanel.tsx";
 import { SaveSectionDialog } from "./SavedSectionDialogs.tsx";
 import type { EditorAction, EditorState } from "./store.ts";
 import { useSavedSections, type SavedSectionActions } from "./useSavedSections.ts";
+import type { LocalizedMessage } from "./localized-message.ts";
 
 afterEach(async () => {
   await cleanup();
@@ -226,6 +236,89 @@ describe("Save as section command (W-876)", () => {
 });
 
 describe("Save as section dialog (W-876)", () => {
+  test("language changes preserve an edited name and Synced until the dialog reopens", async () => {
+    const previousLanguage = document.documentElement.lang;
+    const calls: [string, string][] = [];
+    // 与 Editor 的 sectionNameFor 一致：未命名图层使用可翻译的默认元素名。
+    function Host({ open }: { open: boolean }) {
+      const t = useI18n();
+      return (
+        <SaveSectionDialog
+          open={open}
+          onOpenChange={() => {}}
+          defaultName={t(ELEMENT_NAMES["heading"] ?? "Heading")}
+          onSave={async (name, mode) => {
+            calls.push([name, mode]);
+            return null;
+          }}
+        />
+      );
+    }
+    try {
+      document.documentElement.lang = "en";
+      await mount(<Host open />);
+      const form = () =>
+        document.querySelector<HTMLFormElement>('[data-emvb-dialog="save-section"]');
+      const name = () => form()?.querySelector<HTMLInputElement>("input:not([type=radio])");
+      expect(name()?.value).toBe("Heading");
+      await act(async () => {
+        const input = name();
+        if (input) typeInto(input, "我的品牌区块");
+      });
+      const synced = [
+        ...(form()?.querySelectorAll<HTMLElement>("[role=radio], input[type=radio]") ?? []),
+      ].at(-1);
+      await act(async () => synced?.click());
+      await act(async () => {
+        document.documentElement.lang = "zh-CN";
+        await settle();
+      });
+      expect(name()?.value).toBe("我的品牌区块");
+      expect(form()?.querySelector("[data-emvb-save-section-submit]")?.textContent).toBe(
+        "创建同步区块",
+      );
+      await act(async () => form()?.requestSubmit());
+      expect(calls).toEqual([["我的品牌区块", "synced"]]);
+      await rerender(<Host open={false} />);
+      await rerender(<Host open />);
+      expect(name()?.value).toBe("标题");
+      expect(form()?.querySelector("[data-emvb-save-section-submit]")?.textContent).toBe(
+        "保存区块",
+      );
+    } finally {
+      await cleanup();
+      document.documentElement.lang = previousLanguage;
+    }
+  });
+
+  test("an existing blank-name error follows the current language without resubmitting", async () => {
+    const previousLanguage = document.documentElement.lang;
+    try {
+      document.documentElement.lang = "en";
+      await mount(
+        <SaveSectionDialog open onOpenChange={() => {}} defaultName="" onSave={async () => null} />,
+      );
+      const form = () =>
+        document.querySelector<HTMLFormElement>('[data-emvb-dialog="save-section"]');
+      await act(async () => form()?.requestSubmit());
+      expect(form()?.textContent).toContain("Give the section a name.");
+      await act(async () => {
+        document.documentElement.lang = "zh-CN";
+        await settle();
+      });
+      expect(form()?.textContent).toContain("请为区块命名。");
+      expect(form()?.textContent).not.toContain("Give the section a name.");
+      await act(async () => {
+        document.documentElement.lang = "en";
+        await settle();
+      });
+      expect(form()?.textContent).toContain("Give the section a name.");
+    } finally {
+      await cleanup();
+      document.documentElement.lang = previousLanguage;
+    }
+  });
+
   test("a blank name is refused; Synced changes the action and is passed on", async () => {
     const calls: [string, string][] = [];
     await mount(
@@ -388,7 +481,7 @@ describe("useSavedSections synced (W-880)", () => {
       return null;
     }
     await mount(<Harness />);
-    let reason: string | null = null;
+    let reason: LocalizedMessage | null = null;
     await act(async () => {
       reason = (await actions?.save("tabp0001", "Tab", "synced")) ?? null;
     });
@@ -431,5 +524,205 @@ describe("Save as section focus (W-883)", () => {
     await act(async () => close?.());
     await act(async () => new Promise((resolve) => setTimeout(resolve, 300)));
     expect(document.activeElement?.textContent).toBe("Div block");
+  });
+});
+
+describe("saved-section feedback follows the current language", () => {
+  const session = (
+    fetcher: Fetcher,
+    render: (saved: SavedSectionActions) => React.ReactNode = () => null,
+  ) => {
+    const latest = {
+      current: {
+        page: {
+          layout: {
+            schemaVersion: 17,
+            root: {
+              id: "root0001",
+              type: "container",
+              props: {},
+              children: [{ id: "head0001", type: "heading", props: { text: "Hello", level: 2 } }],
+            },
+          },
+        },
+        design: emptyDesign(),
+        selectedId: "head0001",
+      },
+    } as unknown as React.RefObject<EditorState>;
+    const toasts = createKumoToastManager();
+    let actions: SavedSectionActions | null = null;
+    function Harness() {
+      actions = useSavedSections({
+        fetcher,
+        latest,
+        dispatch: () => {},
+        changeDesign: async () => {},
+        announce: () => {},
+        toasts,
+      });
+      return render(actions);
+    }
+    return {
+      Harness,
+      toasts,
+      get actions() {
+        return actions;
+      },
+    };
+  };
+  const language = async (locale: string) =>
+    act(async () => {
+      document.documentElement.lang = locale;
+      await settle();
+    });
+
+  test("load fallbacks retranslate, while API messages matching UI words stay literal", async () => {
+    const previousLanguage = document.documentElement.lang;
+    let rawError = false;
+    const state = session(
+      async () => {
+        if (rawError) throw new Error("Save");
+        throw undefined;
+      },
+      (saved) => <AddPanel onAdd={() => {}} saved={saved} />,
+    );
+    try {
+      await language("en");
+      const host = await mount(<state.Harness />);
+      expect(host.querySelector('[role="alert"]')?.textContent).toBe("Couldn't load My sections.");
+      await language("zh-CN");
+      expect(host.querySelector('[role="alert"]')?.textContent).toBe("无法加载“我的区块”。");
+      rawError = true;
+      await act(async () => {
+        state.actions?.refresh();
+        await settle();
+      });
+      expect(host.querySelector('[role="alert"]')?.textContent).toBe("Save");
+      await language("en");
+      await language("zh-CN");
+      expect(host.querySelector('[role="alert"]')?.textContent).toBe("Save");
+    } finally {
+      await cleanup();
+      document.documentElement.lang = previousLanguage;
+    }
+  });
+
+  test("a save failure already shown in the dialog re-translates without another request", async () => {
+    const previousLanguage = document.documentElement.lang;
+    let saves = 0;
+    const state = session(
+      async (path) => {
+        if (path.endsWith("/save")) {
+          saves++;
+          throw undefined;
+        }
+        return Response.json({ data: { items: [] } });
+      },
+      (saved) => (
+        <SaveSectionDialog
+          open
+          onOpenChange={() => {}}
+          defaultName="Save"
+          onSave={(name, mode) => saved.save("head0001", name, mode)}
+        />
+      ),
+    );
+    try {
+      await language("en");
+      await mount(<state.Harness />);
+      const form = () =>
+        document.querySelector<HTMLFormElement>('[data-emvb-dialog="save-section"]');
+      await act(async () => {
+        form()?.requestSubmit();
+        await settle();
+      });
+      expect(form()?.textContent).toContain("Couldn't save the section.");
+      await language("zh-CN");
+      expect(form()?.textContent).toContain("无法保存区块。");
+      expect(form()?.querySelector<HTMLInputElement>("input:not([type=radio])")?.value).toBe(
+        "Save",
+      );
+      expect(saves).toBe(1);
+    } finally {
+      await cleanup();
+      document.documentElement.lang = previousLanguage;
+    }
+  });
+
+  test("visible success toasts update title and description while preserving the user's name", async () => {
+    const previousLanguage = document.documentElement.lang;
+    const state = session(async () =>
+      Response.json({ data: { items: [], id: "saved0001", item: { id: "part0001" } } }),
+    );
+    try {
+      await language("en");
+      await mount(
+        <EditorToasts toastManager={state.toasts}>
+          <state.Harness />
+        </EditorToasts>,
+      );
+      await act(async () => {
+        await state.actions?.save("head0001", "Save", "copy");
+      });
+      await act(async () => {
+        await state.actions?.save("head0001", "Save", "synced");
+      });
+      const notice = () => document.querySelector("[data-emvb-toasts]")?.textContent;
+      expect(notice()).toContain('Saved "Save" to My sections');
+      expect(notice()).toContain('Made the synced section "Save"');
+      expect(notice()).toContain(
+        "Edit it in Theme Builder; publish it there to use it on the site.",
+      );
+      await language("zh-CN");
+      expect(notice()).toContain("已将“Save”保存到“我的区块”");
+      expect(notice()).toContain("已创建同步区块“Save”");
+      expect(notice()).not.toContain("Edit it in Theme Builder;");
+    } finally {
+      await cleanup();
+      document.documentElement.lang = previousLanguage;
+    }
+  });
+
+  test("rename and delete failures already shown in the panel follow language changes", async () => {
+    const previousLanguage = document.documentElement.lang;
+    const state = session(
+      async (path) => {
+        if (path.endsWith("/rename") || path.endsWith("/delete")) throw undefined;
+        return Response.json({ data: { items: fakeSaved().list } });
+      },
+      (saved) => <AddPanel onAdd={() => {}} saved={saved} />,
+    );
+    try {
+      await language("en");
+      const host = await mount(<state.Harness />);
+      await act(async () =>
+        host.querySelector<HTMLElement>('[data-emvb-saved-rename="aaaaaaaaaaaaaaaa"]')?.click(),
+      );
+      const field = host.querySelector<HTMLInputElement>("[data-emvb-saved-rename-field]");
+      await act(async () => {
+        if (field) typeInto(field, "My own name");
+      });
+      await act(async () =>
+        field?.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true })),
+      );
+      expect(host.textContent).toContain("Couldn't rename the section.");
+      await act(async () =>
+        host.querySelector<HTMLElement>('[data-emvb-saved-delete="bbbbbbbbbbbbbbbb"]')?.click(),
+      );
+      const confirm = [
+        ...document.querySelectorAll<HTMLElement>(
+          '[data-emvb-dialog="delete-saved-section"] button',
+        ),
+      ].find((button) => button.textContent === "Delete section");
+      await act(async () => confirm?.click());
+      expect(host.textContent).toContain("Couldn't delete the section.");
+      await language("zh-CN");
+      expect(host.textContent).toContain("无法重命名区块。");
+      expect(host.textContent).toContain("无法删除区块。");
+      expect(field?.value).toBe("My own name");
+    } finally {
+      await cleanup();
+      document.documentElement.lang = previousLanguage;
+    }
   });
 });

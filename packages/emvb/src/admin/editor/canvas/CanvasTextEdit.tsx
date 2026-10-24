@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖当前编辑元素、文本草稿与保存、取消回调。
+ * [OUTPUT]: 提供CanvasTextEdit。
+ * [POS]: 画布内文本输入层，提交用户原文。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { useI18n } from "../../i18n/index.ts";
 import * as React from "react";
 import { commitPlainText } from "../../../core/index.ts";
 import type { Box } from "./SelectionOverlay.tsx";
@@ -19,6 +26,7 @@ export function CanvasTextEdit({
   onCommit: (text: string) => void;
   onCancel: () => void;
 }) {
+  const t = useI18n();
   // W-117: read the element's look once, before it is marked as editing. Computed style is live,
   // and the canvas makes an editing element's text transparent, so reading it on a later render
   // (every keystroke) gave the field transparent text.
@@ -65,7 +73,7 @@ export function CanvasTextEdit({
     <textarea
       ref={ref}
       className="emvb-canvas-text"
-      aria-label="Edit text"
+      aria-label={t("Edit text")}
       rows={1}
       spellCheck
       value={draft}

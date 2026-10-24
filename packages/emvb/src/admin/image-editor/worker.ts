@@ -1,4 +1,10 @@
 /**
+ * [INPUT]: 依赖浏览器 Worker、OffscreenCanvas 与 WebGL 2 探测。
+ * [OUTPUT]: 提供probeWorker、planRendering 与渲染模式类型。
+ * [POS]: 引擎启动决策层，在画布转交前选择渲染线程。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+/**
  * photocn render-worker strategy for the EmDash admin (D-059).
  *
  * photocn's default worker is a `blob:` URL, which the `/_emdash` CSP blocks

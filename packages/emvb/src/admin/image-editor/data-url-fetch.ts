@@ -1,4 +1,10 @@
 /**
+ * [INPUT]: 依赖浏览器 Response、fetch 与 data URL 字节。
+ * [OUTPUT]: 提供decodeDataUrl 与 withDataUrlFetch。
+ * [POS]: 主线程导出的 CSP 适配层，其他请求仍走原 fetch。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+/**
  * photocn's main-thread export encodes with `canvas.toDataURL()` and reads
  * it back with `fetch(dataUrl)`. The `/_emdash` CSP has `connect-src 'self'`,
  * which blocks `fetch("data:…")`, so main-thread exports fail in the admin.

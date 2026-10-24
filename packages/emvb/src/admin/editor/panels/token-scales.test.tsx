@@ -1,13 +1,23 @@
+/**
+ * [INPUT]: 依赖比例尺编辑器、设计令牌及 DOM 测试工具。
+ * [OUTPUT]: 验证令牌生成、容量计数和语言切换。
+ * [POS]: 比例尺交互回归；切换语言不重复保存或丢失结果计数。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
 import { afterEach, describe, expect, test } from "bun:test";
 import { act } from "react";
 import { emptyDesign, SCALE_RATIOS, type DesignSystem } from "../../../core/index.ts";
-import { cleanup, mount } from "../../../../test/dom/mount.ts";
+import { cleanup, mount, settle } from "../../../../test/dom/mount.ts";
 import { pickOption } from "../../../../test/dom/select.ts";
 import { EDITOR_CSS } from "../editor-css.ts";
 import { FEATURE_CSS } from "../feature-css.ts";
 import { TokenScales } from "./TokenScales.tsx";
 
-afterEach(cleanup);
+const initialLanguage = document.documentElement.lang;
+afterEach(async () => {
+  await cleanup();
+  document.documentElement.lang = initialLanguage;
+});
 
 describe("Scales in Site styles (W-316)", () => {
   test("previews a fluid type scale and adds it to Font sizes", async () => {
@@ -149,4 +159,41 @@ test("UX-057: Ratio and the small-screen size take a full row, and link buttons 
     '.emvb-tokens-grid > [data-emvb-tokens-row="full"] { grid-column: 1 / -1; }',
   );
   expect(EDITOR_CSS).toMatch(/\.emvb-link-button \{[^}]*align-self: flex-start;/);
+});
+
+test("language changes translate saved scale counts without saving again", async () => {
+  document.documentElement.lang = "en";
+  const design = emptyDesign();
+  const spacings = Array.from({ length: 95 }, (_, index) => ({
+    id: index === 0 ? "space-s" : `gap${index}`,
+    name: `Gap ${index}`,
+    value: { value: index + 1, unit: "px" as const },
+  }));
+  const saved: DesignSystem[] = [];
+  const host = await mount(
+    <TokenScales
+      design={{ ...design, variables: { ...design.variables, spacings } }}
+      onSave={async (next) => void saved.push(next)}
+    />,
+  );
+  await pickOption(host.querySelector("[data-emvb-tokens-kind]"), "space");
+  const apply = host.querySelector<HTMLButtonElement>("[data-emvb-tokens-apply]");
+  if (!apply) throw new Error("No scale apply button");
+  await act(async () => apply.click());
+  const english = "5 added, 1 updated in Spacing. 3 didn't fit: Spacing holds up to 100.";
+  const status = () => host.querySelector('[role="status"]')?.textContent;
+  expect(status()).toBe(english);
+  expect(saved).toHaveLength(1);
+  expect(saved[0]?.variables.spacings).toHaveLength(100);
+  await act(async () => {
+    document.documentElement.lang = "zh-CN";
+    await settle();
+  });
+  expect(status()).toBe("已在间距中新增 5 项，更新 1 项。另有 3 项未添加：间距最多容纳 100 项。");
+  await act(async () => {
+    document.documentElement.lang = "en";
+    await settle();
+  });
+  expect(status()).toBe(english);
+  expect(saved).toHaveLength(1);
 });

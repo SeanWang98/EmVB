@@ -1,10 +1,17 @@
+/**
+ * [INPUT]: 依赖剪贴板包、树操作与即时翻译器。
+ * [OUTPUT]: 提供元素和样式复制、粘贴及拒绝反馈。
+ * [POS]: 剪贴板界面边界；内容包保持原值，仅翻译操作提示。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { localizedDroppedNotice } from "./action-notices.ts";
+import { translate } from "../i18n/index.ts";
 import type { createKumoToastManager } from "@cloudflare/kumo";
 import * as React from "react";
 import {
   applyStyle,
   CLIP_REASONS,
   clipStyle,
-  droppedNotice,
   elementClip,
   encodeClip,
   findNode,
@@ -45,7 +52,7 @@ export type ClipboardActions = {
 };
 
 const nameOf = (node: LayoutNode | undefined) =>
-  node ? (ELEMENT_NAMES[node.type] ?? node.type) : "Element";
+  node ? translate(ELEMENT_NAMES[node.type] ?? node.type) : translate("Element");
 
 /** Copy, paste, copy style and paste style for the editor (W-093, D-033). */
 export function useClipboardActions({
@@ -79,18 +86,19 @@ export function useClipboardActions({
     const node = layout ? findNode(layout, id) : undefined;
     if (!node) return;
     if (!writeClipboardText(encodeClip(make(node)))) {
-      announce(CLIPBOARD_HINTS.storageBlocked);
-      notify("Couldn't copy", CLIPBOARD_HINTS.storageBlocked);
+      announce(translate(CLIPBOARD_HINTS.storageBlocked));
+      notify(translate("Couldn't copy"), translate(CLIPBOARD_HINTS.storageBlocked));
       return;
     }
-    const message = `${what(nameOf(node))} copied`;
+    const message = translate("{name} copied", { name: what(nameOf(node)) });
     announce(message);
     notify(message);
   };
 
   const refuse = (id: string, reason: string) => {
-    announce(reason);
-    onRefuse({ id, reason });
+    const message = translate(reason);
+    announce(message);
+    onRefuse({ id, reason: message });
   };
 
   const paste = (id: string | null, mode: PasteMode = "auto") => {
@@ -105,10 +113,10 @@ export function useClipboardActions({
     const result = pasteNode(layout, node, target, mode);
     if (!result.ok) return refuse(target, result.reason);
     dispatch({ type: "apply-arranged", layout: result.layout, selected: result.selected });
-    const message = `${nameOf(node)} pasted`;
+    const message = translate("{name} pasted", { name: nameOf(node) });
     announce(message);
-    const notice = droppedNotice(dropped);
-    if (notice) notify(message, notice);
+    const notice = localizedDroppedNotice(dropped);
+    if (notice) notify(message, translate(notice));
   };
 
   const pasteStyle = (id: string | null) => {
@@ -119,18 +127,18 @@ export function useClipboardActions({
     if (!read.ok) return refuse(id, read.reason);
     const { style, dropped } = prepareStyle(clipStyle(read.clip), state.design);
     dispatch({ type: "update-node", id, update: (node) => applyStyle(node, style) });
-    const message = `Style pasted on ${nameOf(findNode(layout, id))}`;
+    const message = translate("Style pasted on {name}", { name: nameOf(findNode(layout, id)) });
     announce(message);
-    const notice = droppedNotice(dropped);
-    if (notice) notify(message, notice);
+    const notice = localizedDroppedNotice(dropped);
+    if (notice) notify(message, translate(notice));
   };
 
   return {
     copy: (id) => store(id, elementClip, (name) => name),
-    copyStyle: (id) => store(id, styleClip, (name) => `${name} style`),
+    copyStyle: (id) => store(id, styleClip, (name) => translate("{name} style", { name })),
     paste,
     pasteStyle,
-    pasteBlocked: kind === "element" ? null : CLIPBOARD_HINTS.pasteEmpty,
-    pasteStyleBlocked: kind ? null : CLIPBOARD_HINTS.pasteStyleEmpty,
+    pasteBlocked: kind === "element" ? null : translate(CLIPBOARD_HINTS.pasteEmpty),
+    pasteStyleBlocked: kind ? null : translate(CLIPBOARD_HINTS.pasteStyleEmpty),
   };
 }

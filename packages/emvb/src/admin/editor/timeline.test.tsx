@@ -1,3 +1,9 @@
+/**
+ * [INPUT]: 依赖修订接口、布局差异与后台语言订阅。
+ * [OUTPUT]: 验证历史比较、恢复、焦点及错误语言切换。
+ * [POS]: 独立条目修订界面回归测试；布局与用户标签保持原值。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
 import { afterEach, describe, expect, test } from "bun:test";
 import * as React from "react";
 import { act } from "react";
@@ -420,6 +426,20 @@ test("a restore refusal goes away when another version is picked (W-561)", async
     document.querySelector<HTMLButtonElement>('[data-emvb-restore-section="gone0001"]')?.click(),
   );
   const alert = () => document.querySelector(".emvb-timeline-main [role=alert]")?.textContent;
+  expect(alert()).toContain("too many elements");
+  const previousLanguage = document.documentElement.lang;
+  try {
+    await act(async () => {
+      document.documentElement.lang = "zh-CN";
+      await settle();
+    });
+    expect(alert()).toBe("恢复后页面元素数量将超出限制。");
+  } finally {
+    await act(async () => {
+      document.documentElement.lang = previousLanguage;
+      await settle();
+    });
+  }
   expect(alert()).toContain("too many elements");
   await act(async () =>
     document.querySelector<HTMLButtonElement>('[data-emvb-version="r1"]')?.click(),

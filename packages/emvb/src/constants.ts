@@ -5,7 +5,7 @@
  * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
  */
 export const PLUGIN_ID = "emvb";
-export const PLUGIN_VERSION = "0.8.0-dev.1";
+export const PLUGIN_VERSION = "0.8.0-dev.2";
 export const PACKAGE_NAME = "@perkyzz/emvb";
 export const ADMIN_ENTRY = `${PACKAGE_NAME}/admin`;
 export const PAGES_COLLECTION = "emvb_pages";

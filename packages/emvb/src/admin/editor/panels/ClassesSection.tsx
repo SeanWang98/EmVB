@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖站点设计、当前布局与本地化上下文。
+ * [OUTPUT]: 导出共享样式类编辑区。
+ * [POS]: 站点样式的样式类编辑边界；错误保存原始名称。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { useI18n, type Translate } from "../../i18n/index.ts";
 import { Empty, Input } from "@cloudflare/kumo";
 import {
   ArrowDownIcon,
@@ -21,7 +28,6 @@ import {
   patchClassStyle,
   renameClass,
   classNameTaken,
-  classNameTakenMessage,
   type DesignSystem,
   type Layout,
   type StyleProps,
@@ -89,6 +95,7 @@ function ClassStyleEditor({
   design: DesignSystem;
   onSave: (design: DesignSystem) => Promise<boolean | void>;
 }) {
+  const t = useI18n();
   const [state, setState] = React.useState<StyleStateChoice>("normal");
   const [section, setSection] = React.useState<StyleSectionId>("layout");
   const style = state === "normal" ? cls.style : cls.states?.[state];
@@ -96,9 +103,13 @@ function ClassStyleEditor({
   const keys = classKeys(section, style, position, state);
   return (
     <div className="emvb-site-item-body emvb-site-class-styles">
-      <p className="emvb-helper">These styles apply everywhere this class is used.</p>
+      <p className="emvb-helper">{t("These styles apply everywhere this class is used.")}</p>
       <StateSwitcher value={state} states={cls.states} className={cls.name} onChange={setState} />
-      <div className="emvb-site-class-sections" role="tablist" aria-label="Class style sections">
+      <div
+        className="emvb-site-class-sections"
+        role="tablist"
+        aria-label={t("Class style sections")}
+      >
         {CLASS_SECTIONS.map((id) => (
           <button
             key={id}
@@ -109,7 +120,7 @@ function ClassStyleEditor({
             className="emvb-site-class-section"
             onClick={() => setSection(id)}
           >
-            {SECTION_LABELS[id]}
+            {t(SECTION_LABELS[id])}
           </button>
         ))}
       </div>
@@ -134,7 +145,7 @@ function ClassStyleEditor({
 }
 
 /** "2 on page": class usage is counted on the open page only. */
-const usageText = (count: number) => `${count} on page`;
+const usageText = (t: Translate, count: number) => t("{count} on page", { count });
 
 export function ClassesSection({
   design,
@@ -147,6 +158,7 @@ export function ClassesSection({
   onSave: (design: DesignSystem) => Promise<boolean | void>;
   onAskDelete: (id: string, name: string) => void;
 }) {
+  const t = useI18n();
   const noun = useEditedNoun();
   const classes = design.classes ?? [];
   const [creating, setCreating] = React.useState(false);
@@ -154,7 +166,7 @@ export function ClassesSection({
   const [editing, setEditing] = React.useState<string | null>(null);
   const [renaming, setRenaming] = React.useState<string | null>(null);
   const [filter, setFilter] = React.useState("");
-  const [nameError, setNameError] = React.useState<string | null>(null);
+  const [duplicateName, setDuplicateName] = React.useState<string | null>(null);
   const rows = React.useRef(new Map<string, HTMLButtonElement>());
   // W-840: the create row goes away on Create or Cancel; focus lands on the new row or on New.
   const section = React.useRef<HTMLElement | null>(null);
@@ -172,10 +184,10 @@ export function ClassesSection({
     const trimmed = cleanClassName(name);
     if (!trimmed || classes.length >= MAX_CLASSES) return;
     if (classNameTaken(design, trimmed)) {
-      setNameError(classNameTakenMessage(trimmed));
+      setDuplicateName(trimmed);
       return;
     }
-    setNameError(null);
+    setDuplicateName(null);
     const id = uniqueId(
       trimmed,
       "class",
@@ -194,47 +206,49 @@ export function ClassesSection({
     setRenaming(null);
     requestAnimationFrame(() => rows.current.get(id)?.focus());
     if (next && classNameTaken(design, next, id)) {
-      setNameError(classNameTakenMessage(next));
+      setDuplicateName(next);
       return;
     }
-    setNameError(null);
+    setDuplicateName(null);
     if (next) void onSave(renameClass(design, id, next));
   };
 
   return (
     <section ref={section} className="emvb-site-section" data-emvb-classes="">
       <p className="emvb-helper emvb-site-cascade" data-emvb-cascade-help="">
-        When two classes set the same property, the one lower in this list wins. Local styles on an
-        element still win. Editing a class updates every element that uses it. Tablet and mobile
-        overrides stay on the Style tab.
+        {t(
+          "When two classes set the same property, the one lower in this list wins. Local styles on an element still win. Editing a class updates every element that uses it. Tablet and mobile overrides stay on the Style tab.",
+        )}
       </p>
       <SectionHead
-        title="Classes"
+        title={t("Classes")}
         count={classes.length}
         onNew={() => setCreating(true)}
         newDisabled={classes.length >= MAX_CLASSES}
       />
       {classes.length >= MAX_CLASSES ? (
         <p className="emvb-helper" data-emvb-class-cap="">
-          This site has 100 classes, the most allowed. Delete one to add another.
+          {t("This site has 100 classes, the most allowed. Delete one to add another.")}
         </p>
       ) : null}
       {(classes.length > 3 || filter.length > 0) && (
-        <SiteSearch label="Search classes" value={filter} onChange={setFilter} />
+        <SiteSearch label={t("Search classes")} value={filter} onChange={setFilter} />
       )}
       {classes.length === 0 && !creating && (
         <div className="emvb-site-empty-card" data-emvb-classes-empty="">
           <Empty
             size="sm"
             icon={<TagSimpleIcon size={24} aria-hidden="true" />}
-            title="No classes yet"
-            description="Select an element, open its Style tab and type a name in the Classes box. Or use New here."
+            title={t("No classes yet")}
+            description={t(
+              "Select an element, open its Style tab and type a name in the Classes box. Or use New here.",
+            )}
           />
         </div>
       )}
       {classes.length > 0 && visible.length === 0 && (
         <p className="emvb-helper" data-emvb-classes-nomatch="">
-          No classes match "{filter.trim()}".
+          {t('No classes match "{query}".', { query: filter.trim() })}
         </p>
       )}
       <ul className="emvb-site-items">
@@ -257,7 +271,7 @@ export function ClassesSection({
                     <TagSimpleIcon size={14} aria-hidden="true" className="emvb-site-item-icon" />
                     <RenameInput
                       name={cls.name}
-                      label={`Rename ${cls.name}`}
+                      label={t("Rename {name}", { name: cls.name })}
                       onDone={(next) => rename(cls.id, next)}
                     />
                   </span>
@@ -301,27 +315,32 @@ export function ClassesSection({
                 )}
                 <span
                   className="emvb-site-usage"
-                  title={`Used by ${count} ${count === 1 ? "element" : "elements"} on this ${noun}`}
+                  title={t(
+                    count === 1
+                      ? "Used by {count} element on this {noun}"
+                      : "Used by {count} elements on this {noun}",
+                    { count, noun: t(noun) },
+                  )}
                   data-emvb-usage=""
                 >
-                  {usageText(count)}
+                  {usageText(t, count)}
                 </span>
                 <RowMenu
-                  label={`Actions for ${cls.name}`}
+                  label={t("Actions for {name}", { name: cls.name })}
                   actions={[
                     {
-                      label: open ? "Hide styles" : "Edit styles",
+                      label: t(open ? "Hide styles" : "Edit styles"),
                       icon: PaintBrushIcon,
                       onSelect: toggle,
                     },
                     {
-                      label: "Rename",
+                      label: t("Rename"),
                       icon: PencilSimpleLineIcon,
                       afterClose: true,
                       onSelect: () => setRenaming(cls.id),
                     },
                     {
-                      label: "Move up",
+                      label: t("Move up"),
                       icon: ArrowUpIcon,
                       onSelect: () => {
                         const next = moveDesignClass(design, cls.id, -1);
@@ -329,7 +348,7 @@ export function ClassesSection({
                       },
                     },
                     {
-                      label: "Move down",
+                      label: t("Move down"),
                       icon: ArrowDownIcon,
                       onSelect: () => {
                         const next = moveDesignClass(design, cls.id, 1);
@@ -337,7 +356,7 @@ export function ClassesSection({
                       },
                     },
                     {
-                      label: "Duplicate",
+                      label: t("Duplicate"),
                       icon: CopySimpleIcon,
                       onSelect: () => {
                         const next = duplicateClass(design, cls.id);
@@ -345,7 +364,7 @@ export function ClassesSection({
                       },
                     },
                     {
-                      label: "Delete",
+                      label: t("Delete"),
                       icon: TrashIcon,
                       danger: true,
                       onSelect: () => onAskDelete(cls.id, cls.name),
@@ -358,24 +377,24 @@ export function ClassesSection({
           );
         })}
       </ul>
-      {nameError && (
+      {duplicateName && (
         <p className="emvb-inline-error" role="alert" data-emvb-class-name-error="">
-          {nameError}
+          {t('A class named "{name}" already exists. Pick another name.', { name: duplicateName })}
         </p>
       )}
       {creating && (
         <CreateRow
           rowProps={{ "data-emvb-class-create": "" }}
-          submitLabel="Create class"
+          submitLabel={t("Create class")}
           onCancel={() => {
             setCreating(false);
-            setNameError(null);
+            setDuplicateName(null);
             focusNew();
           }}
           onCreate={() => void create()}
         >
           <Input
-            label="Name"
+            label={t("Name")}
             className={FIELD}
             value={name}
             onChange={(e) => setName(e.target.value)}

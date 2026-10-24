@@ -1,4 +1,10 @@
 /**
+ * [INPUT]: 依赖JPEG 字节与 EXIF IFD 结构。
+ * [OUTPUT]: 提供stripJpegGps。
+ * [POS]: 导出隐私边界，清除 GPS 并保留其他 EXIF 标签。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+/**
  * GPS stripping for exported JPEGs (D-060).
  *
  * photocn copies the source EXIF block into JPEG exports

@@ -1,9 +1,10 @@
 /**
- * [INPUT]: 依赖编辑器确认动作、脏状态与字段模式。
+ * [INPUT]: 依赖编辑确认动作、字段模式与后台语言。
  * [OUTPUT]: 提供冲突、回退、离开与删除确认弹窗。
- * [POS]: 编辑器确认边界；字段离开明确区分应用与保存。
+ * [POS]: 确认边界；翻译操作模板，保留标签和数量参数。
  * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
  */
+import { useI18n } from "../i18n/index.ts";
 import { Button, Dialog, Loader } from "@cloudflare/kumo";
 import { useMediaQuery } from "./useMediaQuery.ts";
 import { useEditedNoun } from "./edited-noun.ts";
@@ -19,20 +20,25 @@ export function ConflictDialog({
   onReload,
   onOverwrite,
 }: OpenProps & { onReload: () => void; onOverwrite: () => void }) {
+  const t = useI18n();
   const noun = useEditedNoun();
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog size="base" className="p-6">
         <style>{UI_CSS}</style>
         <div data-emvb-dialog="conflict" className="emvb-dialog">
-          <Dialog.Title>This {noun} was changed somewhere else</Dialog.Title>
+          <Dialog.Title>
+            {t("This {noun} was changed somewhere else", { noun: t(noun) })}
+          </Dialog.Title>
           <Dialog.Description>
-            Someone saved this {noun} after you opened it. Reload to get their version and lose your
-            unsaved changes, or overwrite their version with yours.
+            {t(
+              "Someone saved this {noun} after you opened it. Reload to get their version and lose your unsaved changes, or overwrite their version with yours.",
+              { noun: t(noun) },
+            )}
           </Dialog.Description>
           <div className="emvb-dialog-actions">
             <Button variant="secondary" className={BUTTON} onClick={onReload}>
-              Reload page
+              {t("Reload page")}
             </Button>
             <Button
               variant="destructive"
@@ -40,7 +46,7 @@ export function ConflictDialog({
               style={SOLID_DESTRUCTIVE}
               onClick={onOverwrite}
             >
-              Overwrite their version
+              {t("Overwrite their version")}
             </Button>
           </div>
         </div>
@@ -55,25 +61,27 @@ export function RevertDialog({
   onOpenChange,
   onRevert,
 }: OpenProps & { onRevert: () => void }) {
+  const t = useI18n();
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog size="base" className="p-6">
         <style>{UI_CSS}</style>
         <div data-emvb-dialog="revert" className="emvb-dialog">
-          <Dialog.Title>Revert to the published version?</Dialog.Title>
+          <Dialog.Title>{t("Revert to the published version?")}</Dialog.Title>
           <Dialog.Description>
-            Your saved draft and any unsaved changes are discarded, and the editor shows what is
-            live now. This can't be undone.
+            {t(
+              "Your saved draft and any unsaved changes are discarded, and the editor shows what is live now. This can't be undone.",
+            )}
           </Dialog.Description>
           <div className="emvb-dialog-actions">
-            <DialogCloseButton>Cancel</DialogCloseButton>
+            <DialogCloseButton>{t("Cancel")}</DialogCloseButton>
             <Button
               variant="destructive"
               className={BUTTON}
               style={SOLID_DESTRUCTIVE}
               onClick={onRevert}
             >
-              Revert to published
+              {t("Revert to published")}
             </Button>
           </div>
         </div>
@@ -97,6 +105,7 @@ export function LeaveDialog({
   saving?: boolean;
   fieldMode?: boolean;
 }) {
+  const t = useI18n();
   const noun = useEditedNoun();
   const reducedMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
   const unlessSaving = (run: () => void) => () => {
@@ -114,20 +123,22 @@ export function LeaveDialog({
         <style>{UI_CSS}</style>
         <div data-emvb-dialog="leave" className="emvb-dialog">
           <Dialog.Title>
-            {fieldMode ? "Discard canvas changes?" : "Leave without saving?"}
+            {fieldMode ? t("Discard canvas changes?") : t("Leave without saving?")}
           </Dialog.Title>
           <Dialog.Description>
             {fieldMode ? (
-              "Only Apply changes returns this layout to the Page form. Site styles and shared resources save separately."
+              t(
+                "Only Apply changes returns this layout to the Page form. Site styles and shared resources save separately.",
+              )
             ) : (
-              <>You have unsaved changes on this {noun}.</>
+              <>{t("You have unsaved changes on this {noun}.", { noun: t(noun) })}</>
             )}
           </Dialog.Description>
           <div className="emvb-dialog-actions">
             <Dialog.Close
               render={(props) => (
                 <Button {...props} variant="secondary" className={BUTTON} aria-disabled={saving}>
-                  Keep editing
+                  {t("Keep editing")}
                 </Button>
               )}
             />
@@ -137,7 +148,7 @@ export function LeaveDialog({
               aria-disabled={saving}
               onClick={unlessSaving(onDiscard)}
             >
-              Discard changes
+              {t("Discard changes")}
             </Button>
             <Button
               variant="primary"
@@ -148,7 +159,7 @@ export function LeaveDialog({
               aria-busy={saving}
               onClick={unlessSaving(onSaveAndLeave)}
             >
-              {saving ? "Saving…" : fieldMode ? "Apply and return" : "Save and leave"}
+              {saving ? t("Saving…") : fieldMode ? t("Apply and return") : t("Save and leave")}
             </Button>
           </div>
         </div>
@@ -165,6 +176,7 @@ export function DeleteSubtreeDialog({
   count,
   onConfirm,
 }: OpenProps & { label: string; count: number; onConfirm: () => void }) {
+  const t = useI18n();
   const inside = count - 1;
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
@@ -172,18 +184,22 @@ export function DeleteSubtreeDialog({
         <style>{UI_CSS}</style>
         <div data-emvb-dialog="delete-subtree" className="emvb-dialog">
           <Dialog.Title>
-            Delete {label} and the {inside} element{inside === 1 ? "" : "s"} inside it?
+            {inside === 1
+              ? t("Delete {label} and the {inside} element inside it?", { label, inside })
+              : t("Delete {label} and the {inside} elements inside it?", { label, inside })}
           </Dialog.Title>
-          <Dialog.Description>You can undo this with Restore right after.</Dialog.Description>
+          <Dialog.Description>
+            {t("You can undo this with Restore right after.")}
+          </Dialog.Description>
           <div className="emvb-dialog-actions">
-            <DialogCloseButton>Cancel</DialogCloseButton>
+            <DialogCloseButton>{t("Cancel")}</DialogCloseButton>
             <Button
               variant="destructive"
               className={BUTTON}
               style={SOLID_DESTRUCTIVE}
               onClick={onConfirm}
             >
-              Delete {count} elements
+              {t("Delete {count} elements", { count })}
             </Button>
           </div>
         </div>

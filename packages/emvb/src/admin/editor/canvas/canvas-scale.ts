@@ -1,3 +1,9 @@
+/**
+ * [INPUT]: 依赖设备枚举、舞台宽度与缩放模式。
+ * [OUTPUT]: 提供canvasScale 与 CanvasZoom 类型。
+ * [POS]: 画布视口的纯尺寸计算，区分适应与原始尺寸。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
 import { DEVICE_PREVIEW_PX, type PopupDevice } from "../../../core/index.ts";
 
 /** Fit scales the canvas down to the stage; Actual shows it at 100% and scrolls (W-158). */

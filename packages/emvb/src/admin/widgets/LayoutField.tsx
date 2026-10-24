@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖独立页面的布局值与后台 URL。
+ * [INPUT]: 依赖独立页面布局、后台 URL 与界面翻译。
  * [OUTPUT]: 提供只读布局摘要及共享字段属性类型。
  * [POS]: 独立 EmVB 页面兼容入口；canvas 负责可编辑字段。
  * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
@@ -7,6 +7,7 @@
 import { LinkButton, Text } from "@cloudflare/kumo";
 import { ArrowSquareOutIcon } from "@phosphor-icons/react";
 import { summarizeLayout } from "../../core/index.ts";
+import { useI18n } from "../i18n/index.ts";
 import { PAGES_COLLECTION, PLUGIN_ID } from "../../constants.ts";
 
 export type FieldWidgetProps = {
@@ -40,14 +41,20 @@ export function entryIdFromLocation(pathname: string): string | undefined {
  * links to EmVB. It has no inputs and never calls `onChange`, so the JSON can't be hand-edited here.
  */
 export function LayoutField({ value, label, id }: FieldWidgetProps) {
+  const t = useI18n();
   const summary = summarizeLayout(parse(value));
   const entryId = entryIdFromLocation(window.location.pathname);
   const href = entryId
     ? `/_emdash/admin/plugins/${PLUGIN_ID}/editor?entry=${encodeURIComponent(entryId)}`
     : `/_emdash/admin/plugins/${PLUGIN_ID}/pages`;
   const description = !summary
-    ? "This page has no content yet."
-    : `${summary.nodes} ${summary.nodes === 1 ? "element" : "elements"} · schema ${summary.schemaVersion ?? "unknown"}`;
+    ? t("This page has no content yet.")
+    : t(
+        summary.nodes === 1
+          ? "{count} element · schema {version}"
+          : "{count} elements · schema {version}",
+        { count: summary.nodes, version: summary.schemaVersion ?? t("unknown") },
+      );
   return (
     <div
       id={id}
@@ -58,14 +65,14 @@ export function LayoutField({ value, label, id }: FieldWidgetProps) {
     >
       <Text variant="secondary">{label}</Text>
       <Text>{description}</Text>
-      <Text variant="secondary">This page is edited in EmVB.</Text>
+      <Text variant="secondary">{t("This page is edited in EmVB.")}</Text>
       <div>
         <LinkButton
           href={href}
           variant="secondary"
           icon={<ArrowSquareOutIcon aria-hidden="true" />}
         >
-          {entryId ? "Open in EmVB" : "Go to Visual pages"}
+          {entryId ? t("Open in EmVB") : t("Go to Visual pages")}
         </LinkButton>
       </div>
     </div>

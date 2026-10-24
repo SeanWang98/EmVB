@@ -1,4 +1,10 @@
 /**
+ * [INPUT]: 依赖固定图标构建脚本输出的 JSON 结构。
+ * [OUTPUT]: 提供IconSetStyle、IconEntry 与 IconSetFile 类型。
+ * [POS]: 构建脚本与编辑器懒加载共享的数据协议。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+/**
  * The Icon library set files (W-234): one JSON per set in ./sets, built by
  * `scripts/build-icon-sets.ts` from the pinned icon packages and loaded lazily by the editor.
  */

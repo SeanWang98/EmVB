@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖布局节点、后台界面翻译与同目录字段控件。
+ * [OUTPUT]: 内容字段路由；按字段描述选择控件并保留存储值。
+ * [POS]: 元素设置面板的 FieldControl；不拥有页面保存与发布。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { useI18n } from "../../../i18n/index.ts";
 import * as React from "react";
 import { Select } from "@cloudflare/kumo";
 import type { FieldDescriptor, LayoutNode } from "../../../../core/index.ts";
@@ -36,6 +43,7 @@ export function FieldControl({
   /** Another control in the same form uses this field name (W-194). */
   duplicateName?: boolean;
 }) {
+  const t = useI18n();
   const props = propsOf(node);
   const raw = props[field.key];
 
@@ -70,7 +78,7 @@ export function FieldControl({
         value={typeof raw === "string" ? raw : ""}
         fetcher={fetcher}
         partType="section"
-        label="Section part"
+        label={t("Section part")}
         emptyLabel="Inline section"
         marker="section"
         onChange={(partId) => onChange(withProp(node, "partId", partId || undefined))}
@@ -93,8 +101,9 @@ export function FieldControl({
         />
         {duplicateName && (
           <p className="emvb-inline-error" role="alert" data-emvb-duplicate-field>
-            Another field in this form uses this name, so only one value is submitted. Give each
-            field its own name.
+            {t(
+              "Another field in this form uses this name, so only one value is submitted. Give each field its own name.",
+            )}
           </p>
         )}
       </React.Fragment>
@@ -113,7 +122,7 @@ export function FieldControl({
     if (!fetcher) {
       return (
         <p key={field.key} className="emvb-helper" data-emvb-field={field.key}>
-          Media library needs a signed-in session.
+          {t("Media library needs a signed-in session.")}
         </p>
       );
     }
@@ -131,10 +140,14 @@ export function FieldControl({
   if (field.kind === "boolean") {
     return (
       <HintedSwitch
-        label={field.label}
+        label={t(field.label)}
         checked={Boolean(raw)}
         onCheckedChange={(checked) => onChange(withProp(node, field.key, checked || undefined))}
-        hint={SWITCH_HINTS[`${node.type}.${field.key}`]}
+        hint={
+          SWITCH_HINTS[`${node.type}.${field.key}`]
+            ? t(SWITCH_HINTS[`${node.type}.${field.key}`] ?? "")
+            : undefined
+        }
         data={{ "data-emvb-field": field.key }}
         hintData={{ "data-emvb-field-hint": "" }}
       />
@@ -158,7 +171,7 @@ export function FieldControl({
     return (
       <div data-emvb-field={field.key}>
         <Select
-          label={field.label}
+          label={t(field.label)}
           className={FIELD}
           value={String(value)}
           onValueChange={(next) => {
@@ -166,13 +179,15 @@ export function FieldControl({
             onChange(withProp(node, field.key, option ? option.value : next));
           }}
           renderValue={(current: unknown) =>
-            field.options?.find((o) => String(o.value) === String(current))?.label ??
-            String(current)
+            t(
+              field.options?.find((o) => String(o.value) === String(current))?.label ??
+                String(current),
+            )
           }
         >
           {field.options.map((option) => (
             <Select.Option key={String(option.value)} value={String(option.value)}>
-              {option.label}
+              {t(option.label)}
             </Select.Option>
           ))}
         </Select>
@@ -213,22 +228,23 @@ function DeviceSelectField({
   device: "desktop" | "tablet" | "mobile";
   onChange: (node: LayoutNode) => void;
 }) {
+  const t = useI18n();
   const props = propsOf(node);
   const options = field.options ?? [];
   const labelOf = (value: unknown) =>
-    options.find((o) => String(o.value) === String(value))?.label ?? String(value);
+    t(options.find((o) => String(o.value) === String(value))?.label ?? String(value));
   const desktop = props[field.key] ?? options[0]?.value;
   const tablet = props[devices.tablet];
   const mobile = props[devices.mobile];
   if (device === "desktop") {
     const notes = [
-      tablet !== undefined ? `Tablet ${labelOf(tablet)}` : null,
-      mobile !== undefined ? `Mobile ${labelOf(mobile)}` : null,
+      tablet !== undefined ? t("Tablet {value}", { value: labelOf(tablet) }) : null,
+      mobile !== undefined ? t("Mobile {value}", { value: labelOf(mobile) }) : null,
     ].filter((note): note is string => note !== null);
     return (
       <div data-emvb-field={field.key}>
         <Select
-          label={field.label}
+          label={t(field.label)}
           className={FIELD}
           value={String(desktop ?? "")}
           onValueChange={(next) => {
@@ -239,13 +255,15 @@ function DeviceSelectField({
         >
           {options.map((option) => (
             <Select.Option key={String(option.value)} value={String(option.value)}>
-              {option.label}
+              {t(option.label)}
             </Select.Option>
           ))}
         </Select>
         {notes.length > 0 && (
           <p className="emvb-helper" data-emvb-device-values={field.key}>
-            {notes.join(" · ")}. Switch the canvas to Tablet or Mobile to change them.
+            {t("{values}. Switch the canvas to Tablet or Mobile to change them.", {
+              values: notes.join(" · "),
+            })}
           </p>
         )}
       </div>
@@ -255,11 +273,14 @@ function DeviceSelectField({
   const own = props[key];
   const wider = device === "mobile" && tablet !== undefined ? tablet : desktop;
   const SAME = "same";
-  const sameLabel = `Same as ${device === "mobile" && tablet !== undefined ? "tablet" : "desktop"} (${labelOf(wider)})`;
+  const sameLabel = t("Same as {device} ({value})", {
+    device: t(device === "mobile" && tablet !== undefined ? "tablet" : "desktop"),
+    value: labelOf(wider),
+  });
   return (
     <div data-emvb-field={key}>
       <Select
-        label={`${field.label} on ${DEVICE_NAMES[device]}`}
+        label={t("{name} on {device}", { name: t(field.label), device: t(DEVICE_NAMES[device]) })}
         className={FIELD}
         value={own === undefined ? SAME : String(own)}
         onValueChange={(next) => {
@@ -275,7 +296,7 @@ function DeviceSelectField({
         <Select.Option value={SAME}>{sameLabel}</Select.Option>
         {options.map((option) => (
           <Select.Option key={String(option.value)} value={String(option.value)}>
-            {option.label}
+            {t(option.label)}
           </Select.Option>
         ))}
       </Select>

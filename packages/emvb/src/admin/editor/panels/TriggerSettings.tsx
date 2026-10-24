@@ -1,3 +1,9 @@
+/**
+ * [INPUT]: 依赖弹窗参数约束、输入提交规则与后台翻译上下文
+ * [OUTPUT]: 导出本地化 TriggerSettings；校验并回传触发参数
+ * [POS]: 触发规则参数行；数字与 CSS 选择器保持原值
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
 import { Input } from "@cloudflare/kumo";
 import * as React from "react";
 import {
@@ -6,6 +12,7 @@ import {
   type PopupOpenTrigger,
   TRIGGER_LIMITS,
 } from "../../../core/index.ts";
+import { useI18n, type Translate } from "../../i18n/index.ts";
 import { FIELD } from "../../ui.ts";
 import { isCommitEnter } from "../ime.ts";
 import { InlineError } from "./inline-error.tsx";
@@ -76,10 +83,10 @@ function selectorError(selector: string): string | null {
 }
 
 // W-776: under a second the time reads in ms; 30 ms read "0 s after the page loads".
-const seconds = (ms: number) =>
+const seconds = (ms: number, t: Translate) =>
   ms > 0 && ms < 1000
-    ? `${ms} ms`
-    : `${(ms / 1000).toLocaleString("en", { maximumFractionDigits: 1 })} s`;
+    ? t("{count} ms", { count: ms })
+    : t("{count} s", { count: (ms / 1000).toLocaleString("en", { maximumFractionDigits: 1 }) });
 
 /** The per-type settings row inside a popup trigger (S7b / W-081). */
 export function TriggerSettings({
@@ -89,15 +96,18 @@ export function TriggerSettings({
   trigger: PopupOpenTrigger;
   onChange: (next: PopupOpenTrigger) => void;
 }) {
+  const t = useI18n();
   if (trigger.type === "delay") {
     return (
       <NumberField
         key={trigger.ms}
-        label="Delay (ms)"
+        label={t("Delay (ms)")}
         value={trigger.ms}
         min={0}
         max={TRIGGER_LIMITS.maxDelayMs}
-        description={`${seconds(trigger.ms)} after the page loads. Up to 120 000 ms.`}
+        description={t("{duration} after the page loads. Up to 120 000 ms.", {
+          duration: seconds(trigger.ms, t),
+        })}
         normalize={(raw) => clamp(Number(raw) || 0, 0, TRIGGER_LIMITS.maxDelayMs)}
         onCommit={(ms) => onChange({ type: "delay", ms })}
       />
@@ -107,28 +117,29 @@ export function TriggerSettings({
     return (
       <NumberField
         key={trigger.percent}
-        label="Scroll percent"
+        label={t("Scroll percent")}
         value={trigger.percent}
         min={0}
         max={TRIGGER_LIMITS.maxScrollPercent}
-        description="How far down the page, from 0 to 100."
+        description={t("How far down the page, from 0 to 100.")}
         normalize={clampScrollPercent}
         onCommit={(percent) => onChange({ type: "scroll", percent })}
       />
     );
   }
   if (trigger.type === "click") {
-    const error = selectorError(trigger.selector);
+    const problem = selectorError(trigger.selector);
+    const error = problem ? t(problem) : null;
     return (
       <>
         <Input
-          label="CSS selector"
+          label={t("CSS selector")}
           className={`${FIELD} emvb-mono`}
           value={trigger.selector}
           placeholder=".open-popup"
           maxLength={TRIGGER_LIMITS.maxClickSelectorLength}
           aria-invalid={error ? true : undefined}
-          description="Clicking any element that matches opens the popup."
+          description={t("Clicking any element that matches opens the popup.")}
           onChange={(event) => onChange({ type: "click", selector: event.target.value })}
         />
         {error && (
@@ -142,7 +153,7 @@ export function TriggerSettings({
   if (trigger.type === "exit_intent") {
     return (
       <p className="emvb-helper">
-        Opens when the pointer leaves toward the top of the viewport (desktop).
+        {t("Opens when the pointer leaves toward the top of the viewport (desktop).")}
       </p>
     );
   }
@@ -150,11 +161,13 @@ export function TriggerSettings({
     return (
       <NumberField
         key={trigger.ms}
-        label="Idle time (ms)"
+        label={t("Idle time (ms)")}
         value={trigger.ms}
         min={TRIGGER_LIMITS.minIdleMs}
         max={TRIGGER_LIMITS.maxDelayMs}
-        description={`${seconds(trigger.ms)} without scrolling, typing, clicking or moving the pointer.`}
+        description={t("{duration} without scrolling, typing, clicking or moving the pointer.", {
+          duration: seconds(trigger.ms, t),
+        })}
         normalize={(raw) =>
           clamp(
             Number(raw) || TRIGGER_LIMITS.minIdleMs,

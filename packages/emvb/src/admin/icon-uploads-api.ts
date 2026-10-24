@@ -1,3 +1,9 @@
+/**
+ * [INPUT]: 依赖图标上传校验与共用 JSON 请求接口。
+ * [OUTPUT]: 提供用户图标的查询、上传、改名与移除。
+ * [POS]: 图标媒体客户端；浏览器先校验，服务端再次清洗。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
 import { PLUGIN_ID } from "../constants.ts";
 import { prepareUploadedSvg, UPLOAD_SVG_MAX_BYTES, type UploadedIconItem } from "../core/index.ts";
 import { requestJson, type Fetcher } from "./api.ts";

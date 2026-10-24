@@ -19,7 +19,7 @@ LICENSE：MIT 许可证。
 ## Fork 版本边界
 
 桥接器、主插件依赖与 BRIDGE_VERSION 同步版本。
-当前 workspace 版本为 `0.8.0-dev.1`。
+当前 workspace 版本为 `0.8.0-dev.2`。
 此同步满足源码与版本契约，不代表已经发布。
 本次宿主只打包安装 `@perkyzz/emvb`。
 不得把未发布桥接器版本当作 npm registry 产物。

@@ -1,3 +1,16 @@
+/**
+ * [INPUT]: 依赖图标模型、上传 API 与结构化显示消息。
+ * [OUTPUT]: 提供useIconLibrary 与计数格式化函数。
+ * [POS]: 图标状态层；模板随语言切换，API 错误保留原文。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import {
+  errorMessage,
+  formatMessage,
+  LocalizedMessageError,
+  type LocalizedMessage,
+} from "../localized-message.ts";
+import { useI18n } from "../../i18n/index.ts";
 import * as React from "react";
 import type { Fetcher } from "../../api.ts";
 import {
@@ -43,6 +56,7 @@ export function useIconLibrary({
   /** Loads one icon set; replaceable so a failed download can be tested. */
   loadSet?: typeof loadIconSet;
 }) {
+  const t = useI18n();
   const [categoryId, setCategoryId] = React.useState(() =>
     initialCategory(currentId, fetcher !== undefined),
   );
@@ -53,7 +67,39 @@ export function useIconLibrary({
   const [uploads, setUploads] = React.useState<LibraryIcon[]>();
   const [uploadsFailed, setUploadsFailed] = React.useState<string>();
   const [uploading, setUploading] = React.useState(false);
-  const [uploadNote, setUploadNote] = React.useState<{ error: boolean; text: string }>();
+  const [uploadNoteMessage, setUploadNote] = React.useState<{
+    error: boolean;
+    text: LocalizedMessage;
+    values?: Readonly<Record<string, string | number>>;
+    imagesLeftOut?: number;
+    fallbackName?: boolean;
+  }>();
+  const uploadNote = uploadNoteMessage
+    ? {
+        ...uploadNoteMessage,
+        text:
+          typeof uploadNoteMessage.text === "string"
+            ? t(uploadNoteMessage.text, {
+                ...uploadNoteMessage.values,
+                ...(uploadNoteMessage.fallbackName ? { name: t("an icon") } : {}),
+                ...(uploadNoteMessage.imagesLeftOut !== undefined
+                  ? {
+                      removed:
+                        uploadNoteMessage.imagesLeftOut > 0
+                          ? " " +
+                            t(
+                              uploadNoteMessage.imagesLeftOut === 1
+                                ? "{count} outside image was left out."
+                                : "{count} outside images were left out.",
+                              { count: uploadNoteMessage.imagesLeftOut },
+                            )
+                          : "",
+                    }
+                  : {}),
+              })
+            : formatMessage(uploadNoteMessage.text, t),
+      }
+    : undefined;
   const fileRef = React.useRef<HTMLInputElement | null>(null);
   const [query, setQuery] = React.useState("");
   const [selectedId, setSelectedId] = React.useState(
@@ -186,27 +232,28 @@ export function useIconLibrary({
         setSelectedId(result.existingId);
         setUploadNote({
           error: false,
-          text: `You already uploaded this SVG as ${known?.label ?? "an icon"}, so it's selected. Insert adds it to the page.`,
+          text: "You already uploaded this SVG as {name}, so it's selected. Insert adds it to the page.",
+          values: { name: known?.label ?? "" },
+          fallbackName: !known?.label,
         });
         return;
       }
       const { item, imagesLeftOut } = result;
       const [icon] = uploadedIcons([item]);
-      if (!icon) throw new Error("The uploaded SVG couldn't be shown. Try another file.");
+      if (!icon)
+        throw new LocalizedMessageError("The uploaded SVG couldn't be shown. Try another file.");
       setUploads((prev) => [icon, ...(prev ?? []).filter((other) => other.id !== icon.id)]);
       setSelectedId(icon.id);
       setUploadNote({
         error: false,
-        text: `Uploaded ${icon.label}. Insert adds it to the page.${
-          imagesLeftOut > 0
-            ? ` ${imagesLeftOut} outside image${imagesLeftOut === 1 ? " was" : "s were"} left out.`
-            : ""
-        }`,
+        text: "Uploaded {name}. Insert adds it to the page.{removed}",
+        values: { name: icon.label },
+        imagesLeftOut,
       });
     } catch (caught) {
       setUploadNote({
         error: true,
-        text: caught instanceof Error ? caught.message : "The upload failed. Try again.",
+        text: errorMessage(caught, "The upload failed. Try again."),
       });
     } finally {
       setUploading(false);
@@ -225,7 +272,7 @@ export function useIconLibrary({
     : undefined;
   const renameUpload = () => {
     if (!fetcher || !uploadId || !selected) return;
-    const name = window.prompt("Rename this upload", selected.label);
+    const name = window.prompt(t("Rename this upload"), selected.label);
     if (!name || !name.trim() || name.trim() === selected.label) return;
     void renameUploadedIcon(fetcher, uploadId, name.trim())
       .then((item) => {
@@ -234,13 +281,14 @@ export function useIconLibrary({
         setUploads((current) => current?.map((entry) => (entry.id === icon.id ? icon : entry)));
         setUploadNote({
           error: false,
-          text: `Renamed to ${icon.label}. Pages that already use it are unchanged.`,
+          text: "Renamed to {name}. Pages that already use it are unchanged.",
+          values: { name: icon.label },
         });
       })
       .catch((caught: unknown) => {
         setUploadNote({
           error: true,
-          text: caught instanceof Error ? caught.message : "Couldn't rename that upload.",
+          text: errorMessage(caught, "Couldn't rename that upload."),
         });
       });
   };
@@ -248,7 +296,9 @@ export function useIconLibrary({
     if (!fetcher || !uploadId || !selected) return;
     if (
       !window.confirm(
-        `Remove “${selected.label}” from My uploads? Icons already on a page stay as they are.`,
+        t("Remove “{name}” from My uploads? Icons already on a page stay as they are.", {
+          name: selected.label,
+        }),
       )
     ) {
       return;
@@ -265,24 +315,29 @@ export function useIconLibrary({
       .catch((caught: unknown) => {
         setUploadNote({
           error: true,
-          text: caught instanceof Error ? caught.message : "Couldn't remove that upload.",
+          text: errorMessage(caught, "Couldn't remove that upload."),
         });
       });
   };
 
   const status = failed
-    ? `${failed} didn't load.`
+    ? t("{set} didn't load.", { set: failed })
     : inUploads && uploadsFailed
-      ? "Uploads didn't load."
+      ? t("Uploads didn't load.")
       : !ready
-        ? "Loading icons…"
+        ? t("Loading icons…")
         : filtered.length === 0
           ? query.trim()
-            ? `No icons match "${query.trim()}" in ${category.label}.`
+            ? t('No icons match "{query}" in {category}.', {
+                query: query.trim(),
+                category: t(category.label),
+              })
             : inUploads
-              ? "No uploads yet."
-              : "No icons here."
-          : `${fmt(filtered.length)} icon${filtered.length === 1 ? "" : "s"}`;
+              ? t("No uploads yet.")
+              : t("No icons here.")
+          : filtered.length === 1
+            ? t("{count} icon", { count: fmt(filtered.length) })
+            : t("{count} icons", { count: fmt(filtered.length) });
 
   return {
     categories,

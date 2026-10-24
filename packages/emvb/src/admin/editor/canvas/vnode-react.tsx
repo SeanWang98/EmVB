@@ -1,3 +1,9 @@
+/**
+ * [INPUT]: 依赖核心 VNode、标签及属性允许列表。
+ * [OUTPUT]: 提供vnodeToReact。
+ * [POS]: 核心渲染到 React 的适配层，保留内容与属性语义。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
 import * as React from "react";
 import { isAllowedAttr, isAllowedTag, type VNode } from "../../../core/index.ts";
 

@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖元素描述、用户图层与即时翻译器。
+ * [OUTPUT]: 组装命令、插入、图层和样式类检索项。
+ * [POS]: 检索模型边界；默认元素名翻译，用户名称原样保留。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { translate } from "../i18n/index.ts";
 import {
   ELEMENT_DESCRIPTORS,
   SECTION_RECIPES,
@@ -79,7 +86,7 @@ export function paletteItems(ctx: PaletteActions): PaletteItem[] {
     items.push({
       id: `insert:${descriptor.type}`,
       group: "Insert",
-      label: `Insert ${descriptor.name}`,
+      label: translate("Insert {name}", { name: translate(descriptor.name) }),
       keywords: `${descriptor.type} ${descriptor.group}`,
       run: () => ctx.insert(descriptor.type as ElementType),
     });
@@ -90,8 +97,8 @@ export function paletteItems(ctx: PaletteActions): PaletteItem[] {
       items.push({
         id: `recipe:${recipe.id}`,
         group: "Insert",
-        label: `Insert ${recipe.name} section`,
-        hint: "Recipe",
+        label: translate("Insert {name} section", { name: translate(recipe.name) }),
+        hint: translate("Recipe"),
         keywords: `recipe section block template ${recipe.description}`,
         run: () => insertRecipe(recipe.id),
       });
@@ -104,8 +111,8 @@ export function paletteItems(ctx: PaletteActions): PaletteItem[] {
       items.push({
         id: `saved:${section.id}`,
         group: "Insert",
-        label: `Insert ${section.name}`,
-        hint: "My sections",
+        label: translate("Insert {name}", { name: section.name }),
+        hint: translate("My sections"),
         keywords: "my sections saved section block template segment",
         run: () => insertSaved(section.id),
       });
@@ -116,12 +123,12 @@ export function paletteItems(ctx: PaletteActions): PaletteItem[] {
     const walk = (node: LayoutNode, depth: number): void => {
       if (count >= MAX_LAYERS) return;
       count += 1;
-      const name = node.label || ELEMENT_NAMES[node.type] || node.type;
+      const name = node.label || translate(ELEMENT_NAMES[node.type] || node.type);
       const text = textOf(node);
       items.push({
         id: `layer:${node.id}`,
         group: "Jump to",
-        label: depth === 0 ? "Page (root)" : name,
+        label: depth === 0 ? translate("Page (root)") : name,
         ...(text ? { hint: `“${clipText(text, 40)}”` } : {}),
         keywords: `${node.type} ${text}`,
         run: () => ctx.select(node.id),
@@ -149,8 +156,10 @@ export function paletteItems(ctx: PaletteActions): PaletteItem[] {
       items.push({
         id: `class:${cls.id}`,
         group: "Apply class",
-        label: `Apply .${cls.name}`,
-        hint: `to ${selected.label || ELEMENT_NAMES[selected.type] || selected.type}`,
+        label: translate("Apply .{name}", { name: cls.name }),
+        hint: translate("to {name}", {
+          name: selected.label || translate(ELEMENT_NAMES[selected.type] || selected.type),
+        }),
         keywords: cls.id,
         run: () => ctx.applyClass(selected.id, cls.id),
       });

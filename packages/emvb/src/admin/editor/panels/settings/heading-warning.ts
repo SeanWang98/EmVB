@@ -1,3 +1,9 @@
+/**
+ * [INPUT]: 依赖布局字段与设置面板的调用参数。
+ * [OUTPUT]: 说明标题级别跨级的无障碍问题。
+ * [POS]: 元素设置面板的 heading-warning 边界。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
 import type { LayoutNode } from "../../../../core/index.ts";
 import type { ThemePartType } from "../../../../core/theme/part-types.ts";
 

@@ -1,3 +1,9 @@
+/**
+ * [INPUT]: 依赖布局字段与设置面板的调用参数。
+ * [OUTPUT]: 判断并切换背景填充模式。
+ * [POS]: 元素设置面板的 background-mode 边界。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
 import type { StyleProps } from "../../../../core/index.ts";
 import { STYLE_UI } from "./style-sections.ts";
 import { NEW_GRADIENT } from "./BackgroundControls.tsx";

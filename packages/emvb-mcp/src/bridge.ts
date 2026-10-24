@@ -16,7 +16,7 @@ import {
 } from "@perkyzz/emvb/mcp";
 import type { Remote, ToolResult } from "./remote.ts";
 
-export const BRIDGE_VERSION = "0.8.0-dev.1";
+export const BRIDGE_VERSION = "0.8.0-dev.2";
 
 const failure = (message: string): ToolResult => ({
   content: [{ type: "text", text: message }],

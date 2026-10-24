@@ -1,8 +1,16 @@
+/**
+ * [INPUT]: 依赖节点校验、媒体 URL 规则、错误格式器与语言上下文
+ * [OUTPUT]: 提供响应式图片源解析器与字段
+ * [POS]: 图片设置的 srcset 编辑入口；按当前语言重绘提交快照错误
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { useI18n, type Translate } from "../../../i18n/index.ts";
 import * as React from "react";
 import { sanitizeMediaUrl, type LayoutNode } from "../../../../core/index.ts";
 import { FIELD } from "../../../ui.ts";
 import { savableNode } from "./DraftTextField.tsx";
 import { propsOf, withProp } from "./node-props.ts";
+import { formatError, type LocalizedError } from "./localized-error.ts";
 
 type Source = { src: string; width: number };
 
@@ -24,13 +32,21 @@ const sourcesText = (value: unknown): string =>
  * `/photo-400.jpg 400` or `/photo-400.jpg 400w`, one per line → sources; or the reason the
  * text can't be stored (W-397).
  */
-export function parseSources(text: string): { sources: Source[] } | { error: string } {
+export function parseSources(
+  text: string,
+  translate?: Translate,
+): { sources: Source[] } | { error: string } {
   // W-423: a srcset pasted from elsewhere ("a.jpg 480w, b.jpg 960w") splits into lines too.
   const lines = text
     .split(/\n|,\s+/)
     .map((line) => line.trim())
     .filter((line) => line.length > 0);
-  if (lines.length > MAX_SOURCES) return { error: `Up to ${MAX_SOURCES} extra sources.` };
+  if (lines.length > MAX_SOURCES)
+    return {
+      error:
+        translate?.("Up to {count} extra sources.", { count: MAX_SOURCES }) ??
+        `Up to ${MAX_SOURCES} extra sources.`,
+    };
   const sources: Source[] = [];
   for (const line of lines) {
     // W-545: a site path may hold a space ("/uploads/my photo-400.jpg 400"); the width is the
@@ -39,12 +55,20 @@ export function parseSources(text: string): { sources: Source[] } | { error: str
     const width = match ? Number(match[2]) : Number.NaN;
     if (!match || !Number.isInteger(width) || width < 1 || width > 8000) {
       return {
-        error: `"${line.slice(0, 60)}": write the URL, a space, then its width in px (1–8000).`,
+        error:
+          translate?.('"{source}": write the URL, a space, then its width in px (1–8000).', {
+            source: line.slice(0, 60),
+          }) ?? `"${line.slice(0, 60)}": write the URL, a space, then its width in px (1–8000).`,
       };
     }
     const src = match[1] as string;
     if (!sanitizeMediaUrl(src) || src.includes(",")) {
-      return { error: `"${src.slice(0, 60)}" isn't a URL or site path the page can use.` };
+      return {
+        error:
+          translate?.('"{source}" isn\'t a URL or site path the page can use.', {
+            source: src.slice(0, 60),
+          }) ?? `"${src.slice(0, 60)}" isn't a URL or site path the page can use.`,
+      };
     }
     sources.push({ src, width });
   }
@@ -59,9 +83,11 @@ export function ImageSourcesField({
   node: LayoutNode;
   onChange: (node: LayoutNode) => void;
 }) {
+  const t = useI18n();
   const raw = propsOf(node)["sources"];
   const [draft, setDraft] = React.useState(sourcesText(raw));
-  const [error, setError] = React.useState<string | null>(null);
+  const [error, setError] = React.useState<LocalizedError | null>(null);
+  const errorText = formatError(error, t);
   const id = React.useId();
   React.useEffect(() => {
     setDraft(sourcesText(raw));
@@ -69,9 +95,15 @@ export function ImageSourcesField({
   }, [node.id, raw]);
 
   const commit = () => {
-    const parsed = parseSources(draft);
+    const input = draft;
+    const parsed = parseSources(input);
     if ("error" in parsed) {
-      setError(parsed.error);
+      setError({
+        format: (currentT) => {
+          const failure = parseSources(input, currentT);
+          return "error" in failure ? failure.error : "";
+        },
+      });
       return;
     }
     const next = withProp(node, "sources", parsed.sources.length > 0 ? parsed.sources : undefined);
@@ -87,7 +119,7 @@ export function ImageSourcesField({
   return (
     <div className="emvb-field-group" data-emvb-field="sources">
       <label className="emvb-field-label" htmlFor={id}>
-        Extra sizes (srcset)
+        {t("Extra sizes (srcset)")}
       </label>
       <textarea
         id={id}
@@ -105,8 +137,10 @@ export function ImageSourcesField({
         id={`${id}-help`}
         data-emvb-sources-error={error ? "" : undefined}
       >
-        {error ??
-          "One per line: the URL of a smaller or larger copy, a space, then its width in px. Set Width (px) so the main image is listed too."}
+        {errorText ??
+          t(
+            "One per line: the URL of a smaller or larger copy, a space, then its width in px. Set Width (px) so the main image is listed too.",
+          )}
       </span>
     </div>
   );

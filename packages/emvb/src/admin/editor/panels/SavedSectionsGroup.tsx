@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖共享区块动作、延迟错误消息与后台语言。
+ * [OUTPUT]: 提供随后台语言更新的面板控件。
+ * [POS]: 编辑器面板；只翻译界面，保留用户内容原值。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { useI18n, translate, type Translate } from "../../i18n/index.ts";
 import { Button, Input } from "@cloudflare/kumo";
 import { PencilSimpleIcon, TrashIcon } from "@phosphor-icons/react";
 import * as React from "react";
@@ -6,10 +13,17 @@ import { matchesSearch } from "../../search.ts";
 import { BUTTON, FIELD } from "../../ui.ts";
 import { DeleteSavedSectionDialog } from "../SavedSectionDialogs.tsx";
 import type { SavedSectionActions } from "../useSavedSections.ts";
+import { formatMessage, type LocalizedMessage } from "../localized-message.ts";
 
 /** Saved sections that match the Add panel's search. */
-export const matchingSections = (saved: SavedSectionActions, query: string) =>
-  saved.list.filter((item) => matchesSearch(query, item.name, "my saved section"));
+export const matchingSections = (
+  saved: SavedSectionActions,
+  query: string,
+  t: Translate = translate,
+) =>
+  saved.list.filter((item) =>
+    matchesSearch(query, item.name, "my saved section", t("My sections")),
+  );
 
 const focusIn = (root: HTMLElement | null, selector: string) =>
   root?.querySelector<HTMLElement>(selector)?.focus({ preventScroll: false });
@@ -27,11 +41,12 @@ export function SavedSectionsGroup({
   saved: SavedSectionActions;
   query: string;
 }) {
+  const t = useI18n();
   const groupRef = React.useRef<HTMLDivElement>(null);
   const [renaming, setRenaming] = React.useState<string | null>(null);
-  const [renameError, setRenameError] = React.useState<string | null>(null);
+  const [renameError, setRenameError] = React.useState<LocalizedMessage | null>(null);
   const [asking, setAsking] = React.useState<string | null>(null);
-  const [deleteError, setDeleteError] = React.useState<string | null>(null);
+  const [deleteError, setDeleteError] = React.useState<LocalizedMessage | null>(null);
   /** Where focus goes once the delete dialog has closed. */
   const focusAfter = React.useRef<string | null>(null);
   /** A control to focus once the render that brings it back has committed. */
@@ -41,7 +56,7 @@ export function SavedSectionsGroup({
     focusIn(groupRef.current, focusNext);
     setFocusNext(null);
   }, [focusNext]);
-  const items = matchingSections(saved, query);
+  const items = matchingSections(saved, query, t);
   if (query.trim() && items.length === 0) return null;
   const askedName = saved.list.find((item) => item.id === asking)?.name ?? null;
 
@@ -93,11 +108,11 @@ export function SavedSectionsGroup({
   return (
     <div className="emvb-add-group" data-emvb-saved-sections="" ref={groupRef}>
       <h3 className="emvb-add-group-title" tabIndex={-1} data-emvb-saved-title="">
-        My sections
+        {t("My sections")}
       </h3>
       {!saved.loaded ? (
         <p className="emvb-helper" role="status">
-          Loading My sections…
+          {t("Loading My sections…")}
         </p>
       ) : saved.loadError ? (
         <div className="emvb-saved-error">
@@ -105,16 +120,17 @@ export function SavedSectionsGroup({
             {saved.loadError}
           </p>
           <Button type="button" variant="secondary" className={BUTTON} onClick={saved.refresh}>
-            Try again
+            {t("Try again")}
           </Button>
         </div>
       ) : items.length === 0 ? (
         <p className="emvb-helper" data-emvb-saved-empty="">
-          Save an element as a section from its ··· menu in Layers, or with Save as section in the
-          command palette.
+          {t(
+            "Save an element as a section from its ··· menu in Layers, or with Save as section in the command palette.",
+          )}
         </p>
       ) : (
-        <ul className="emvb-saved-list" aria-label="My sections">
+        <ul className="emvb-saved-list" aria-label={t("My sections")}>
           {items.map((item) => (
             <li key={item.id} className="emvb-saved-row">
               {renaming === item.id ? (
@@ -131,12 +147,14 @@ export function SavedSectionsGroup({
                     data-emvb-saved-section={item.id}
                     disabled={item.damaged}
                     title={
-                      item.damaged ? "This saved section can't be read" : `Insert ${item.name}`
+                      item.damaged
+                        ? t("This saved section can't be read")
+                        : t("Insert {name}", { name: item.name })
                     }
                     onClick={() => void saved.insert(item.id)}
                   >
                     {item.name}
-                    {item.damaged && <span className="emvb-helper"> (can&apos;t be read)</span>}
+                    {item.damaged && <span className="emvb-helper">{t(" (can't be read)")}</span>}
                   </button>
                   <Button
                     type="button"
@@ -144,8 +162,8 @@ export function SavedSectionsGroup({
                     shape="square"
                     size="sm"
                     className="emvb-icon-btn"
-                    aria-label={`Rename ${item.name}`}
-                    title="Rename"
+                    aria-label={t("Rename {name}", { name: item.name })}
+                    title={t("Rename")}
                     data-emvb-saved-rename={item.id}
                     disabled={item.damaged}
                     icon={<PencilSimpleIcon aria-hidden="true" />}
@@ -160,8 +178,8 @@ export function SavedSectionsGroup({
                     shape="square"
                     size="sm"
                     className="emvb-icon-btn"
-                    aria-label={`Delete ${item.name}`}
-                    title="Delete"
+                    aria-label={t("Delete {name}", { name: item.name })}
+                    title={t("Delete")}
                     data-emvb-saved-delete={item.id}
                     icon={<TrashIcon aria-hidden="true" />}
                     onClick={() => setAsking(item.id)}
@@ -174,7 +192,7 @@ export function SavedSectionsGroup({
       )}
       {deleteError && (
         <p className="emvb-inline-error" role="alert">
-          {deleteError}
+          {formatMessage(deleteError, t)}
         </p>
       )}
       <DeleteSavedSectionDialog
@@ -205,9 +223,10 @@ function RenameField({
   onDone,
 }: {
   initial: string;
-  error: string | null;
+  error: LocalizedMessage | null;
   onDone: (value: string | null) => void;
 }) {
+  const t = useI18n();
   const [text, setText] = React.useState(initial);
   const done = React.useRef(false);
   const finish = (value: string | null) => {
@@ -221,13 +240,13 @@ function RenameField({
   };
   return (
     <Input
-      aria-label="Section name"
+      aria-label={t("Section name")}
       className={`${FIELD} emvb-saved-rename`}
       data-emvb-saved-rename-field=""
       autoFocus
       maxLength={SAVED_SECTION_NAME_MAX}
       value={text}
-      error={error ?? undefined}
+      error={error ? formatMessage(error, t) : undefined}
       aria-invalid={error ? true : undefined}
       onFocus={(event) => event.currentTarget.select()}
       onChange={(event) => setText(event.target.value)}

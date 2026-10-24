@@ -1,12 +1,35 @@
+/**
+ * [INPUT]: 依赖保存失败模型、英文显示器与 API 错误。
+ * [OUTPUT]: 验证错误分类、重试与定位保持原有行为。
+ * [POS]: 保存边界回归；比较显示文案，不约束消息存储形式。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
 import { describe, expect, test } from "bun:test";
 import type { Layout } from "../../core/index.ts";
 import { ApiError } from "../api.ts";
+import { createTranslator } from "../i18n/index.ts";
+import { formatMessage } from "./localized-message.ts";
 import {
   publishFailureMessage,
   saveFailure,
   slugTakenMessage,
   type SaveStatus,
 } from "./useSave.ts";
+
+/** 错误消息在 UI 边界求值；此套分类测试固定使用英文显示。 */
+function shownFailure(...args: Parameters<typeof saveFailure>) {
+  const failure = saveFailure(...args);
+  const t = createTranslator("en");
+  return {
+    ...failure,
+    status:
+      failure.status.kind === "error"
+        ? { ...failure.status, message: formatMessage(failure.status.message, t) }
+        : failure.status,
+    ...(failure.slugError !== undefined ? { slugError: formatMessage(failure.slugError, t) } : {}),
+    ...(failure.rejection !== undefined ? { rejection: formatMessage(failure.rejection, t) } : {}),
+  };
+}
 
 const layout: Layout = {
   schemaVersion: 17,
@@ -18,28 +41,28 @@ const layout: Layout = {
   },
 };
 const page = { slug: "about", layout };
-const fix: SaveStatus = {
+const fix = {
   kind: "error",
   message: "Couldn't save. Fix the highlighted setting and save again.",
   retry: false,
-};
-const offline: SaveStatus = {
+} satisfies SaveStatus;
+const offline = {
   kind: "error",
   message: "Couldn't save. Check your connection and try again.",
   retry: true,
-};
+} satisfies SaveStatus;
 
 describe("save failures (R-006)", () => {
   test("network errors and 5xx are retryable connection errors", () => {
-    expect(saveFailure(new TypeError("fetch failed"), page)).toEqual({ status: offline });
-    expect(saveFailure(new ApiError(503, "UNAVAILABLE", "down"), page)).toEqual({
+    expect(shownFailure(new TypeError("fetch failed"), page)).toEqual({ status: offline });
+    expect(shownFailure(new ApiError(503, "UNAVAILABLE", "down"), page)).toEqual({
       status: offline,
     });
   });
 
   test("a 500 is a retryable connection error and a 499 is not (W-091)", () => {
-    expect(saveFailure(new ApiError(500, "ERR", "boom"), page)).toEqual({ status: offline });
-    expect(saveFailure(new ApiError(499, "ERR", "closed"), page).status).toEqual({
+    expect(shownFailure(new ApiError(500, "ERR", "boom"), page)).toEqual({ status: offline });
+    expect(shownFailure(new ApiError(499, "ERR", "closed"), page).status).toEqual({
       kind: "error",
       message: "Couldn't save. closed",
       retry: false,
@@ -55,7 +78,7 @@ describe("save failures (R-006)", () => {
     const wide: Layout = { schemaVersion: 17, root: { ...layout.root, children } };
     const message = "The page layout is invalid. root.children[11].props.level: too big";
     expect(
-      saveFailure(new ApiError(422, "SAVE_REJECTED", message), { ...page, layout: wide }),
+      shownFailure(new ApiError(422, "SAVE_REJECTED", message), { ...page, layout: wide }),
     ).toEqual({
       status: fix,
       rejection: message,
@@ -64,7 +87,7 @@ describe("save failures (R-006)", () => {
   });
 
   test("a taken slug shows the Slug error and opens page settings", () => {
-    expect(saveFailure(new ApiError(409, "SLUG_CONFLICT", "taken"), page)).toEqual({
+    expect(shownFailure(new ApiError(409, "SLUG_CONFLICT", "taken"), page)).toEqual({
       status: fix,
       slugError: slugTakenMessage("about"),
       select: null,
@@ -72,7 +95,7 @@ describe("save failures (R-006)", () => {
   });
 
   test("any other 409 is an edit conflict", () => {
-    expect(saveFailure(new ApiError(409, "CONFLICT", "stale"), page)).toEqual({
+    expect(shownFailure(new ApiError(409, "CONFLICT", "stale"), page)).toEqual({
       status: {
         kind: "error" as const,
         message: "Couldn't save. This page was changed somewhere else.",
@@ -84,7 +107,7 @@ describe("save failures (R-006)", () => {
 
   test("a 400 or 422 selects the element named in the message and shows the rejection", () => {
     const message = "The page layout is invalid. root.children[0].props.level: too big";
-    expect(saveFailure(new ApiError(422, "SAVE_REJECTED", message), page)).toEqual({
+    expect(shownFailure(new ApiError(422, "SAVE_REJECTED", message), page)).toEqual({
       status: fix,
       rejection: message,
       select: "head0001",
@@ -97,12 +120,12 @@ describe("save failures (R-006)", () => {
       message: `Couldn't save. ${message}`,
       retry: false,
     });
-    expect(saveFailure(new ApiError(400, "BAD", "no path here"), page)).toEqual({
+    expect(shownFailure(new ApiError(400, "BAD", "no path here"), page)).toEqual({
       status: shown("no path here"),
       rejection: "no path here",
     });
     expect(
-      saveFailure(new ApiError(422, "SAVE_REJECTED", "root.children[0]"), {
+      shownFailure(new ApiError(422, "SAVE_REJECTED", "root.children[0]"), {
         ...page,
         layout: null,
       }),
@@ -110,7 +133,7 @@ describe("save failures (R-006)", () => {
   });
 
   test("other client errors show the server's message", () => {
-    expect(saveFailure(new ApiError(403, "FORBIDDEN", "Not allowed."), page)).toEqual({
+    expect(shownFailure(new ApiError(403, "FORBIDDEN", "Not allowed."), page)).toEqual({
       status: { kind: "error" as const, message: "Couldn't save. Not allowed.", retry: false },
     });
   });
@@ -138,7 +161,7 @@ describe("save failures (R-006)", () => {
 describe("signed out mid-edit (W-205)", () => {
   test("a 401 save says to sign in again and offers Retry; a 401 publish says so too", () => {
     const signedOut = new ApiError(401, "UNAUTHORIZED", "Not authenticated");
-    expect(saveFailure(signedOut, { slug: "a", layout: null })).toEqual({
+    expect(shownFailure(signedOut, { slug: "a", layout: null })).toEqual({
       status: {
         kind: "error",
         message: "Couldn't save. You're signed out: sign in again in another tab, then Retry.",
@@ -152,7 +175,7 @@ describe("signed out mid-edit (W-205)", () => {
 describe("deleted while open (W-206)", () => {
   test("a 404 save points to the Trash and offers Retry", () => {
     const gone = new ApiError(404, "NOT_FOUND", "Content item not found: 01X");
-    const failure = saveFailure(gone, { slug: "a", layout: null });
+    const failure = shownFailure(gone, { slug: "a", layout: null });
     expect(failure.status).toMatchObject({ kind: "error", retry: true });
     expect(failure.status.kind === "error" ? failure.status.message : "").toContain("Trash");
   });

@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖样式元数据与可注入的后台翻译器。
+ * [OUTPUT]: 导出长度单位、合法范围与可注入翻译的 parseLengthDraft。
+ * [POS]: 元素设置面板的长度解析边界，翻译展示文案并保留存储值。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { createTranslator, type Translate } from "../../../i18n/index.ts";
 import { STYLE_LABELS, type StyleKey } from "./style-sections.ts";
 
 export type LengthUnit = "px" | "rem" | "em" | "%" | "vw" | "vh" | "ch";
@@ -71,34 +78,38 @@ export function parseLengthDraft(
   draft: string,
   key: StyleKey,
   unit: LengthUnit | "x",
+  t: Translate = createTranslator("en"),
 ): ParsedLength {
   const text = draft.trim();
   if (text === "") return { ok: true, value: undefined };
-  const label = STYLE_LABELS[key];
+  const label = t(STYLE_LABELS[key]);
   const allowed = unitsFor(key);
   if (text.toLowerCase() === "auto") {
     return allowed.includes("auto")
       ? { ok: true, value: "auto" }
-      : { ok: false, message: `${label} can't be auto. Enter a number.` };
+      : { ok: false, message: t("{label} can't be auto. Enter a number.", { label }) };
   }
   const match = DRAFT.exec(text);
   const n = match ? Number(match[1]) : Number.NaN;
   if (!match || !Number.isFinite(n)) {
     if (COMMA_DECIMAL.test(text)) {
-      return { ok: false, message: "Use a dot for decimals, such as 1.5." };
+      return { ok: false, message: t("Use a dot for decimals, such as 1.5.") };
     }
     if (OTHER_UNIT.test(text)) {
       return {
         ok: false,
-        message: `${label} takes ${listed(allowed.filter((u) => u !== "auto" && u !== "x"))}.`,
+        message: t("{label} takes {units}.", {
+          label,
+          units: listed(allowed.filter((u) => u !== "auto" && u !== "x")),
+        }),
       };
     }
-    return { ok: false, message: `Enter a number, such as 16 or 16${unit}.` };
+    return { ok: false, message: t("Enter a number, such as 16 or 16{unit}.", { unit }) };
   }
   if (unit === "x" && !match[2] && allowed.includes("x")) {
     // W-213: unitless line height, 0–100.
     if (n < 0 || n > 100) {
-      return { ok: false, message: `${label} without a unit can be from 0 to 100.` };
+      return { ok: false, message: t("{label} without a unit can be from 0 to 100.", { label }) };
     }
     return { ok: true, value: n };
   }
@@ -106,21 +117,24 @@ export function parseLengthDraft(
   if (!allowed.includes(typed)) {
     return {
       ok: false,
-      message: `${label} takes ${listed(allowed.filter((u) => u !== "auto"))}.`,
+      message: t("{label} takes {units}.", {
+        label,
+        units: listed(allowed.filter((u) => u !== "auto")),
+      }),
     };
   }
   if (n < 0 && !NEGATIVE.has(key)) {
     return {
       ok: false,
-      message: `${label} can't be negative. Enter 0 or more.`,
+      message: t("{label} can't be negative. Enter 0 or more.", { label }),
     };
   }
   if (Math.abs(n) > 10_000) {
     return {
       ok: false,
       message: NEGATIVE.has(key)
-        ? `${label} can be from -10000 to 10000.`
-        : `${label} can be up to 10000. Enter a smaller number.`,
+        ? t("{label} can be from -10000 to 10000.", { label })
+        : t("{label} can be up to 10000. Enter a smaller number.", { label }),
     };
   }
   return { ok: true, value: { value: n, unit: typed } };

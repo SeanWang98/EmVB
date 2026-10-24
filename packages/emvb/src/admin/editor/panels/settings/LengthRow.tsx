@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖长度解析、变量绑定与按当前语言格式化的错误。
+ * [OUTPUT]: 导出 LengthRow。
+ * [POS]: 长度和单位控件；错误保留提交快照，切语言不改草稿。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { useI18n } from "../../../i18n/index.ts";
 import { DropdownMenu, InputGroup } from "@cloudflare/kumo";
 import { CaretDownIcon } from "@phosphor-icons/react";
 import * as React from "react";
@@ -13,6 +20,7 @@ import {
 import type { StyleKey } from "./style-sections.ts";
 import { bindKind, boundRef, lengthRef, VariableButton, VariableChip } from "./VariableBinding.tsx";
 import { isCommitEnter } from "../../ime.ts";
+import { formatError, type LocalizedError } from "./localized-error.ts";
 
 const isLiteral = (value: unknown): value is LengthLiteral =>
   typeof value === "object" &&
@@ -52,6 +60,7 @@ export function LengthRow({
   onPatch: (patch: Partial<StyleProps>) => void;
   reset: React.ReactNode;
 }) {
+  const t = useI18n();
   const units = unitsFor(styleKey);
   // W-213: a plain number is a unitless line height, shown with the `x` unit.
   // W-603: memoized, so a plain number doesn't make a new object each render; the effect below
@@ -64,7 +73,8 @@ export function LengthRow({
   const [draft, setDraft] = React.useState(literal ? String(literal.value) : "");
   const [unit, setUnit] = React.useState<UnitChoice>(value === "auto" ? "auto" : numericUnit);
   const lastNumeric = React.useRef<NumericUnit>(numericUnit);
-  const [error, setError] = React.useState<string | null>(null);
+  const [error, setError] = React.useState<LocalizedError | null>(null);
+  const errorText = formatError(error, t);
   React.useEffect(() => {
     setDraft(literal ? String(literal.value) : "");
     setUnit(value === "auto" ? "auto" : (literal?.unit ?? lastNumeric.current));
@@ -77,9 +87,15 @@ export function LengthRow({
   };
 
   const commit = () => {
-    const parsed = parseLengthDraft(draft, styleKey, unit === "auto" ? lastNumeric.current : unit);
+    const parsedUnit = unit === "auto" ? lastNumeric.current : unit;
+    const parsed = parseLengthDraft(draft, styleKey, parsedUnit, t);
     if (!parsed.ok) {
-      setError(parsed.message);
+      setError({
+        format: (tr) => {
+          const again = parseLengthDraft(draft, styleKey, parsedUnit, tr);
+          return again.ok ? "" : again.message;
+        },
+      });
       return;
     }
     setError(null);
@@ -96,7 +112,7 @@ export function LengthRow({
       return;
     }
     lastNumeric.current = next;
-    const parsed = parseLengthDraft(draft, styleKey, next);
+    const parsed = parseLengthDraft(draft, styleKey, next, t);
     if (parsed.ok && parsed.value !== undefined && parsed.value !== "auto") {
       const n = typeof parsed.value === "number" ? parsed.value : parsed.value.value;
       if (next === "x") {
@@ -130,7 +146,7 @@ export function LengthRow({
           <InputGroup
             label={label}
             className={`${FIELD} emvb-length`}
-            error={error ? { message: error, match: true } : undefined}
+            error={errorText ? { message: errorText, match: true } : undefined}
           >
             <InputGroup.Input
               className="emvb-mono"
@@ -138,9 +154,12 @@ export function LengthRow({
               inputMode="decimal"
               value={draft}
               placeholder={unit === "auto" ? "auto" : placeholder}
-              title={`A number in ${unit === "auto" ? lastNumeric.current : unit}, or with its own unit (2rem, 50%)${
-                units.includes("auto") ? ", or auto" : ""
-              }`}
+              title={t(
+                units.includes("auto")
+                  ? "A number in {unit}, or with its own unit (2rem, 50%), or auto"
+                  : "A number in {unit}, or with its own unit (2rem, 50%)",
+                { unit: unit === "auto" ? lastNumeric.current : unit },
+              )}
               aria-invalid={error ? true : undefined}
               onChange={(event) => {
                 if (unit === "auto") setUnit(lastNumeric.current);
@@ -157,7 +176,7 @@ export function LengthRow({
                   <button
                     type="button"
                     className="emvb-unit-btn"
-                    aria-label={`${label} unit (${unit})`}
+                    aria-label={t("{label} unit ({unit})", { label, unit })}
                     data-emvb-unit={unit}
                   >
                     {unit === "x" ? "×" : unit}
@@ -166,7 +185,7 @@ export function LengthRow({
                 </DropdownMenu.Trigger>
                 <DropdownMenu.Content data-emvb-unit-menu={styleKey}>
                   <DropdownMenu.RadioGroup
-                    aria-label={`${label} unit`}
+                    aria-label={t("{label} unit", { label })}
                     value={unit}
                     onValueChange={(next: UnitChoice) => pickUnit(next)}
                   >
@@ -177,7 +196,9 @@ export function LengthRow({
                         closeOnClick
                         data-emvb-unit-option={choice}
                       >
-                        <span className="emvb-mono">{choice === "x" ? "× (no unit)" : choice}</span>
+                        <span className="emvb-mono">
+                          {choice === "x" ? t("× (no unit)") : choice}
+                        </span>
                         <DropdownMenu.RadioItemIndicator />
                       </DropdownMenu.RadioItem>
                     ))}
@@ -193,7 +214,7 @@ export function LengthRow({
               min={0}
               max={200}
               step={1}
-              aria-label={`${label} slider`}
+              aria-label={t("{label} slider", { label })}
               value={Math.min(200, literal?.value ?? 0)}
               onChange={(event) => {
                 const next = Number(event.target.value);

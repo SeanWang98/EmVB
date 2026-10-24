@@ -1,3 +1,9 @@
+/**
+ * [INPUT]: 依赖内容 API、布局校验与编辑器延迟翻译消息。
+ * [OUTPUT]: 提供条目和站点样式加载及失败状态。
+ * [POS]: 独立编辑数据入口；缓存源错误，显示层决定语言。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
 import * as React from "react";
 import {
   defaultConditions,
@@ -20,6 +26,12 @@ import {
 import { PAGES_COLLECTION, PLUGIN_ID, THEME_PARTS_COLLECTION } from "../../constants.ts";
 import { ApiError, requestJson, type Fetcher } from "../api.ts";
 import { entryStatus } from "../entry-status.ts";
+import {
+  errorMessage,
+  literalMessage,
+  LocalizedMessageError,
+  type LocalizedMessage,
+} from "./localized-message.ts";
 
 export type EditorEntry = {
   id: string;
@@ -54,7 +66,7 @@ export type EditorData =
   | { state: "loading" }
   | { state: "ready"; entry: EditorEntry; design: LoadedDesign }
   | { state: "not-found" | "forbidden" }
-  | { state: "error"; message: string; retry: () => void };
+  | { state: "error"; message: LocalizedMessage; retry: () => void };
 
 const UNREADABLE = "This page's layout can't be read.";
 
@@ -139,11 +151,11 @@ function readLayout(raw: unknown): Layout | null {
     try {
       value = JSON.parse(raw) as unknown;
     } catch {
-      throw new Error(UNREADABLE);
+      throw new LocalizedMessageError(UNREADABLE);
     }
   }
   const result = validateLayout(value);
-  if (!result.ok) throw new Error(UNREADABLE);
+  if (!result.ok) throw new LocalizedMessageError(UNREADABLE);
   return result.layout;
 }
 
@@ -187,7 +199,7 @@ export function useEditorData(
         } else {
           setData({
             state: "error",
-            message: error instanceof Error ? error.message : String(error),
+            message: errorMessage(error, literalMessage(String(error))),
             retry: () => setAttempt((n) => n + 1),
           });
         }

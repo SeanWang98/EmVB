@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖核心 A/B 树操作与后台翻译。
+ * [OUTPUT]: 导出 VariantEditor。
+ * [POS]: 元素设置面板的A/B 测试控件，翻译展示文案并保留存储值。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { useI18n } from "../../../i18n/index.ts";
 import {
   createVariantB,
   endAbTest,
@@ -27,16 +34,18 @@ export function VariantEditor({
   onChange: (node: LayoutNode) => void;
   onArrange?: (run: (layout: Layout) => Arranged) => void;
 }) {
+  const t = useI18n();
   if (isRoot || NO_VARIANT.has(node.type) || !onArrange) return null;
   const v = node.variant;
   return (
     <section className="emvb-bind" data-emvb-variant-editor="">
-      <h3 className="emvb-bind-title">A/B test</h3>
+      <h3 className="emvb-bind-title">{t("A/B test")}</h3>
       {!v ? (
         <>
           <p className="emvb-helper">
-            Show half of your visitors a different version. The server picks the version, so nothing
-            flickers and no script loads.
+            {t(
+              "Show half of your visitors a different version. The server picks the version, so nothing flickers and no script loads.",
+            )}
           </p>
           <button
             type="button"
@@ -44,24 +53,28 @@ export function VariantEditor({
             data-emvb-create-variant=""
             onClick={() => onArrange((layout) => createVariantB(layout, node.id))}
           >
-            Create variant B
+            {t("Create variant B")}
           </button>
         </>
       ) : (
         <>
           <p className="emvb-helper" data-emvb-variant-arm={v.arm}>
-            Variant {v.arm.toUpperCase()} of test <b>{v.test}</b>. The canvas shows every variant;
-            visitors see one.
+            {t("Variant {arm} of test {name}. The canvas shows every variant; visitors see one.", {
+              arm: v.arm.toUpperCase(),
+              name: v.test,
+            })}
           </p>
           {lone && (
             <p className="emvb-helper" data-emvb-variant-lone="">
-              Variant {v.arm === "a" ? "B" : "A"} was removed, so every visitor sees this one. End
-              the test to tidy it up.
+              {t(
+                "Variant {arm} was removed, so every visitor sees this one. End the test to tidy it up.",
+                { arm: v.arm === "a" ? "B" : "A" },
+              )}
             </p>
           )}
           {v.arm === "b" && !lone && (
             <label className="emvb-bind-row">
-              <span className="emvb-bind-label">Visitors who see B (%)</span>
+              <span className="emvb-bind-label">{t("Visitors who see B (%)")}</span>
               <input
                 className="emvb-native-input"
                 type="number"
@@ -83,7 +96,7 @@ export function VariantEditor({
             data-emvb-end-test=""
             onClick={() => onArrange((layout) => endAbTest(layout, node.id))}
           >
-            Keep this variant and end the test
+            {t("Keep this variant and end the test")}
           </button>
         </>
       )}

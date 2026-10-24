@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖布局限制、拖放协议、文档几何与后台语言。
+ * [OUTPUT]: 提供useCanvasDnD。
+ * [POS]: 拖放目标解析及临时反馈，不保存翻译后的标签。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { useI18n } from "../../i18n/index.ts";
 import * as React from "react";
 import {
   canDrop,
@@ -96,6 +103,7 @@ export function useCanvasDnD({
   onDropNew: (elementType: string, parentId: string, index: number) => void;
   onMove: (id: string, parentId: string, index: number) => void;
 }): { dropLine: Box | null; dropTarget: DropTarget | null; invalid: InvalidDrop | null } {
+  const t = useI18n();
   const [dropLine, setDropLine] = React.useState<Box | null>(null);
   const [invalid, setInvalid] = React.useState<InvalidDrop | null>(null);
   const [dropTarget, setDropTarget] = React.useState<DropTarget | null>(null);
@@ -206,15 +214,15 @@ export function useCanvasDnD({
               // The root is the page itself, so say so rather than "Container" (W-128).
               label:
                 next.parentId === current.root.id
-                  ? "Inside Page"
-                  : `Inside ${handlers.current.labelFor(next.parentId)}`,
+                  ? t("Inside Page")
+                  : t("Inside {name}", { name: handlers.current.labelFor(next.parentId) }),
             }
           : null,
       );
       if (allowed && transfer) transfer.dropEffect = kinds.existing ? "move" : "copy";
       return true;
     },
-    [clearDrag, handlers, layoutRef, resolveDrop],
+    [clearDrag, handlers, layoutRef, resolveDrop, t],
   );
 
   useCanvasEvents({

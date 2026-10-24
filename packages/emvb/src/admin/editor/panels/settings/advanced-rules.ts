@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖布局树、属性保留规则与后台翻译类型。
+ * [OUTPUT]: 提供 CSS id 与属性校验；拒绝值保留草稿。
+ * [POS]: 高级字段的纯校验边界；默认错误保持英文。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { createTranslator, type Translate } from "../../../i18n/index.ts";
 import type { Layout, LayoutNode } from "../../../../core/index.ts";
 import { isReservedAttribute } from "../../../../core/render/extras.ts";
 import { nodeChildren } from "../../../../core/tree-ops.ts";
@@ -37,7 +44,10 @@ export function htmlIdError(value: string, layout: Layout | null, nodeId: string
 const isFreshRow = (row: AttributeRow) => row.name === "data-" && row.value === "";
 
 /** Each row's error (null when it can be saved), in row order. */
-export function attributeErrors(rows: readonly AttributeRow[]): (string | null)[] {
+export function attributeErrors(
+  rows: readonly AttributeRow[],
+  t: Translate = createTranslator("en"),
+): (string | null)[] {
   const seen = new Set<string>();
   return rows.map((row) => {
     if (isFreshRow(row)) return null;
@@ -49,7 +59,7 @@ export function attributeErrors(rows: readonly AttributeRow[]): (string | null)[
     } else if (seen.has(row.name)) {
       error = "This name is already used on this element.";
     } else if (row.value.length > MAX_ATTR_VALUE) {
-      error = `Values are at most ${MAX_ATTR_VALUE} characters.`;
+      error = t("Values are at most {count} characters.", { count: MAX_ATTR_VALUE });
     } else if ([...row.value].some((char) => char.charCodeAt(0) < 32)) {
       error = "Values can't hold line breaks or control characters.";
     }

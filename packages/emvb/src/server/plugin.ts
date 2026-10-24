@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 EmDash 原生插件 API、服务端能力与主站配置。
- * [OUTPUT]: 注册画布字段、内容校验、样式及插件路由。
+ * [OUTPUT]: 注册画布字段、双语静态入口、校验及插件路由。
  * [POS]: 服务端装配入口，配置集合继续使用 EmDash 内容存储。
  * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
  */
@@ -70,13 +70,13 @@ export function createPlugin(
     admin: {
       entry: ADMIN_ENTRY,
       pages: [
-        { path: "/pages", label: "Pages VisualBuilder", icon: "layout" },
-        { path: "/theme", label: "Theme Builder", icon: "layout" },
-        { path: "/agents", label: "AI agents", icon: "layout" },
+        { path: "/pages", label: "可视化页面 · Visual Builder", icon: "layout" },
+        { path: "/theme", label: "主题构建器 · Theme Builder", icon: "layout" },
+        { path: "/agents", label: "AI 助手 · AI agents", icon: "layout" },
       ],
       fieldWidgets: [
-        { name: "layout", label: "EmVB page (read-only)", fieldTypes: ["json"] },
-        { name: "canvas", label: "EmVB canvas", fieldTypes: ["json"] },
+        { name: "layout", label: "EmVB 页面（只读） / Read-only", fieldTypes: ["json"] },
+        { name: "canvas", label: "EmVB 画布 / Canvas", fieldTypes: ["json"] },
       ],
     },
     routes: {

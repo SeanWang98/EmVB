@@ -1,3 +1,9 @@
+/**
+ * [INPUT]: 依赖布局字段与设置面板的调用参数。
+ * [OUTPUT]: 标签与选项由调用方翻译；存储值保持原样。
+ * [POS]: 元素设置面板的 PanelSelect 边界。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
 import { Select } from "@cloudflare/kumo";
 import { FIELD } from "../../../ui.ts";
 

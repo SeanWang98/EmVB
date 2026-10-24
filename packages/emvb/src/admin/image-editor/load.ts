@@ -1,4 +1,10 @@
 /**
+ * [INPUT]: 依赖图片节点属性、同源地址与媒体读取能力。
+ * [OUTPUT]: 提供editableSource、loadEditableSource 与结果类型。
+ * [POS]: 源图读取边界，拒绝外站及 SVG、GIF。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+/**
  * Where the image editor reads its picture from (W-482). Re-opening an edited image starts from
  * the untouched original (`edit.originalSrc`), never from the edited file. Only same-origin
  * pictures can be edited: the admin CSP blocks other origins (`connect-src 'self'`) and a

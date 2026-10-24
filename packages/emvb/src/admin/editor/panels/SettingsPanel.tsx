@@ -1,9 +1,10 @@
 /**
- * [INPUT]: 依赖布局选择、站点样式与字段模式标记。
- * [OUTPUT]: 提供元素设置及站点样式面板。
- * [POS]: 编辑器右栏；字段模式将页面元数据留给宿主。
+ * [INPUT]: 依赖编辑器状态、操作接口与后台语言。
+ * [OUTPUT]: 提供随后台语言更新的面板控件。
+ * [POS]: 编辑器面板；只翻译界面，保留用户内容原值。
  * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
  */
+import { useI18n } from "../../i18n/index.ts";
 import type * as React from "react";
 import type { Deletion } from "../restore-deleted.ts";
 import type { DesignSystem, LayoutNode, PopupDevice } from "../../../core/index.ts";
@@ -61,11 +62,16 @@ export function SettingsPanel({
   items?: ItemActions;
   fieldMode?: boolean;
 }) {
+  const t = useI18n();
   return (
     <aside
       className="emvb-panel emvb-panel-right"
       aria-label={
-        siteStylesOpen ? "Site styles" : selectedNode ? "Element settings" : "Page settings"
+        siteStylesOpen
+          ? t("Site styles")
+          : selectedNode
+            ? t("Element settings")
+            : t("Page settings")
       }
     >
       {siteStylesOpen ? (
@@ -119,10 +125,18 @@ export function SettingsPanel({
         />
       ) : fieldMode ? (
         <div className="p-4" data-emvb-field-settings="">
-          <h2>页面正文</h2>
-          <p>选择画布元素以修改内容和样式。</p>
-          <p>应用后，Page 表单负责保存草稿（含自动保存）和发布。</p>
-          <p>Site styles 独立保存，需单独发布；取消正文不会撤销站点样式。</p>
+          <h2>{t("Page body")}</h2>
+          <p>{t("Select a canvas element to edit its content and styles.")}</p>
+          <p>
+            {t(
+              "After applying changes, Page saves drafts (including autosave) and handles publishing.",
+            )}
+          </p>
+          <p>
+            {t(
+              "Site styles save separately and require their own publish action. Cancelling the body does not undo Site styles.",
+            )}
+          </p>
         </div>
       ) : (
         <PageSettings

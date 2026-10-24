@@ -1,4 +1,10 @@
 /**
+ * [INPUT]: 依赖源图片 Blob、图片解码与 GPU 尺寸上限。
+ * [OUTPUT]: 提供fitWithin 与 fitSourceToGpu。
+ * [POS]: 加载前的尺寸限制层，记录原始尺寸供界面说明。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+/**
  * W-496: photocn renders with WebGL, which can't hold a picture wider or taller than the GPU's
  * texture limit (often 8192 or 16384 px). Past it the preview stayed empty and Save copy wrote a
  * flat grey file. Such pictures are scaled down to the limit before editing, and the editor says

@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖图标目录、SVG 清理与语言上下文
+ * [OUTPUT]: 提供图标字段、预览和名称解析
+ * [POS]: 元素设置的图标入口；只翻译界面标签
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { useI18n } from "../../../i18n/index.ts";
 import { Button } from "@cloudflare/kumo";
 import * as React from "react";
 import { getBundledIcon, sanitizeSvgMarkup, type LayoutNode } from "../../../../core/index.ts";
@@ -68,10 +75,10 @@ export function iconNameLabel(iconId: string): string {
 }
 
 /** "Font Awesome · Solid" for a stored id, or undefined when the id names no known set. */
-function sourceLabel(iconId: string): string | undefined {
+function sourceLabel(iconId: string, translate: (source: string) => string): string | undefined {
   const at = locateIcon(iconId);
   if (!at) return undefined;
-  if (at.set === UPLOADS) return UPLOADS_CATEGORY.label;
+  if (at.set === UPLOADS) return translate(UPLOADS_CATEGORY.label);
   const set = ICON_SETS.find((item) => item.id === at.set);
   if (!set) return undefined;
   const style = set.styles.find((item) => item.id === at.style);
@@ -93,6 +100,7 @@ export function IconPicker({
   fetcher?: Fetcher;
   onChange: (node: LayoutNode) => void;
 }) {
+  const t = useI18n();
   const props = propsOf(node);
   const current = typeof props.iconId === "string" ? props.iconId : "";
   const [open, setOpen] = React.useState(false);
@@ -109,7 +117,13 @@ export function IconPicker({
       : current
         ? iconNameLabel(current)
         : undefined;
-  const source = current ? sourceLabel(current) : undefined;
+  const source = current ? sourceLabel(current, t) : undefined;
+  const displayName =
+    current && locateIcon(current)?.set === UPLOADS
+      ? (typeof props.title === "string" && props.title) || t(UPLOADS_CATEGORY.label)
+      : name
+        ? t(name)
+        : undefined;
 
   const insert = (icon: LibraryIcon) => {
     const title = typeof props.title === "string" ? props.title : "";
@@ -134,12 +148,12 @@ export function IconPicker({
 
   return (
     <div ref={field} className="emvb-field-group" data-emvb-field="iconId" data-emvb-icon-picker="">
-      <span className="emvb-field-label">Icon</span>
+      <span className="emvb-field-label">{t("Icon")}</span>
       <div className="emvb-icon-current" data-emvb-icon-current={current}>
         <button
           type="button"
           className="emvb-icon-current-preview"
-          aria-label={`Change icon (now ${name ?? "none"})`}
+          aria-label={t("Change icon (now {name})", { name: displayName ?? t("none") })}
           onClick={() => setOpen(true)}
         >
           {markup ? (
@@ -149,13 +163,13 @@ export function IconPicker({
           )}
         </button>
         <span className="emvb-icon-current-text">
-          <strong>{name ?? "No icon"}</strong>
+          <strong>{displayName ?? t("No icon")}</strong>
           <span>
             {markup
-              ? (source ?? "Saved SVG")
+              ? (source ?? t("Saved SVG"))
               : current
-                ? "Not found — choose another"
-                : "Choose one"}
+                ? t("Not found — choose another")
+                : t("Choose one")}
           </span>
         </span>
         <Button
@@ -165,7 +179,7 @@ export function IconPicker({
           data-emvb-icon-open=""
           onClick={() => setOpen(true)}
         >
-          Choose…
+          {t("Choose…")}
         </Button>
         {removable && (
           <Button
@@ -175,7 +189,7 @@ export function IconPicker({
             data-emvb-icon-remove=""
             onClick={remove}
           >
-            Remove
+            {t("Remove")}
           </Button>
         )}
       </div>

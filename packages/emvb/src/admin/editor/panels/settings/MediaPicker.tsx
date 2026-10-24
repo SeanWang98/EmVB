@@ -1,12 +1,14 @@
+/**
+ * [INPUT]: 依赖媒体 API、图片编辑器与本地和外部错误边界
+ * [OUTPUT]: 提供图片选择、上传和原图恢复字段
+ * [POS]: 元素设置的媒体入口；错误随语言重绘，媒体独立保存
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { useI18n } from "../../../i18n/index.ts";
 import { Badge, Banner, Button, DropdownMenu, Input } from "@cloudflare/kumo";
 import { DotsThreeIcon, MagicWandIcon, WarningCircleIcon } from "@phosphor-icons/react";
 import * as React from "react";
-import {
-  ImageEdit,
-  sanitizeMediaUrl,
-  summarizeImageEdit,
-  type LayoutNode,
-} from "../../../../core/index.ts";
+import { ImageEdit, sanitizeMediaUrl, type LayoutNode } from "../../../../core/index.ts";
 import type { Fetcher } from "../../../api.ts";
 import {
   getMedia,
@@ -24,8 +26,11 @@ import {
   prefetchImageEditor,
 } from "../../../image-editor/ImageEditButton.tsx";
 import { editableSource } from "../../../image-editor/load.ts";
+import { localizedImageEditSummary } from "../../../image-editor/edit-summary.ts";
 import { BUTTON, FIELD } from "../../../ui.ts";
 import { isCommitEnter } from "../../ime.ts";
+import { formatError, type LocalizedError } from "./localized-error.ts";
+import { errorMessage, formatMessage } from "../../localized-message.ts";
 
 const propsOf = (node: LayoutNode): Record<string, unknown> =>
   node.props as Record<string, unknown>;
@@ -53,11 +58,12 @@ const ORIGINAL_DELETED =
   "The original picture was deleted from the media library, so this image can't be reset. It keeps the edited copy.";
 
 export function MediaPicker({ node, fetcher, onChange, label = "Image", editable = false }: Props) {
+  const t = useI18n();
   const props = propsOf(node);
   const src = typeof props.src === "string" ? props.src : "";
   const [open, setOpen] = React.useState(false);
   const [items, setItems] = React.useState<MediaLibraryItem[]>([]);
-  const [libraryError, setLibraryError] = React.useState<string | null>(null);
+  const [libraryError, setLibraryError] = React.useState<LocalizedError | null>(null);
   const [busy, setBusyState] = React.useState(false);
   // W-819: the source buttons stay focusable while busy (aria-disabled, presses ignored), so
   // keyboard focus no longer drops to the page body during an upload; the ref answers at once.
@@ -66,7 +72,9 @@ export function MediaPicker({ node, fetcher, onChange, label = "Image", editable
     busyRef.current = next;
     setBusyState(next);
   }, []);
-  const [error, setError] = React.useState<string | null>(null);
+  const [error, setError] = React.useState<LocalizedError | null>(null);
+  const errorText = formatError(error, t);
+  const libraryErrorText = formatError(libraryError, t);
   const [urlDraft, setUrlDraft] = React.useState(src);
   const fileRef = React.useRef<HTMLInputElement>(null);
   const libraryCloseRef = React.useRef<HTMLButtonElement>(null);
@@ -94,9 +102,7 @@ export function MediaPicker({ node, fetcher, onChange, label = "Image", editable
     try {
       setItems(await listImages(fetcher, { limit: 40 }));
     } catch (caught) {
-      setLibraryError(
-        caught instanceof Error ? caught.message : "Couldn't load the media library.",
-      );
+      setLibraryError(errorMessage(caught, "Couldn't load the media library."));
       setItems([]);
     } finally {
       setBusy(false);
@@ -123,7 +129,9 @@ export function MediaPicker({ node, fetcher, onChange, label = "Image", editable
   const edit = ImageEdit.safeParse(props.edit);
   /** W-487: say why a picture can't be edited instead of offering a button that fails. */
   const editCheck = src ? editableSource(props, window.location.origin) : null;
-  const editSummary = edit.success ? summarizeImageEdit(edit.data.recipe, 12) || "Edited" : null;
+  const editSummary = edit.success
+    ? localizedImageEditSummary(edit.data.recipe, 12, t) || t("Edited")
+    : null;
 
   /** W-485: upload the edited copy as a new item; the original stays in the library. */
   const saveCopy = async (file: File, copy: { width: number; height: number; edit: unknown }) => {
@@ -174,9 +182,12 @@ export function MediaPicker({ node, fetcher, onChange, label = "Image", editable
       if (next) onChange(withProps(target, next));
     } catch (caught) {
       if (!imageTarget()) return;
-      setError(
-        `Couldn't reach the media library to find the original.${caught instanceof Error && caught.message ? ` ${caught.message}` : ""}`,
-      );
+      const detail = errorMessage(caught, "");
+      setError({
+        format: (currentT) =>
+          currentT("Couldn't reach the media library to find the original.") +
+          (detail ? ` ${formatMessage(detail, currentT)}` : ""),
+      });
     } finally {
       setBusy(false);
     }
@@ -202,7 +213,7 @@ export function MediaPicker({ node, fetcher, onChange, label = "Image", editable
       if (target) applyItem(item, target);
     } catch (caught) {
       if (!imageTarget()) return;
-      setError(caught instanceof Error ? caught.message : "Upload failed.");
+      setError(errorMessage(caught, "Upload failed."));
     } finally {
       setBusy(false);
       if (fileRef.current) fileRef.current.value = "";
@@ -234,14 +245,14 @@ export function MediaPicker({ node, fetcher, onChange, label = "Image", editable
 
   return (
     <div className="emvb-field-group" data-emvb-field="src" data-emvb-media-picker="">
-      <label className="emvb-field-label">{label}</label>
+      <label className="emvb-field-label">{t(label)}</label>
       {src ? (
         <div className="emvb-media-preview">
           <img src={src} alt="" className="emvb-media-thumb" />
           <span className="emvb-helper emvb-mono">{src}</span>
           {editSummary ? (
             <span className="emvb-media-edited" data-emvb-image-edited="">
-              <Badge variant="neutral">Edited</Badge>
+              <Badge variant="neutral">{t("Edited")}</Badge>
               <span className="emvb-helper" data-emvb-image-edit-summary="">
                 {editSummary}
               </span>
@@ -249,7 +260,7 @@ export function MediaPicker({ node, fetcher, onChange, label = "Image", editable
           ) : null}
         </div>
       ) : (
-        <p className="emvb-helper">No image selected yet.</p>
+        <p className="emvb-helper">{t("No image selected yet.")}</p>
       )}
       <div className="emvb-media-actions">
         <Button
@@ -262,7 +273,7 @@ export function MediaPicker({ node, fetcher, onChange, label = "Image", editable
           ref={libraryOpenerRef}
           data-emvb-media-library=""
         >
-          Choose from library
+          {t("Choose from library")}
         </Button>
         <Button
           type="button"
@@ -274,7 +285,7 @@ export function MediaPicker({ node, fetcher, onChange, label = "Image", editable
           aria-disabled={busy}
           data-emvb-media-upload-btn=""
         >
-          Upload
+          {t("Upload")}
         </Button>
         {editable && src && editCheck?.ok ? (
           <ImageEditButton imageProps={props} onSave={saveCopy} />
@@ -290,7 +301,7 @@ export function MediaPicker({ node, fetcher, onChange, label = "Image", editable
             aria-disabled={busy}
             data-emvb-image-reset-original=""
           >
-            Reset to original
+            {t("Reset to original")}
           </Button>
         ) : null}
         <input
@@ -307,15 +318,15 @@ export function MediaPicker({ node, fetcher, onChange, label = "Image", editable
       </div>
       {editable && src && editCheck && !editCheck.ok ? (
         <p className="emvb-helper" data-emvb-image-cant-edit={editCheck.reason}>
-          {editCheck.message}
+          {t(editCheck.message)}
         </p>
       ) : null}
       <Input
         ref={urlInputRef}
-        label="Or paste a URL"
+        label={t("Or paste a URL")}
         className={FIELD}
         value={urlDraft}
-        error={error ?? undefined}
+        error={errorText ?? undefined}
         data-emvb-media-url=""
         onChange={(event) => setUrlDraft(event.target.value)}
         onBlur={() => commitUrl(false)}
@@ -328,7 +339,7 @@ export function MediaPicker({ node, fetcher, onChange, label = "Image", editable
           className="emvb-media-dialog"
           ref={libraryRef}
           role="dialog"
-          aria-label="Media library"
+          aria-label={t("Media library")}
           data-emvb-media-dialog=""
           onKeyDown={(event) => {
             // W-817: Escape left the library open; it closes it like Close does. The editor's
@@ -340,7 +351,7 @@ export function MediaPicker({ node, fetcher, onChange, label = "Image", editable
           }}
         >
           <div className="emvb-media-dialog-head">
-            <h3 className="emvb-panel-title">Media library</h3>
+            <h3 className="emvb-panel-title">{t("Media library")}</h3>
             <Button
               type="button"
               className={BUTTON}
@@ -349,12 +360,12 @@ export function MediaPicker({ node, fetcher, onChange, label = "Image", editable
               autoFocus
               onClick={closeLibrary}
             >
-              Close
+              {t("Close")}
             </Button>
           </div>
           {busy && (
             <p className="emvb-helper" role="status">
-              Loading…
+              {t("Loading…")}
             </p>
           )}
           {!busy && libraryError && (
@@ -362,8 +373,8 @@ export function MediaPicker({ node, fetcher, onChange, label = "Image", editable
               role="alert"
               variant="error"
               icon={<WarningCircleIcon aria-hidden="true" />}
-              title="Couldn't load the media library"
-              description={libraryError}
+              title={t("Couldn't load the media library")}
+              description={libraryErrorText ?? undefined}
               action={
                 <Button
                   type="button"
@@ -374,13 +385,13 @@ export function MediaPicker({ node, fetcher, onChange, label = "Image", editable
                     void loadLibrary();
                   }}
                 >
-                  Retry
+                  {t("Retry")}
                 </Button>
               }
             />
           )}
           {!busy && !libraryError && items.length === 0 && (
-            <p className="emvb-helper">No images yet. Upload one to get started.</p>
+            <p className="emvb-helper">{t("No images yet. Upload one to get started.")}</p>
           )}
           <ul className="emvb-media-grid">
             {items.map((item) => (
@@ -408,7 +419,7 @@ export function MediaPicker({ node, fetcher, onChange, label = "Image", editable
                           size="sm"
                           shape="square"
                           className="emvb-media-card-menu"
-                          aria-label={`More for ${item.alt || item.filename}`}
+                          aria-label={t("More for {name}", { name: item.alt || item.filename })}
                           icon={<DotsThreeIcon aria-hidden="true" weight="bold" />}
                           data-emvb-media-menu={item.id}
                         />
@@ -423,7 +434,7 @@ export function MediaPicker({ node, fetcher, onChange, label = "Image", editable
                         }}
                         data-emvb-media-edit={item.id}
                       >
-                        Edit…
+                        {t("Edit…")}
                       </DropdownMenu.Item>
                     </DropdownMenu.Content>
                   </DropdownMenu>

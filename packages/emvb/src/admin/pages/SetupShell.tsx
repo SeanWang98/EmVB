@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖集合探测、初始化操作与界面翻译。
+ * [OUTPUT]: 提供加载、初始化与升级状态外壳。
+ * [POS]: 后台页面公共外壳；不翻译写入的集合数据。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { useI18n } from "../i18n/index.ts";
 import { Banner, Button, Empty, Loader } from "@cloudflare/kumo";
 import { LayoutIcon } from "@phosphor-icons/react";
 import * as React from "react";
@@ -28,6 +35,7 @@ export function SetupShell({
   keptNote: string;
   children: React.ReactNode;
 }) {
+  const t = useI18n();
   const { status, running, setup, retry } = useSetupStatus(fetcher, role);
   const reducedMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
 
@@ -38,10 +46,10 @@ export function SetupShell({
         <style data-emvb-ui="">{UI_CSS}</style>
         <h1 className="emvb-page-title">{title}</h1>
         {status.state === "loading" ? (
-          <ListLoading label={`Loading ${title}…`} />
+          <ListLoading label={t("Loading {title}…", { title })} />
         ) : (
           <ListError
-            title={`Couldn't load ${title}`}
+            title={t("Couldn't load {title}", { title })}
             message={status.message}
             onRetry={() => void retry()}
           />
@@ -76,28 +84,28 @@ export function SetupShell({
         <div className="emvb-surface-card emvb-empty-shell">
           <Empty
             icon={<LayoutIcon size={32} aria-hidden="true" />}
-            title="EmVB isn't set up yet"
+            title={t("EmVB isn't set up yet")}
             description={
               status.isAdmin
-                ? "Setup creates the collections EmVB stores its pages and theme parts in."
-                : "Ask an administrator to set up EmVB."
+                ? t("Setup creates the collections EmVB stores its pages and theme parts in.")
+                : t("Ask an administrator to set up EmVB.")
             }
-            contents={action("Set up EmVB")}
+            contents={action(t("Set up EmVB"))}
           />
         </div>
       )}
       {status.state === "outdated" && (
         <Banner
           variant="alert"
-          title="EmVB needs to update its collections"
+          title={t("EmVB needs to update its collections")}
           description={
             status.conflicts.length > 0
               ? status.conflicts.join(" ")
               : status.isAdmin
-                ? `Upgrading adds or corrects EmVB's fields. ${keptNote}`
-                : "Ask an administrator to upgrade EmVB."
+                ? t("Upgrading adds or corrects EmVB's fields. {note}", { note: keptNote })
+                : t("Ask an administrator to upgrade EmVB.")
           }
-          action={status.conflicts.length > 0 ? undefined : action("Upgrade EmVB")}
+          action={status.conflicts.length > 0 ? undefined : action(t("Upgrade EmVB"))}
         />
       )}
       {status.state === "ready" && children}

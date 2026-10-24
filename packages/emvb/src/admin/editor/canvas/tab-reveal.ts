@@ -1,3 +1,9 @@
+/**
+ * [INPUT]: 依赖画布文档、选中元素与页签控件标识。
+ * [OUTPUT]: 提供页签、折叠项和菜单的选择揭示函数。
+ * [POS]: 仅展开选区所在结构，不修改保存的展开状态。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
 /** The group's own radios and panels; nested groups are left out. */
 const own = (tabs: Element) => ({
   inputs: [...tabs.querySelectorAll<HTMLInputElement>(":scope > .emvb-tab-input")],

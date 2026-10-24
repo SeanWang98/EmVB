@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖布局节点、延迟错误翻译与同目录字段控件。
+ * [OUTPUT]: 访客规则编辑；保存国家、设备、访客分组与时间条件。
+ * [POS]: 元素设置面板的 AudienceEditor；不拥有页面保存与发布。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { useI18n } from "../../../i18n/index.ts";
 import { Checkbox, Input } from "@cloudflare/kumo";
 import * as React from "react";
 import {
@@ -8,6 +15,7 @@ import {
 } from "../../../../core/index.ts";
 import { FIELD } from "../../../ui.ts";
 import { PanelSelect } from "./PanelSelect.tsx";
+import { formatError, type LocalizedError } from "./localized-error.ts";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const COUNTRY = /^[A-Z]{2}$/;
@@ -83,12 +91,13 @@ export function AudienceEditor({
   isRoot: boolean;
   onChange: (node: LayoutNode) => void;
 }) {
+  const t = useI18n();
   const [countryText, setCountryText] = React.useState(node.audience?.countries?.join(", ") ?? "");
   const [segmentText, setSegmentText] = React.useState(node.audience?.segments?.join(", ") ?? "");
-  const [segmentError, setSegmentError] = React.useState<string | null>(null);
+  const [segmentError, setSegmentError] = React.useState<LocalizedError | null>(null);
   // W-438: the zone is typed in full before it's checked; checking each keystroke refused the "/".
   const [zoneText, setZoneText] = React.useState(node.audience?.timeZone ?? "");
-  const [zoneError, setZoneError] = React.useState<string | null>(null);
+  const [zoneError, setZoneError] = React.useState<LocalizedError | null>(null);
   React.useEffect(() => {
     setCountryText(node.audience?.countries?.join(", ") ?? "");
     setSegmentText(node.audience?.segments?.join(", ") ?? "");
@@ -110,20 +119,20 @@ export function AudienceEditor({
   return (
     <section className="emvb-bind" data-emvb-audience-editor="" aria-labelledby={`${id}-title`}>
       <h3 className="emvb-bind-title" id={`${id}-title`}>
-        Visitors
+        {t("Visitors")}
       </h3>
       <div className="emvb-bind-row">
         <span className="emvb-bind-label" id={`${id}-show`}>
-          Show to
+          {t("Show to")}
         </span>
         <PanelSelect
           labelledBy={`${id}-show`}
           value={mode}
           data={{ "data-emvb-audience-mode": "" }}
           options={[
-            { value: "everyone", label: "Everyone" },
-            { value: "only", label: "Only visitors who match" },
-            { value: "except", label: "Everyone except visitors who match" },
+            { value: "everyone", label: t("Everyone") },
+            { value: "only", label: t("Only visitors who match") },
+            { value: "except", label: t("Everyone except visitors who match") },
           ]}
           onChange={(value) => {
             if (value === "everyone") set(undefined);
@@ -134,7 +143,7 @@ export function AudienceEditor({
       {audience && (
         <>
           <label className="emvb-bind-row">
-            <span className="emvb-bind-label">Countries (two-letter codes)</span>
+            <span className="emvb-bind-label">{t("Countries (two-letter codes)")}</span>
             <Input
               className={FIELD}
               value={countryText}
@@ -149,11 +158,11 @@ export function AudienceEditor({
             />
           </label>
           <fieldset className="emvb-aud-checks">
-            <legend className="emvb-bind-label">Devices</legend>
+            <legend className="emvb-bind-label">{t("Devices")}</legend>
             {AUDIENCE_DEVICES.map((device) => (
               <Checkbox
                 key={device}
-                label={`${device[0]?.toUpperCase() ?? ""}${device.slice(1)}`}
+                label={t(`${device[0]?.toUpperCase() ?? ""}${device.slice(1)}`)}
                 checked={base.devices?.includes(device) ?? false}
                 data-emvb-audience-device={device}
                 onCheckedChange={(checked) => {
@@ -167,16 +176,16 @@ export function AudienceEditor({
           </fieldset>
           <div className="emvb-bind-row">
             <span className="emvb-bind-label" id={`${id}-visit`}>
-              Visit
+              {t("Visit")}
             </span>
             <PanelSelect
               labelledBy={`${id}-visit`}
               value={base.visitor ?? "any"}
               data={{ "data-emvb-audience-visitor": "" }}
               options={[
-                { value: "any", label: "New or returning" },
-                { value: "new", label: "First visit" },
-                { value: "returning", label: "Returning visitor" },
+                { value: "any", label: t("New or returning") },
+                { value: "new", label: t("First visit") },
+                { value: "returning", label: t("Returning visitor") },
               ]}
               onChange={(value) => {
                 const { visitor: _v, ...rest } = base;
@@ -185,7 +194,7 @@ export function AudienceEditor({
             />
           </div>
           <label className="emvb-bind-row">
-            <span className="emvb-bind-label">Segments (from your site)</span>
+            <span className="emvb-bind-label">{t("Segments (from your site)")}</span>
             <Input
               className={FIELD}
               value={segmentText}
@@ -211,7 +220,12 @@ export function AudienceEditor({
                   .filter((name) => name.length > 0);
                 const bad = tokens.find((name) => !AUDIENCE_SEGMENT.test(name));
                 if (bad) {
-                  setSegmentError(`${bad} isn't a segment name. Use letters, numbers, and : _ -`);
+                  setSegmentError({
+                    format: (currentT) =>
+                      currentT("{name} isn't a segment name. Use letters, numbers, and : _ -", {
+                        name: bad,
+                      }),
+                  });
                   return;
                 }
                 const segments = parseSegments(segmentText);
@@ -226,26 +240,28 @@ export function AudienceEditor({
                 id={`${id}-segment-error`}
                 data-emvb-audience-segment-error=""
               >
-                {segmentError}
+                {formatError(segmentError, t)}
               </span>
             )}
           </label>
           {ruleCount(base) === 0 && (
             <p className="emvb-helper" data-emvb-audience-empty="">
               {mode === "only"
-                ? "Add a country, device, segment, or time. Until then, everyone sees this."
+                ? t("Add a country, device, segment, or time. Until then, everyone sees this.")
                 : // W-608: with no rule every visitor matches, so "except" hides it from all.
-                  "Add a country, device, segment, or time. Until then, this is hidden from every visitor."}
+                  t(
+                    "Add a country, device, segment, or time. Until then, this is hidden from every visitor.",
+                  )}
             </p>
           )}
           <div className="emvb-bind-row">
-            <span className="emvb-bind-label">Hours (24 h, empty = all day)</span>
+            <span className="emvb-bind-label">{t("Hours (24 h, empty = all day)")}</span>
             <Input
               className={FIELD}
               type="number"
               min={0}
               max={23}
-              aria-label="From hour"
+              aria-label={t("From hour")}
               data-emvb-audience-from=""
               value={base.hours?.from ?? ""}
               onChange={(event) => {
@@ -263,7 +279,7 @@ export function AudienceEditor({
               type="number"
               min={0}
               max={24}
-              aria-label="To hour"
+              aria-label={t("To hour")}
               data-emvb-audience-to=""
               value={base.hours?.to ?? ""}
               onChange={(event) => {
@@ -277,11 +293,11 @@ export function AudienceEditor({
             />
           </div>
           <fieldset className="emvb-aud-checks">
-            <legend className="emvb-bind-label">Days (none = every day)</legend>
+            <legend className="emvb-bind-label">{t("Days (none = every day)")}</legend>
             {DAYS.map((day, index) => (
               <Checkbox
                 key={day}
-                label={day}
+                label={t(day)}
                 checked={base.days?.includes(index) ?? false}
                 data-emvb-audience-day={index}
                 onCheckedChange={(checked) => {
@@ -295,7 +311,7 @@ export function AudienceEditor({
           </fieldset>
           {(base.hours || base.days) && (
             <label className="emvb-bind-row">
-              <span className="emvb-bind-label">Time zone</span>
+              <span className="emvb-bind-label">{t("Time zone")}</span>
               <Input
                 className={FIELD}
                 value={zoneText}
@@ -321,13 +337,15 @@ export function AudienceEditor({
           )}
           {(base.hours || base.days) && zoneError && (
             <span className="emvb-helper" id={`${id}-zone-error`} data-emvb-audience-zone-error="">
-              {zoneError}
+              {formatError(zoneError, t)}
             </span>
           )}
           <p className="emvb-helper" data-emvb-audience-help="">
             {ruleCount(base) === 0
-              ? "Add a rule: with none, every visitor matches."
-              : "The server checks these on each visit, with no script. A rule it can't check (no country from the host, or segments your site doesn't pass) doesn't match. The canvas shows this element to you either way."}
+              ? t("Add a rule: with none, every visitor matches.")
+              : t(
+                  "The server checks these on each visit, with no script. A rule it can't check (no country from the host, or segments your site doesn't pass) doesn't match. The canvas shows this element to you either way.",
+                )}
           </p>
         </>
       )}

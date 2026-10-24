@@ -1,3 +1,9 @@
+/**
+ * [INPUT]: 依赖页面草稿、主题条件与后台翻译上下文
+ * [OUTPUT]: 导出本地化 PageSettings；回传页面或主题部件补丁
+ * [POS]: 独立条目设置；翻译界面文案并保留用户内容
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
 import { Button, Collapsible, Input, Select } from "@cloudflare/kumo";
 import { CaretDownIcon, CaretRightIcon } from "@phosphor-icons/react";
 import * as React from "react";
@@ -11,6 +17,7 @@ import {
 } from "../../../core/index.ts";
 import type { Fetcher } from "../../api.ts";
 import { canonicalProblem, type PageDraft } from "../../content-api.ts";
+import { useI18n } from "../../i18n/index.ts";
 import { BUTTON, FIELD } from "../../ui.ts";
 import type { PagePatch } from "../store.ts";
 import { ConditionsEditor } from "./ConditionsEditor.tsx";
@@ -48,15 +55,16 @@ export function PageSettings({
   /** For the Social image picker (W-287); without it the field isn't offered. */
   fetcher?: Fetcher;
 }) {
+  const t = useI18n();
   // Hooks run before the theme-part branch, so switching `kind` keeps the hook order (W-092).
   const descriptionId = React.useId();
   const [seoOpen, setSeoOpen] = React.useState(false);
   if (kind === "theme-part") {
     return (
       <div className="emvb-panel-body" data-emvb-panel="theme-part-settings">
-        <h2 className="emvb-panel-title">Theme part settings</h2>
+        <h2 className="emvb-panel-title">{t("Theme part settings")}</h2>
         <Input
-          label="Title"
+          label={t("Title")}
           className={FIELD}
           value={page.title}
           onChange={(event) => onChange({ title: event.target.value })}
@@ -64,17 +72,17 @@ export function PageSettings({
         {/* UX-092: the type is fixed, so it reads as a fact, not a field that won't take input. */}
         <div className="emvb-field-group" data-emvb-part-type="">
           <p className="emvb-part-type">
-            <span className="emvb-field-label">Type</span>
+            <span className="emvb-field-label">{t("Type")}</span>
             <span className="emvb-part-type-value">
-              {THEME_PART_TYPE_LABELS[page.partType ?? "header"]}
+              {t(THEME_PART_TYPE_LABELS[page.partType ?? "header"])}
             </span>
           </p>
-          <p className="emvb-helper">Chosen when the part was created.</p>
+          <p className="emvb-helper">{t("Chosen when the part was created.")}</p>
         </div>
         {ITEM_PART_USE[page.partType ?? "header"] ? (
           // UX-061: item parts never match a page location, so conditions would change nothing.
           <p className="emvb-helper" data-emvb-item-part-note="">
-            {ITEM_PART_USE[page.partType ?? "header"]}
+            {t(ITEM_PART_USE[page.partType ?? "header"] ?? "")}
           </p>
         ) : (
           <ConditionsEditor
@@ -108,32 +116,32 @@ export function PageSettings({
   const canonicalError = canonicalProblem(page.seoCanonical ?? "");
   return (
     <div className="emvb-panel-body" data-emvb-panel="page-settings">
-      <h2 className="emvb-panel-title">Page settings</h2>
+      <h2 className="emvb-panel-title">{t("Page settings")}</h2>
       <Input
-        label="Title"
+        label={t("Title")}
         className={FIELD}
         value={page.title}
         onChange={(event) => onChange({ title: event.target.value })}
       />
       <Input
-        label="Slug"
+        label={t("Slug")}
         className={`${FIELD} emvb-mono`}
         value={page.slug}
         error={slugError ?? undefined}
         onChange={(event) => onChange({ slug: event.target.value })}
       />
       <Select
-        label="Page layout"
+        label={t("Page layout")}
         className={FIELD}
         value={page.canvasMode}
         onValueChange={(value) => onChange({ canvasMode: String(value) })}
         renderValue={(value: unknown) =>
-          LAYOUTS.find((option) => option.value === value)?.label ?? String(value)
+          t(LAYOUTS.find((option) => option.value === value)?.label ?? String(value))
         }
       >
         {LAYOUTS.map((option) => (
           <Select.Option key={option.value} value={option.value}>
-            {option.label}
+            {t(option.label)}
           </Select.Option>
         ))}
       </Select>
@@ -151,18 +159,18 @@ export function PageSettings({
         </Collapsible.Trigger>
         <Collapsible.Panel className="emvb-section-body">
           <Input
-            label="Meta title"
+            label={t("Meta title")}
             className={FIELD}
             maxLength={200}
             value={page.seoTitle}
             placeholder={page.title}
             onChange={(event) => onChange({ seoTitle: event.target.value })}
           />
-          <p className="emvb-helper">Shown in search results and browser tabs.</p>
+          <p className="emvb-helper">{t("Shown in search results and browser tabs.")}</p>
           {/* UX-021: a description runs to about 150 characters, so it gets room and a count. */}
           <div className="emvb-field-group">
             <label className="emvb-field-label" htmlFor={descriptionId}>
-              Meta description
+              {t("Meta description")}
             </label>
             <textarea
               id={descriptionId}
@@ -175,28 +183,32 @@ export function PageSettings({
               onChange={(event) => onChange({ seoDescription: event.target.value })}
             />
             <p className="emvb-helper" id={`${descriptionId}-count`} data-emvb-seo-count="">
-              {page.seoDescription.length} characters. Search results show about 150.
+              {t("{count} characters. Search results show about 150.", {
+                count: page.seoDescription.length,
+              })}
             </p>
           </div>
           {/* W-284: EmDash stores these; the public page prints them (W-274). */}
           <Input
-            label="Canonical URL"
+            label={t("Canonical URL")}
             type="url"
             className={FIELD}
             maxLength={500}
             value={page.seoCanonical ?? ""}
             placeholder="https://"
-            error={canonicalError ?? undefined}
+            error={canonicalError ? t(canonicalError) : undefined}
             onChange={(event) => onChange({ seoCanonical: event.target.value })}
           />
           <p className="emvb-helper">
-            Only if this page copies another one: the address search engines should list instead.
+            {t(
+              "Only if this page copies another one: the address search engines should list instead.",
+            )}
           </p>
           {fetcher && (
             <div data-emvb-seo-image="">
               {/* W-287: the Image element's picker on a stand-in node; only `src` is kept. */}
               <MediaPicker
-                label="Social image"
+                label={t("Social image")}
                 node={
                   {
                     id: "seo-image",
@@ -211,7 +223,7 @@ export function PageSettings({
                 }}
               />
               <p className="emvb-helper">
-                Shown when the page is shared on social sites. 1200 × 630 px works best.
+                {t("Shown when the page is shared on social sites. 1200 × 630 px works best.")}
               </p>
               {page.seoImage?.trim() && (
                 <Button
@@ -220,16 +232,18 @@ export function PageSettings({
                   className={BUTTON}
                   onClick={() => onChange({ seoImage: "" })}
                 >
-                  Remove social image
+                  {t("Remove social image")}
                 </Button>
               )}
             </div>
           )}
           <HintedSwitch
-            label="Hide from search engines"
+            label={t("Hide from search engines")}
             checked={page.seoNoIndex === true}
             onCheckedChange={(checked) => onChange({ seoNoIndex: checked })}
-            hint="Search engines are asked not to list this page or follow its links (noindex, nofollow)."
+            hint={t(
+              "Search engines are asked not to list this page or follow its links (noindex, nofollow).",
+            )}
             hintData={{ "data-emvb-noindex-help": "" }}
           />
         </Collapsible.Panel>
@@ -255,31 +269,34 @@ function FloatSettingsFields({
   settings: NonNullable<PageDraft["float"]>;
   onChange: (settings: NonNullable<PageDraft["float"]>) => void;
 }) {
+  const t = useI18n();
   return (
     // UX-061: the panel's field rhythm, and the note described by the Place select.
     <div className="emvb-field-group" data-emvb-panel="float">
       <Select
-        label="Place"
+        label={t("Place")}
         className={FIELD}
         value={settings.edge}
-        description="A bar stays on that edge and leaves room for the page. A corner sits over the page."
+        description={t(
+          "A bar stays on that edge and leaves room for the page. A corner sits over the page.",
+        )}
         onValueChange={(value) => {
           const edge = FLOAT_EDGES.find((item) => item === value);
           if (edge) onChange({ ...settings, edge });
         }}
-        renderValue={(value: unknown) => FLOAT_EDGE_LABELS[value as FloatEdge] ?? String(value)}
+        renderValue={(value: unknown) => t(FLOAT_EDGE_LABELS[value as FloatEdge] ?? String(value))}
       >
         {FLOAT_EDGES.map((edge) => (
           <Select.Option key={edge} value={edge}>
-            {FLOAT_EDGE_LABELS[edge]}
+            {t(FLOAT_EDGE_LABELS[edge])}
           </Select.Option>
         ))}
       </Select>
       <HintedSwitch
-        label="Close button"
+        label={t("Close button")}
         checked={settings.dismiss}
         onCheckedChange={(checked) => onChange({ ...settings, dismiss: checked })}
-        hint="Closing hides it until the next visit. Nothing is stored in a cookie."
+        hint={t("Closing hides it until the next visit. Nothing is stored in a cookie.")}
       />
     </div>
   );

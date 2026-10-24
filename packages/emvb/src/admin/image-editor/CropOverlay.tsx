@@ -1,10 +1,17 @@
 /**
+ * [INPUT]: 依赖图片引擎几何状态与 crop-geometry 坐标换算。
+ * [OUTPUT]: 提供CropFrameOverlay 与 CornerHandlesOverlay。
+ * [POS]: 裁剪及透视的指针层，提交归一化坐标。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+/**
  * The crop frame over the whole image, and the advanced perspective corners (W-483).
  *
  * Ported from photocn's `crop-overlay.tsx` (https://github.com/rbbydotdev/photocn,
  * apps/www/src/registry/image-editor), MIT License, Copyright (c) 2026 rbbydotdev. Tailwind
  * classes became EmVB CSS (image-editor-css.ts); the behaviour is unchanged.
  */
+import { useI18n } from "../i18n/index.ts";
 import * as React from "react";
 import {
   constrain,
@@ -55,6 +62,7 @@ const MIN_CROP_PX = 32;
  * the image under the frame, scroll or pinch to zoom. Everything is limited to the warped image.
  */
 export function CropFrameOverlay({ geometry, view, stage, disabled, onFreezeView }: OverlayProps) {
+  const t = useI18n();
   const oriented = geometry.orientedSize;
   const polygon = geometry.polygon;
   const drag = React.useRef<Drag | null>(null);
@@ -90,16 +98,25 @@ export function CropFrameOverlay({ geometry, view, stage, disabled, onFreezeView
   });
   const resizeBy = (handle: Handle, rect: NormalizedRect, k: number, dx: number, dy: number) =>
     constrain(
-      (t) =>
-        toNorm(resizeRect(toPx(rect), handle, (dx * t) / k, (dy * t) / k, ratio, MIN_CROP_PX / k)),
+      (fraction) =>
+        toNorm(
+          resizeRect(
+            toPx(rect),
+            handle,
+            (dx * fraction) / k,
+            (dy * fraction) / k,
+            ratio,
+            MIN_CROP_PX / k,
+          ),
+        ),
       inside,
     );
   const panBy = (rect: NormalizedRect, k: number, dx: number, dy: number) =>
     constrain(
-      (t) => ({
+      (fraction) => ({
         ...rect,
-        x: rect.x - (dx * t) / k / oriented.width,
-        y: rect.y - (dy * t) / k / oriented.height,
+        x: rect.x - (dx * fraction) / k / oriented.width,
+        y: rect.y - (dy * fraction) / k / oriented.height,
       }),
       inside,
     );
@@ -257,7 +274,9 @@ export function CropFrameOverlay({ geometry, view, stage, disabled, onFreezeView
         <path d={maskPath} fillRule="evenodd" />
       </svg>
       <div
-        aria-label="Crop area. Drag or use the arrow keys to move the picture; scroll, pinch or press + and − to zoom."
+        aria-label={t(
+          "Crop area. Drag or use the arrow keys to move the picture; scroll, pinch or press + and − to zoom.",
+        )}
         className="emvb-ie-crop-frame"
         data-disabled={disabled || undefined}
         data-emvb-image-crop-frame=""
@@ -281,7 +300,7 @@ export function CropFrameOverlay({ geometry, view, stage, disabled, onFreezeView
         </div>
         {HANDLES.map((handle) => (
           <button
-            aria-label={handle.label}
+            aria-label={t(handle.label)}
             className="emvb-ie-crop-handle"
             data-handle={handle.id}
             disabled={disabled}
@@ -312,6 +331,7 @@ export function CornerHandlesOverlay({
   disabled,
   onFreezeView,
 }: OverlayProps) {
+  const t = useI18n();
   const oriented = geometry.orientedSize;
   const polygon = geometry.polygon;
   const drag = React.useRef<{
@@ -371,7 +391,7 @@ export function CornerHandlesOverlay({
       </svg>
       {points.map((point, index) => (
         <button
-          aria-label={`Move ${CORNER_LABELS[index]} corner`}
+          aria-label={t("Move {corner} corner", { corner: t(CORNER_LABELS[index] ?? "") })}
           className="emvb-ie-corner-handle"
           disabled={disabled}
           key={CORNER_LABELS[index]}

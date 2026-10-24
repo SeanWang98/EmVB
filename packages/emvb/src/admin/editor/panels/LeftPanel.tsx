@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖编辑器状态、操作接口与后台语言。
+ * [OUTPUT]: 提供随后台语言更新的面板控件。
+ * [POS]: 编辑器面板；只翻译界面，保留用户内容原值。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { useI18n } from "../../i18n/index.ts";
 import { Tabs } from "@cloudflare/kumo";
 import * as React from "react";
 import type { ElementType, Layout } from "../../../core/index.ts";
@@ -44,6 +51,7 @@ export function LeftPanel({
   onSaveSection?: (id: string) => void;
   formsAvailable?: boolean;
 }) {
+  const t = useI18n();
   const [tab, setTab] = React.useState(() => {
     try {
       return sessionStorage.getItem(SESSION_KEY) === "layers" ? "layers" : "add";
@@ -65,8 +73,8 @@ export function LeftPanel({
         variant="underline"
         className="emvb-tabs"
         tabs={[
-          { value: "add", label: "Add" },
-          { value: "layers", label: "Layers" },
+          { value: "add", label: t("Add") },
+          { value: "layers", label: t("Layers") },
         ]}
         value={tab}
         onValueChange={changeTab}

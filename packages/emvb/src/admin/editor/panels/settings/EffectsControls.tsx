@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖数值字段、颜色字段与语言上下文
+ * [OUTPUT]: 提供阴影、滤镜、入场和过渡控件
+ * [POS]: 效果样式入口；选项标签与 CSS 值分离
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { useI18n } from "../../../i18n/index.ts";
 import * as React from "react";
 import { Button, Select } from "@cloudflare/kumo";
 import { PlusIcon } from "@phosphor-icons/react";
@@ -38,6 +45,7 @@ export function ShadowControl({
   onDesignChange: (design: DesignSystem) => Promise<void>;
   reset: React.ReactNode;
 }) {
+  const t = useI18n();
   const patch = (part: Partial<Shadow>) => {
     if (!value) return;
     const next: Record<string, unknown> = { ...value, ...part };
@@ -51,36 +59,36 @@ export function ShadowControl({
       data-set={value ? "true" : undefined}
     >
       <div className="emvb-field-group emvb-shadow">
-        <span className="emvb-var-field-label">Box shadow</span>
+        <span className="emvb-var-field-label">{t("Box shadow")}</span>
         {value ? (
           <>
             <ColorControl
-              label="Shadow color"
+              label={t("Shadow color")}
               value={value.color}
               design={design}
               onChange={(color) => patch({ color })}
               onDesignChange={onDesignChange}
             />
             <Select
-              label="Position"
+              label={t("Position")}
               className={FIELD}
               value={value.inset === true ? "inset" : "outset"}
               // W-306: Kumo's Select shows the raw value ("inset") without a renderValue.
-              renderValue={(v: unknown) => (v === "inset" ? "Inset" : "Outset")}
+              renderValue={(v: unknown) => (v === "inset" ? t("Inset") : t("Outset"))}
               onValueChange={(next) => {
                 const checked = next === "inset";
                 patch({ inset: checked === true ? true : undefined });
               }}
             >
-              <Select.Option value="outset">Outset</Select.Option>
-              <Select.Option value="inset">Inset</Select.Option>
+              <Select.Option value="outset">{t("Outset")}</Select.Option>
+              <Select.Option value="inset">{t("Inset")}</Select.Option>
             </Select>
             <div className="emvb-shadow-grid">
               {SHADOW_FIELDS.map(([key, label, spec]) => (
                 <NumberField
                   key={key}
                   fieldKey={`boxShadow.${key}`}
-                  label={label}
+                  label={t(label)}
                   value={value[key]}
                   spec={spec}
                   onCommit={(n) => patch({ [key]: n ?? 0 })}
@@ -96,7 +104,7 @@ export function ShadowControl({
             icon={<PlusIcon aria-hidden="true" />}
             onClick={() => onChange(NEW_SHADOW)}
           >
-            Add shadow
+            {t("Add shadow")}
           </Button>
         )}
       </div>
@@ -131,6 +139,7 @@ export function FiltersControl({
   inherited?: Filter;
   onChange: (next: Filter | undefined) => void;
 }) {
+  const t = useI18n();
   const patch = (key: keyof Filter, n: number | undefined) => {
     const next: Record<string, number> = {};
     for (const [k, v] of Object.entries({ ...value, [key]: n })) {
@@ -148,13 +157,13 @@ export function FiltersControl({
       data-set={value ? "true" : undefined}
       ref={rows}
     >
-      <p className="emvb-sub-label">Filters</p>
+      <p className="emvb-sub-label">{t("Filters")}</p>
       {open || value || inherited ? (
         FILTER_ROWS.map(([key, label, spec]) => (
           <NumberRow
             key={key}
             rowKey={`filter.${key}`}
-            label={label}
+            label={t(label)}
             value={value?.[key]}
             spec={spec}
             inherited={inherited?.[key]}
@@ -172,7 +181,7 @@ export function FiltersControl({
             requestAnimationFrame(() => rows.current?.querySelector<HTMLElement>("input")?.focus());
           }}
         >
-          Add filters
+          {t("Add filters")}
         </Button>
       )}
     </div>
@@ -208,20 +217,21 @@ export function TransitionSelect<T extends string>({
   options: ReadonlyArray<{ value: T; label: string }>;
   onChange: (next: T) => void;
 }) {
+  const t = useI18n();
   return (
     <Select
-      label={label}
+      label={t(label)}
       className={FIELD}
       value={value}
       onValueChange={(next) => {
         const option = options.find((o) => o.value === next);
         if (option) onChange(option.value);
       }}
-      renderValue={(v: unknown) => options.find((o) => o.value === v)?.label ?? String(v)}
+      renderValue={(v: unknown) => t(options.find((o) => o.value === v)?.label ?? String(v))}
     >
       {options.map((option) => (
         <Select.Option key={option.value} value={option.value}>
-          {option.label}
+          {t(option.label)}
         </Select.Option>
       ))}
     </Select>
@@ -247,6 +257,7 @@ export function EntranceControl({
   onChange: (next: Entrance | undefined) => void;
   reset: React.ReactNode;
 }) {
+  const t = useI18n();
   return (
     <div
       className="emvb-style-row"
@@ -254,32 +265,32 @@ export function EntranceControl({
       data-set={value ? "true" : undefined}
     >
       <div className="emvb-field-group emvb-transition">
-        <span className="emvb-var-field-label">Entrance</span>
+        <span className="emvb-var-field-label">{t("Entrance")}</span>
         {value ? (
           <>
             {/* UX-077: the group is already "Entrance"; the select names its own part. */}
             <TransitionSelect
-              label="Animation"
+              label={t("Animation")}
               value={value.type}
               options={ENTRANCE_TYPES}
               onChange={(type) => onChange({ ...value, type })}
             />
             <NumberField
               fieldKey="entrance.duration"
-              label="Duration"
+              label={t("Duration")}
               value={value.duration}
               spec={MS}
               onCommit={(n) => onChange({ ...value, duration: n ?? 0 })}
             />
             <NumberField
               fieldKey="entrance.delay"
-              label="Delay"
+              label={t("Delay")}
               value={value.delay ?? 0}
               spec={MS}
               onCommit={(n) => onChange({ ...value, delay: n && n > 0 ? n : undefined })}
             />
             <TransitionSelect
-              label="Start"
+              label={t("Start")}
               value={value.trigger ?? "load"}
               options={[
                 { value: "load", label: "On load" },
@@ -298,7 +309,7 @@ export function EntranceControl({
             icon={<PlusIcon aria-hidden="true" />}
             onClick={() => onChange({ type: "fade", duration: 400 })}
           >
-            Add entrance
+            {t("Add entrance")}
           </Button>
         )}
       </div>
@@ -317,6 +328,7 @@ export function TransitionControl({
   onChange: (next: Transition | undefined) => void;
   reset: React.ReactNode;
 }) {
+  const t = useI18n();
   const patch = (part: Partial<Transition>) => {
     if (!value) return;
     const merged: Record<string, unknown> = { ...value, ...part };
@@ -330,33 +342,33 @@ export function TransitionControl({
       data-set={value ? "true" : undefined}
     >
       <div className="emvb-field-group emvb-transition">
-        <span className="emvb-var-field-label">Transition</span>
+        <span className="emvb-var-field-label">{t("Transition")}</span>
         {value ? (
           <>
             <div className="emvb-shadow-grid">
               <NumberField
                 fieldKey="transition.duration"
-                label="Duration"
+                label={t("Duration")}
                 value={value.duration}
                 spec={MS}
                 onCommit={(n) => patch({ duration: n ?? 0 })}
               />
               <NumberField
                 fieldKey="transition.delay"
-                label="Delay"
+                label={t("Delay")}
                 value={value.delay}
                 spec={{ ...MS, placeholder: "0" }}
                 onCommit={(n) => patch({ delay: n })}
               />
             </div>
             <TransitionSelect
-              label="Easing"
+              label={t("Easing")}
               value={value.easing}
               options={EASINGS}
               onChange={(easing) => patch({ easing })}
             />
             <TransitionSelect
-              label="Applies to"
+              label={t("Applies to")}
               value={value.property}
               options={APPLIES_TO}
               onChange={(property) => patch({ property })}
@@ -370,7 +382,7 @@ export function TransitionControl({
             icon={<PlusIcon aria-hidden="true" />}
             onClick={() => onChange(NEW_TRANSITION)}
           >
-            Add transition
+            {t("Add transition")}
           </Button>
         )}
       </div>

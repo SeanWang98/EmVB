@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖新增元素回调与后台语言。
+ * [OUTPUT]: 提供EmptyCanvas。
+ * [POS]: 空布局入口，引导添加首个容器。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { useI18n } from "../../i18n/index.ts";
 import { PlusIcon } from "@phosphor-icons/react";
 import type * as React from "react";
 import { NEW_ELEMENT_MIME } from "../dnd/drop-target.ts";
@@ -12,6 +19,7 @@ export function EmptyCanvas({
   latest: React.RefObject<EditorState>;
   dispatch: React.Dispatch<EditorAction>;
 }) {
+  const t = useI18n();
   return (
     <div
       className="emvb-empty-canvas"
@@ -42,7 +50,7 @@ export function EmptyCanvas({
         onClick={() => dispatch({ type: "add-root-container" })}
       >
         <PlusIcon size={16} aria-hidden="true" />
-        Add a container to start
+        {t("Add a container to start")}
       </button>
     </div>
   );

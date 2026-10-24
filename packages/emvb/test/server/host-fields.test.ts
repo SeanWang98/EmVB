@@ -64,8 +64,8 @@ describe("host canvas collection configuration", () => {
       canvasCollections: ["pages", "articles"],
     });
     expect(plugin.admin?.fieldWidgets).toEqual([
-      { name: "layout", label: "EmVB page (read-only)", fieldTypes: ["json"] },
-      { name: "canvas", label: "EmVB canvas", fieldTypes: ["json"] },
+      { name: "layout", label: "EmVB 页面（只读） / Read-only", fieldTypes: ["json"] },
+      { name: "canvas", label: "EmVB 画布 / Canvas", fieldTypes: ["json"] },
     ]);
   });
 });

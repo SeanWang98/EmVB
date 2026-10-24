@@ -7,9 +7,9 @@ Page 字段回传布局，宿主自动保存草稿并负责发布。
 ## 成员清单
 
 CanvasField.test.tsx：回归验证 CanvasField 的行为及边界。
-CanvasField.tsx：Page 受控字段；冻结打开快照，应用只调用 onChange。
+CanvasField.tsx：Page 受控字段；应用只调用 onChange，摘要随界面语言切换。
 LayoutField.test.tsx：回归验证 LayoutField 的行为及边界。
-LayoutField.tsx：独立页面只读摘要；跳转 EmVB，不修改字段。
+LayoutField.tsx：独立页面只读摘要；翻译界面，保留字段值和跳转地址。
 
 ## 会话边界
 

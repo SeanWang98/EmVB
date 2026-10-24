@@ -1,3 +1,9 @@
+/**
+ * [INPUT]: 依赖真实后台页面、公开 schema API 与固定插件路由。
+ * [OUTPUT]: 验证初始化收敛、静态入口标签和只读布局字段。
+ * [POS]: 插件宿主接入验收；按 href 定位入口并核对双语标签。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
 import { expect, test } from "@playwright/test";
 import { api, schemaOf, setupFacts } from "./support/api.ts";
 
@@ -54,14 +60,14 @@ test("an admin sets up EmVB, and upgrading an altered schema converges to the sa
 test("the hidden collection has no sidebar link, and Visual pages does", async ({ page }) => {
   await page.goto("/_emdash/admin");
   const nav = page.getByRole("complementary", { name: "Admin navigation" });
-  await expect(nav.getByRole("link", { name: "Pages VisualBuilder" })).toHaveAttribute(
-    "href",
-    "/_emdash/admin/plugins/emvb/pages",
-  );
+  const pagesLink = nav.locator(`a[href="${PAGES}"]`);
+  await expect(pagesLink).toHaveText("可视化页面 · Visual Builder");
   const emvb = nav.locator("[data-emvb-nav]");
   await expect(emvb).toContainText("EmVB");
-  await expect(emvb.getByRole("link", { name: "Pages VisualBuilder" })).toBeVisible();
-  await expect(emvb.getByRole("link", { name: "Theme Builder" })).toBeVisible();
+  await expect(emvb.locator(`a[href="${PAGES}"]`)).toBeVisible();
+  const themeLink = emvb.locator('a[href="/_emdash/admin/plugins/emvb/theme"]');
+  await expect(themeLink).toBeVisible();
+  await expect(themeLink).toHaveText("主题构建器 · Theme Builder");
   await expect(nav.locator('a[href*="/content/emvb_pages"]')).toHaveCount(0);
 });
 

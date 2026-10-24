@@ -1,3 +1,9 @@
+/**
+ * [INPUT]: 依赖画布文档与核心样式状态标识。
+ * [OUTPUT]: 提供applyStatePreview 与 StatePreview 类型。
+ * [POS]: 编辑态样式预览，只改文档临时属性。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
 import type { StyleStateName } from "../../../core/index.ts";
 
 export type StatePreview = { id: string; state: StyleStateName };

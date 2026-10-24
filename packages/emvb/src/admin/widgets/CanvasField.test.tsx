@@ -155,7 +155,7 @@ describe("controlled Page canvas field", () => {
       const { calls, changes, submits } = await render(value);
       await click("Edit with EmVB");
       expect(document.querySelector("[data-emvb-field-settings]")?.textContent).toContain(
-        "Page 表单",
+        "After applying changes, Page saves drafts (including autosave) and handles publishing.",
       );
       expect(button("Publish") === undefined).toBe(true);
       expect(button("Save draft") === undefined).toBe(true);
@@ -186,7 +186,9 @@ describe("controlled Page canvas field", () => {
   test("Portal submit never reaches the outer Page form and damaged layouts stay unchanged", async () => {
     const { changes, submits } = await render("{broken json");
     await click("Edit with EmVB");
-    expect(document.querySelector("[data-emvb-editor]")?.textContent).toContain("原值未修改");
+    expect(document.querySelector("[data-emvb-editor]")?.textContent).toContain(
+      "The original value was not changed.",
+    );
     await React.act(async () => {
       document
         .querySelector("[data-emvb-editor]")

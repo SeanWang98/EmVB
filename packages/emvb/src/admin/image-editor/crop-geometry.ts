@@ -1,4 +1,10 @@
 /**
+ * [INPUT]: 依赖photocn 几何类型与图片、舞台尺寸。
+ * [OUTPUT]: 提供裁剪坐标换算、缩放插值与矩形约束函数。
+ * [POS]: CropOverlay 的纯几何模型，可独立验证。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+/**
  * Crop-frame maths for the image editor's crop view (W-483).
  *
  * Ported from photocn's `crop-overlay.tsx` (https://github.com/rbbydotdev/photocn,

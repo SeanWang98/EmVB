@@ -1,3 +1,31 @@
+/**
+ * [INPUT]: 依赖元素描述、面板模型、命令错误源消息与后台语言。
+ * [OUTPUT]: 提供可翻译的内容与样式编辑界面。
+ * [POS]: 元素面板编排层；保留用户内容及保存枚举原值。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { useI18n } from "../../i18n/index.ts";
+import { errorMessage, formatMessage, type LocalizedMessage } from "../localized-message.ts";
+import {
+  enclosingFormId,
+  GRID_ITEM_KEYS,
+  inGridParent,
+  OPEN_FIRST,
+  readSections,
+  writeSections,
+  countSet,
+  sectionHasStates,
+  JUMPY,
+  NORMAL_ONLY_KEYS,
+  JUMP_HELP,
+  positionInEffect,
+  ITEM_NOTES,
+  FORM_TYPES,
+  SPACER_HEIGHT,
+  pairFields,
+  fieldShown,
+  breadcrumb,
+} from "./element-panel-model.ts";
 import { Collapsible, Tabs } from "@cloudflare/kumo";
 import type { Fetcher } from "../../api.ts";
 import {
@@ -8,8 +36,7 @@ import {
   WarningCircleIcon,
 } from "@phosphor-icons/react";
 import * as React from "react";
-import { ELEMENT_NAMES, elementIcon } from "../element-chrome.ts";
-import { indexLayout } from "../../../core/tree-ops.ts";
+import { elementIcon } from "../element-chrome.ts";
 import type { ThemePartType } from "../../../core/theme/part-types.ts";
 import { sharedPartH1 } from "./settings/heading-warning.ts";
 import {
@@ -28,7 +55,6 @@ import {
   hasLocalStyles,
   localStylesToClass,
   localToClassRefusal,
-  isFormNode,
   loneAbTests,
   type DesignSystem,
   type ElementDescriptor,
@@ -38,14 +64,10 @@ import {
   type LayoutNode,
   type PopupDevice,
   type ResponsiveDevice,
-  classStylesInListOrder,
   iconHasAdjustableStroke,
   iconHasOwnColors,
-  resolveCascade,
   SAMPLE_POST,
-  STYLE_STATES,
   type StyleProps,
-  type StyleStates,
   boxLinkHeldBack,
 } from "../../../core/index.ts";
 import { applyStylePatch } from "./style-target.ts";
@@ -72,99 +94,9 @@ import {
   offsetsApply,
   SECTION_LABELS,
   sectionsFor,
-  type StyleKey,
   STYLE_UI,
   type StyleSectionId,
 } from "./settings/style-sections.ts";
-
-const enclosingFormId = (layout: Layout, nodeId: string): string | undefined => {
-  const index = indexLayout(layout);
-  let current = index.parentOf.get(nodeId);
-  while (current) {
-    const node = index.byId.get(current);
-    if (node && isFormNode(node)) return node.props.formId || undefined;
-    current = index.parentOf.get(current);
-  }
-  return undefined;
-};
-
-const GRID_ITEM_KEYS = new Set<string>([
-  "gridColumnSpan",
-  "gridColumnStart",
-  "gridRowSpan",
-  "gridRowStart",
-]);
-
-/** Whether the node sits directly in a box that lays its children out on a grid. */
-const inGridParent = (layout: Layout | null | undefined, nodeId: string): boolean => {
-  if (!layout) return true;
-  const index = indexLayout(layout);
-  const parentId = index.parentOf.get(nodeId);
-  const parent = parentId ? index.byId.get(parentId) : undefined;
-  return parent?.type === "grid" || parent?.type === "loop";
-};
-
-const sectionKey = (type: string) => `emvb-style-sections:${type}`;
-
-/**
- * Open the first time an element type is selected, where it has them (W-137): the sections most
- * edits need. After that the open and closed sections are remembered per type, across visits.
- */
-const OPEN_FIRST: StyleSectionId[] = ["typography", "spacing", "background", "border"];
-
-const readSections = (type: string, fallback: StyleSectionId[]): Set<StyleSectionId> => {
-  try {
-    const raw = localStorage.getItem(sectionKey(type));
-    if (!raw) return new Set(fallback);
-    const parsed = JSON.parse(raw) as string[];
-    return new Set(parsed.filter((id): id is StyleSectionId => id in SECTION_LABELS));
-  } catch {
-    return new Set(fallback);
-  }
-};
-
-const writeSections = (type: string, open: Set<StyleSectionId>) => {
-  try {
-    localStorage.setItem(sectionKey(type), JSON.stringify([...open]));
-  } catch {
-    /* private mode */
-  }
-};
-
-const countSet = (type: string, style: StyleProps | undefined, section: StyleSectionId) =>
-  keysFor(type, section, style).filter((key) => style?.[key] !== undefined).length;
-
-/** Whether any state sets a key of this section (the section header's dot in Normal). */
-const sectionHasStates = (type: string, states: StyleStates | undefined, section: StyleSectionId) =>
-  STYLE_STATES.some((state) => countSet(type, states?.[state], section) > 0);
-
-/** Sections where a state change moves things around (DESIGN.md § State styles). */
-const JUMPY = new Set<StyleSectionId>(["layout", "size", "position"]);
-
-/** Set on Normal only (W-089, W-101, W-237); a state's Style tab leaves them out. */
-const NORMAL_ONLY_KEYS = new Set<StyleKey>([
-  "transition",
-  "entrance",
-  "iconAnimation",
-  "scrollMotion",
-]);
-
-const JUMP_HELP: Record<Exclude<StyleStateChoice, "normal">, string> = {
-  hover: "Changing size or position on hover can make the page jump.",
-  focus: "Changing size or position on focus can make the page jump.",
-  active: "Changing size or position while active can make the page jump.",
-};
-
-/** The position in effect: the class's own when editing a class, else classes then local. */
-const positionInEffect = (
-  node: LayoutNode,
-  design: DesignSystem,
-  cls: { style?: StyleProps } | undefined,
-) =>
-  cls
-    ? cls.style?.position
-    : resolveCascade(classStylesInListOrder(design.classes, node.classes ?? []), node.style)
-        .position;
 
 /**
  * Where the panel was scrolled, per tab, for the session (W-152). A new selection or a tab switch
@@ -227,41 +159,13 @@ type Props = {
   onArrange?: (run: (layout: Layout) => Arranged) => void;
 };
 
-/** What an item's content is, since it has no content field of its own (W-130). */
-const ITEM_NOTES: Record<string, string> = {
-  "accordion-item":
-    "The item's content is the elements in its body. Select this item, then add elements, or drag them into its body on the canvas.",
-  "tab-panel":
-    "The tab's content is the elements in its panel. Select this tab, then add elements, or drag them into its panel on the canvas.",
-  menu: "Add Menu items. An item that holds other elements opens a dropdown. Wide panel stretches that dropdown across the menu.",
-  "menu-item":
-    "The label is the link. Elements inside this item are its dropdown. Wide panel stretches the dropdown across the menu.",
-};
-
-const FORM_TYPES = new Set([
-  "form",
-  "text-input",
-  "textarea",
-  "select",
-  "checkbox",
-  "radio",
-  "submit",
-]);
-
-const SPACER_HEIGHT = {
-  key: "height",
-  kind: "number",
-  label: "Height",
-  message: "Height can't be negative. Enter 0 or more.",
-} as const;
-
-const TABS = [
+const tabsFor = (t: ReturnType<typeof useI18n>) => [
   {
     value: "content",
     label: (
       <>
         <PencilSimpleIcon size={14} aria-hidden="true" />
-        Content
+        {t("Content")}
       </>
     ),
   },
@@ -270,7 +174,7 @@ const TABS = [
     label: (
       <>
         <PaintBrushIcon size={14} aria-hidden="true" />
-        Style
+        {t("Style")}
       </>
     ),
   },
@@ -291,62 +195,9 @@ function Alert({
   );
 }
 
-/**
- * UX-028: settings that only matter once another is set stay out of the way
- * until then. A value already stored always shows, so nothing set is ever hidden.
- */
-const DEPENDS_ON: Readonly<Record<string, string>> = {
-  iconPosition: "iconId",
-  iconSize: "iconId",
-  iconGap: "iconId",
-  // UX-072: a new tab needs a link, typed or bound to live data (W-276 drops the target without one).
-  newTab: "href",
-};
-
-/** UX-040: number pairs that read as one setting share a row (X beside Y, width beside height). */
-const PAIRED: Readonly<Record<string, string>> = { focalX: "focalY", width: "height" };
-
-function pairFields<F extends { key: string }>(fields: readonly F[]): F[][] {
-  const rows: F[][] = [];
-  for (let i = 0; i < fields.length; i += 1) {
-    const field = fields[i] as F;
-    const next = fields[i + 1];
-    if (next && PAIRED[field.key] === next.key) {
-      rows.push([field, next]);
-      i += 1;
-    } else rows.push([field]);
-  }
-  return rows;
-}
-
-/** UX-071: fields that only apply to some values of another field on the same element. */
-const SHOWN_WHEN: Readonly<
-  Record<string, (props: Record<string, unknown>, device: PopupDevice) => boolean>
-> = {
-  "loop.columns": (props) => props["display"] === "grid" || props["display"] === "cards",
-  "pagination.countText": (props) => props["showCount"] === true,
-  // Post Link always links to its post, so its new-tab switch always applies.
-  "post-link.newTab": () => true,
-  // UX-075: each device's tracks show on that device, as Columns does (W-139).
-  "grid.columnTracks": (_props, device) => device === "desktop",
-  "grid.columnTracksTablet": (_props, device) => device === "tablet",
-  "grid.columnTracksMobile": (_props, device) => device === "mobile",
-};
-
-function fieldShown(key: string, node: LayoutNode, device: PopupDevice = "desktop"): boolean {
-  const props = node.props as Record<string, unknown>;
-  // A stored value always shows, so it can be seen and reset.
-  if (props[key] !== undefined) return true;
-  const when = SHOWN_WHEN[`${node.type}.${key}`];
-  if (when) return when(props, device);
-  const parent = DEPENDS_ON[key];
-  if (!parent) return true;
-  const bound = (node as { bind?: Record<string, unknown> }).bind?.[parent] !== undefined;
-  return (props[parent] !== undefined && props[parent] !== "") || bound;
-}
-
 /** Right panel with an element selected (IA / W-021): descriptor Content + Style sections. */
 export function ElementPanel(props: Props) {
+  const t = useI18n();
   const descriptor = ELEMENT_DESCRIPTORS.find((d) => d.type === props.node.type);
   if (!descriptor) {
     return (
@@ -355,9 +206,11 @@ export function ElementPanel(props: Props) {
         data-emvb-panel="element"
         data-emvb-element={props.node.type}
       >
-        <h2 className="emvb-panel-title">Unknown element</h2>
+        <h2 className="emvb-panel-title">{t("Unknown element")}</h2>
         <p className="emvb-helper">
-          Unknown element &quot;{props.node.type}&quot;. It can be moved or deleted, but not edited.
+          {t('Unknown element "{type}". It can be moved or deleted, but not edited.', {
+            type: props.node.type,
+          })}
         </p>
         {props.rejection && <Alert>{props.rejection}</Alert>}
       </div>
@@ -401,11 +254,12 @@ function KnownElementPanel({
   descriptor,
   onArrange,
 }: Props & { descriptor: ElementDescriptor }) {
+  const t = useI18n();
   const ui = STYLE_UI[node.type] ?? DEFAULT_UI;
   const [tab, setTab] = React.useState(descriptor.defaultTab);
   const [openSections, setSection] = useOpenSections(node.type, ui.defaultOpen, node.id);
   const { cls, editing, setEditing } = useStyleTarget(node, design);
-  const [designError, setDesignError] = React.useState<string | null>(null);
+  const [designError, setDesignError] = React.useState<LocalizedMessage | null>(null);
   const [styleState, setStyleState] = React.useState<StyleStateChoice>("normal");
   React.useEffect(() => setStyleState("normal"), [node.id]);
   React.useEffect(() => {
@@ -476,9 +330,7 @@ function KnownElementPanel({
     }
     setDesignError(null);
     onDesignChange(written.design).catch((error: unknown) =>
-      setDesignError(
-        error instanceof Error ? error.message : "Couldn't save the class. Try again.",
-      ),
+      setDesignError(errorMessage(error, "Couldn't save the class. Try again.")),
     );
   };
   React.useEffect(() => {
@@ -516,17 +368,17 @@ function KnownElementPanel({
     >
       <div className="emvb-element-header">
         <Icon size={16} aria-hidden="true" />
-        <h2 className="emvb-panel-title">{descriptor.name}</h2>
+        <h2 className="emvb-panel-title">{t(descriptor.name)}</h2>
       </div>
       {crumbs.length > 0 && (
-        <nav className="emvb-breadcrumb" aria-label="Element path">
+        <nav className="emvb-breadcrumb" aria-label={t("Element path")}>
           {crumbs.map((crumb, index) => (
             <React.Fragment key={crumb.id ?? "page"}>
               {index > 0 && <span aria-hidden="true"> › </span>}
               {index === crumbs.length - 1 ? (
                 // UX-065: the element being edited is where you are, not a link back to itself.
                 <span className="emvb-breadcrumb-current" aria-current="location">
-                  {crumb.label}
+                  {t(crumb.label)}
                 </span>
               ) : (
                 <button
@@ -534,7 +386,7 @@ function KnownElementPanel({
                   className="emvb-breadcrumb-part"
                   onClick={() => onSelect(crumb.id)}
                 >
-                  {crumb.label}
+                  {t(crumb.label)}
                 </button>
               )}
             </React.Fragment>
@@ -544,13 +396,13 @@ function KnownElementPanel({
       {rejection && <Alert>{rejection}</Alert>}
       {!formsAvailable && FORM_TYPES.has(node.type) && (
         <Alert data-emvb-forms-missing="">
-          The forms plugin is not installed. Form elements can&apos;t submit until it is added.
+          {t("The forms plugin is not installed. Form elements can't submit until it is added.")}
         </Alert>
       )}
       <Tabs
         variant="underline"
         className="emvb-tabs"
-        tabs={TABS}
+        tabs={tabsFor(t)}
         value={tab}
         onValueChange={(value) => setTab(value === "style" ? "style" : "content")}
       />
@@ -560,9 +412,11 @@ function KnownElementPanel({
             <ItemList node={node} onChange={onChange} onSelect={onSelect} actions={items} />
           ) : descriptor.fields.length === 0 ? (
             <p className="emvb-helper">
-              {node.type === "container"
-                ? "A container holds other elements. Arrange them in Style."
-                : "This element has no content settings."}
+              {t(
+                node.type === "container"
+                  ? "A container holds other elements. Arrange them in Style."
+                  : "This element has no content settings.",
+              )}
             </p>
           ) : (
             pairFields(
@@ -601,41 +455,42 @@ function KnownElementPanel({
             onChange={onChange}
             onArrange={onArrange}
           />
-          {ITEM_NOTES[node.type] && <p className="emvb-helper">{ITEM_NOTES[node.type]}</p>}
+          {ITEM_NOTES[node.type] && <p className="emvb-helper">{t(ITEM_NOTES[node.type] ?? "")}</p>}
           {svgImagesLeftOut(node) > 0 && (
             <p className="emvb-helper" data-emvb-svg-images>
-              {svgImagesNotice(svgImagesLeftOut(node))}
+              {svgImagesNotice(svgImagesLeftOut(node), t)}
             </p>
           )}
           {sharedPartH1(node, partType) && (
             <p className="emvb-helper" data-emvb-shared-h1>
-              This part shows on pages that already have their own H1, so they would get two. Use H2
-              or lower here unless this part is the page's only main heading.
+              {t(
+                "This part shows on pages that already have their own H1, so they would get two. Use H2 or lower here unless this part is the page's only main heading.",
+              )}
             </p>
           )}
           {buttonUrlNote(node) && (
             <p className="emvb-helper" data-emvb-button-url>
-              {buttonUrlNote(node)}
+              {t(buttonUrlNote(node) ?? "")}
             </p>
           )}
           {loopContextNote(node, partType) && (
             <p className="emvb-helper" data-emvb-loop-note>
-              {loopContextNote(node, partType)}
+              {t(loopContextNote(node, partType) ?? "")}
             </p>
           )}
           {imageAltNote(node) && (
             <p className="emvb-helper" data-emvb-alt-note>
-              {imageAltNote(node)}
+              {imageAltNote(node, t)}
             </p>
           )}
           {boxLinkHeldBack(node) && (
             <p className="emvb-helper" data-emvb-held-back-link>
-              {HELD_BACK_BOX_LINK_NOTE}
+              {t(HELD_BACK_BOX_LINK_NOTE)}
             </p>
           )}
           {unnamedBoxLink(node) && (
             <p className="emvb-helper" data-emvb-unnamed-link>
-              {UNNAMED_BOX_LINK_NOTE}
+              {t(UNNAMED_BOX_LINK_NOTE)}
             </p>
           )}
         </div>
@@ -672,14 +527,16 @@ function KnownElementPanel({
           ) : (
             // UX-063: say which device is being edited, as states say "Editing Hover".
             <p className="emvb-helper" data-emvb-device-note={device}>
-              {device === "mobile"
-                ? "Editing Mobile. These styles override Tablet and Desktop."
-                : "Editing Tablet. These styles override Desktop."}{" "}
-              Hover, Focus and Active are set on Desktop and apply on every device.
+              {t(
+                device === "mobile"
+                  ? "Editing Mobile. These styles override Tablet and Desktop."
+                  : "Editing Tablet. These styles override Desktop.",
+              )}{" "}
+              {t("Hover, Focus and Active are set on Desktop and apply on every device.")}
             </p>
           )}
           {!cls && <StyleSources node={node} design={design} device={device} state={styleState} />}
-          {designError && <Alert>{designError}</Alert>}
+          {designError && <Alert>{formatMessage(designError, t)}</Alert>}
           {!cls && styleState === "normal" && node.type === "spacer" && (
             <FieldControl field={SPACER_HEIGHT} node={node} onChange={onChange} fetcher={fetcher} />
           )}
@@ -719,7 +576,7 @@ function KnownElementPanel({
               <>
                 {styleState !== "normal" && JUMPY.has(id) && (
                   <p className="emvb-helper" data-emvb-jump-help="">
-                    {JUMP_HELP[styleState]}
+                    {t(JUMP_HELP[styleState])}
                   </p>
                 )}
                 {keys.map((key) => {
@@ -775,8 +632,9 @@ function KnownElementPanel({
                       )}
                       {colorIgnoredHere && (
                         <p className="emvb-helper" data-emvb-icon-color-ignored="">
-                          This SVG keeps its own colors, so this color shows only once Force single
-                          color is on (Normal state, Desktop).
+                          {t(
+                            "This SVG keeps its own colors, so this color shows only once Force single color is on (Normal state, Desktop).",
+                          )}
                         </p>
                       )}
                       {styleState === "normal" && (
@@ -787,7 +645,7 @@ function KnownElementPanel({
                 })}
                 {id === "position" && !offsetsApply(position) && (
                   <p className="emvb-helper" data-emvb-offsets-help="">
-                    Offsets apply once Position is Relative, Absolute, Fixed or Sticky.
+                    {t("Offsets apply once Position is Relative, Absolute, Fixed or Sticky.")}
                   </p>
                 )}
               </>,
@@ -815,11 +673,12 @@ function Section({
   onOpenChange: (open: boolean) => void;
   children: React.ReactNode;
 }) {
+  const t = useI18n();
   return (
     <Collapsible.Root open={open} onOpenChange={onOpenChange}>
       <Collapsible.Trigger className="emvb-section-header" data-emvb-section={id}>
         <span>
-          {SECTION_LABELS[id]}
+          {t(SECTION_LABELS[id])}
           {!open && count > 0 && <span className="emvb-count"> · {count}</span>}
           {stateMark && <StateDot />}
         </span>
@@ -832,24 +691,4 @@ function Section({
       <Collapsible.Panel className="emvb-section-body">{children}</Collapsible.Panel>
     </Collapsible.Root>
   );
-}
-
-function breadcrumb(
-  layout: Layout | null,
-  id: string,
-): Array<{ id: string | null; label: string }> {
-  if (!layout) return [];
-  const index = indexLayout(layout);
-  const chain: Array<{ id: string; label: string }> = [];
-  let current: string | undefined = id;
-  while (current) {
-    const node = index.byId.get(current);
-    if (!node) break;
-    chain.unshift({
-      id: node.id,
-      label: ELEMENT_NAMES[node.type] ?? node.type,
-    });
-    current = index.parentOf.get(current);
-  }
-  return [{ id: null, label: "Page" }, ...chain];
 }

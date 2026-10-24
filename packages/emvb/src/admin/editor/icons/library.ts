@@ -1,3 +1,9 @@
+/**
+ * [INPUT]: 依赖固定图标集 JSON、上传条目与核心 SVG 净化。
+ * [OUTPUT]: 提供图标分类、懒加载、搜索与上传图标适配。
+ * [POS]: 图标数据边界，选中后保存 SVG 而非加载整个图标集。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
 import { getBundledIcon, sanitizeSvgMarkup } from "../../../core/index.ts";
 import { serialize } from "../../../core/render/vnode.ts";
 import type { UploadedIconItem } from "../../icon-uploads-api.ts";

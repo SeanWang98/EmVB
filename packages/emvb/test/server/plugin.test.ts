@@ -1,3 +1,9 @@
+/**
+ * [INPUT]: 依赖内存 EmDash 运行时、插件 hooks 与设计路由。
+ * [OUTPUT]: 验证原生保存、设计权限与插件声明的公开契约。
+ * [POS]: 服务端集成测试；经真实生命周期读取内容和设计存储。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
 import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
 import { layoutOfBytes, s1Page } from "../fixtures/layouts.ts";
 import { emptyDesign, MAX_DESIGN_BYTES, MAX_LAYOUT_BYTES } from "../../src/core/index.ts";
@@ -331,9 +337,9 @@ describe("design routes", () => {
 describe("admin declarations (D-024)", () => {
   test("Visual pages, Theme Builder and AI agents are declared; the editor stays undeclared", () => {
     expect(createPlugin().admin?.pages).toEqual([
-      { path: "/pages", label: "Pages VisualBuilder", icon: "layout" },
-      { path: "/theme", label: "Theme Builder", icon: "layout" },
-      { path: "/agents", label: "AI agents", icon: "layout" },
+      { path: "/pages", label: "可视化页面 · Visual Builder", icon: "layout" },
+      { path: "/theme", label: "主题构建器 · Theme Builder", icon: "layout" },
+      { path: "/agents", label: "AI 助手 · AI agents", icon: "layout" },
     ]);
   });
 });

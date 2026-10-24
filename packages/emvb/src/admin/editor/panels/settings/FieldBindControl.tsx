@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖布局节点、后台界面翻译与同目录字段控件。
+ * [OUTPUT]: 表单字段绑定；公开定义选择与手动字段名共享草稿。
+ * [POS]: 元素设置面板的 FieldBindControl；不拥有页面保存与发布。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { useI18n, createTranslator, type Translate } from "../../../i18n/index.ts";
 import { Input, Select } from "@cloudflare/kumo";
 import * as React from "react";
 import type { Fetcher } from "../../../api.ts";
@@ -9,11 +16,12 @@ const MANUAL = "__manual__";
 const CHOOSE = "Choose a field…";
 
 /** Why a typed field name can't be stored, or null (W-202: same rule as save). */
-export function fieldNameError(name: string): string | null {
-  if (!name) return "Give the field a name.";
-  if (name.length > MAX_FIELD_NAME) return `Use at most ${MAX_FIELD_NAME} characters.`;
+export function fieldNameError(name: string, t: Translate = createTranslator("en")): string | null {
+  if (!name) return t("Give the field a name.");
+  if (name.length > MAX_FIELD_NAME)
+    return t("Use at most {count} characters.", { count: MAX_FIELD_NAME });
   if (!FIELD_NAME_PATTERN.test(name))
-    return "Start with a letter, then use letters, digits, - or _ (no spaces).";
+    return t("Start with a letter, then use letters, digits, - or _ (no spaces).");
   return null;
 }
 
@@ -27,11 +35,12 @@ function FieldNameInput({
   onChange: (name: string) => void;
   manual?: boolean;
 }) {
-  const error = fieldNameError(value.trim());
+  const t = useI18n();
+  const error = fieldNameError(value.trim(), t);
   return (
     <>
       <Input
-        label="Field name"
+        label={t("Field name")}
         className={`${FIELD} emvb-mono`}
         value={value}
         aria-invalid={error ? true : undefined}
@@ -61,6 +70,7 @@ export function FieldBindControl({
   fetcher: Fetcher;
   onChange: (field: string, label?: string) => void;
 }) {
+  const t = useI18n();
   const [fields, setFields] = React.useState<DefinitionField[] | null>(null);
   const [loading, setLoading] = React.useState(Boolean(formId));
   const [draft, setDraft] = React.useState(value);
@@ -106,7 +116,7 @@ export function FieldBindControl({
     <div className="emvb-field-group" data-emvb-field-bind={hasFields ? "list" : undefined}>
       {hasFields && (
         <Select
-          label="Field"
+          label={t("Field")}
           className={FIELD}
           value={known ? name : MANUAL}
           onValueChange={(next) => {
@@ -117,10 +127,10 @@ export function FieldBindControl({
           }}
           renderValue={(current: unknown) => {
             const field = fields.find((each) => each.name === current);
-            return field ? fieldLabel(field) : CHOOSE;
+            return field ? fieldLabel(field) : t(CHOOSE);
           }}
         >
-          {!known && <Select.Option value={MANUAL}>{CHOOSE}</Select.Option>}
+          {!known && <Select.Option value={MANUAL}>{t(CHOOSE)}</Select.Option>}
           {fields.map((field) => (
             <Select.Option key={field.name} value={field.name}>
               {fieldLabel(field)}
@@ -129,8 +139,13 @@ export function FieldBindControl({
         </Select>
       )}
       <FieldNameInput value={draft} onChange={changeName} manual={!hasFields} />
-      <p className="emvb-helper" role="status" aria-label="Form fields status" aria-live="polite">
-        {feedback}
+      <p
+        className="emvb-helper"
+        role="status"
+        aria-label={t("Form fields status")}
+        aria-live="polite"
+      >
+        {t(feedback)}
       </p>
     </div>
   );

@@ -70,6 +70,8 @@ This fork can edit an existing EmDash Page's `layout` JSON field instead of crea
 
 ## Development and testing
 
+The fork includes Simplified Chinese admin labels that follow EmDash's admin language. User content and stored identifiers stay unchanged. See [the admin localization guide](docs/guides/admin-localization.md).
+
 | Task                                                           | Command                                                      |
 | -------------------------------------------------------------- | ------------------------------------------------------------ |
 | Lint, format, types, dead code, unit and Astro tests           | `bun run check`                                              |

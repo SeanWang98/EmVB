@@ -1,5 +1,5 @@
 /**
- * [INPUT]: 依赖 Page 的受控 JSON 字段与 EmVB 字段会话。
+ * [INPUT]: 依赖 Page 的受控 JSON 字段、字段会话与界面翻译。
  * [OUTPUT]: 提供 canvas 字段组件；应用只调用 onChange。
  * [POS]: 原生 Page 表单入口；不导航、不保存独立页面。
  * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
@@ -10,6 +10,7 @@ import * as React from "react";
 import { summarizeLayout, type Layout } from "../../core/index.ts";
 import { defaultFetcher, type Fetcher } from "../api.ts";
 import { FieldEditor, readFieldLayout } from "../editor/FieldEditor.tsx";
+import { useI18n } from "../i18n/index.ts";
 import type { FieldWidgetProps } from "./LayoutField.tsx";
 
 export function CanvasField({
@@ -19,6 +20,7 @@ export function CanvasField({
   id,
   fetcher = defaultFetcher,
 }: FieldWidgetProps & { fetcher?: Fetcher }) {
+  const t = useI18n();
   const [session, setSession] = React.useState<{ value: unknown } | null>(null);
   const trigger = React.useRef<HTMLButtonElement>(null);
   const summary = React.useMemo(() => {
@@ -51,11 +53,18 @@ export function CanvasField({
       <Text variant="secondary">{label}</Text>
       <Text>
         {summary
-          ? `${summary.nodes} elements · schema ${summary.schemaVersion}`
-          : "尚无画布正文，点击开始编辑。"}
+          ? t(
+              summary.nodes === 1
+                ? "{count} element · schema {version}"
+                : "{count} elements · schema {version}",
+              { count: summary.nodes, version: summary.schemaVersion ?? t("unknown") },
+            )
+          : t("No canvas content yet. Start editing to build this page.")}
       </Text>
       <Text variant="secondary">
-        应用后交由 Page 保存草稿（含自动保存）和发布。站点样式与共享资源独立保存。
+        {t(
+          "Apply returns the layout to Page to save its draft (including autosave) and publish. Site styles and shared resources save separately.",
+        )}
       </Text>
       <div>
         <Button
@@ -65,7 +74,7 @@ export function CanvasField({
           icon={<CursorClickIcon aria-hidden="true" />}
           onClick={() => setSession({ value: structuredClone(value) })}
         >
-          Edit with EmVB
+          {t("Edit with EmVB")}
         </Button>
       </div>
       {session && (

@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖 SVG 安全解析与后台翻译器。
+ * [OUTPUT]: 提供移除外部图片与拒绝 SVG 的说明。
+ * [POS]: SVG 字段的安全反馈；保留原始 SVG 输入。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { createTranslator, type Translate } from "../../../i18n/index.ts";
 import { sanitizeSvgReport, type LayoutNode } from "../../../../core/index.ts";
 
 /** W-231: how many external `<image>`s an SVG element's markup loses when it renders. */
@@ -8,9 +15,12 @@ export function svgImagesLeftOut(node: LayoutNode): number {
 }
 
 /** The note under the SVG markup field when some of its images are left out. */
-export function svgImagesNotice(count: number): string {
-  const what = count === 1 ? "1 external image" : `${count} external images`;
-  return `Left out ${what}. An SVG can only show pictures from the media library or embedded PNG, JPEG, WebP or GIF data.`;
+export function svgImagesNotice(count: number, t: Translate = createTranslator("en")): string {
+  const what = count === 1 ? t("1 external image") : t("{count} external images", { count });
+  return t(
+    "Left out {what}. An SVG can only show pictures from the media library or embedded PNG, JPEG, WebP or GIF data.",
+    { what },
+  );
 }
 
 /**

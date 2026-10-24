@@ -1,4 +1,10 @@
 /**
+ * [INPUT]: 依赖图片引擎编辑动作、Radix 控件与后台语言。
+ * [OUTPUT]: 提供工具按钮、滑块、页签与直方图组件。
+ * [POS]: 图片编辑器的交互控件层，统一焦点与显示文案。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+/**
  * Shared pieces of the image editor (W-483): icon buttons with tooltips, the panel header,
  * centered sliders, the histogram strip and the tool pickers.
  *
@@ -7,6 +13,7 @@
  * compact-layout.tsx, icon-skew.tsx), MIT License, Copyright (c) 2026 rbbydotdev. Rebuilt with
  * Kumo components and EmVB tokens instead of shadcn/ui.
  */
+import { useI18n } from "../i18n/index.ts";
 import { Button, Tabs, Tooltip } from "@cloudflare/kumo";
 import {
   ArrowCounterClockwiseIcon,
@@ -94,6 +101,7 @@ export function IconButton({
   className,
   ...rest
 }: IconButtonProps) {
+  const t = useI18n();
   const { onClick } = rest;
   const props = {
     ...rest,
@@ -108,7 +116,7 @@ export function IconButton({
   const classes = `emvb-ie-btn${showLabel ? "" : " emvb-ie-btn-icon"}${className ? ` ${className}` : ""}`;
   const button = showLabel ? (
     <Button type="button" variant={variant} size="sm" className={classes} icon={icon} {...props}>
-      {label}
+      {t(label)}
     </Button>
   ) : (
     <Button
@@ -116,7 +124,7 @@ export function IconButton({
       variant={variant}
       size="sm"
       shape="square"
-      aria-label={label}
+      aria-label={t(label)}
       className={classes}
       icon={icon}
       {...props}
@@ -124,17 +132,18 @@ export function IconButton({
   );
   if (showLabel || props.disabled) return button;
   return (
-    <Tooltip content={label} side="bottom" asChild>
+    <Tooltip content={t(label)} side="bottom" asChild>
       {button}
     </Tooltip>
   );
 }
 
 export function UndoButton(props: { className?: string }) {
+  const t = useI18n();
   const editor = useImageEditor();
   return (
     <IconButton
-      label="Undo"
+      label={t("Undo")}
       icon={<ArrowUUpLeftIcon aria-hidden="true" />}
       disabled={editor.disabled || !editor.history.canUndo}
       onClick={() => editor.history.undo()}
@@ -145,10 +154,11 @@ export function UndoButton(props: { className?: string }) {
 }
 
 export function RedoButton(props: { className?: string }) {
+  const t = useI18n();
   const editor = useImageEditor();
   return (
     <IconButton
-      label="Redo"
+      label={t("Redo")}
       icon={<ArrowUUpRightIcon aria-hidden="true" />}
       disabled={editor.disabled || !editor.history.canRedo}
       onClick={() => editor.history.redo()}
@@ -159,10 +169,11 @@ export function RedoButton(props: { className?: string }) {
 }
 
 export function ResetAllButton() {
+  const t = useI18n();
   const editor = useImageEditor();
   return (
     <IconButton
-      label="Reset"
+      label={t("Reset")}
       showLabel
       variant="outline"
       icon={<ArrowCounterClockwiseIcon aria-hidden="true" />}
@@ -175,11 +186,12 @@ export function ResetAllButton() {
 
 /** Press and hold to see the original (geometry is kept). */
 export function CompareButton({ showLabel = true }: { showLabel?: boolean }) {
+  const t = useI18n();
   const editor = useImageEditor();
   const release = () => editor.compare.setActive(false);
   return (
     <IconButton
-      label="Original"
+      label={t("Original")}
       showLabel={showLabel}
       variant={showLabel ? "outline" : "ghost"}
       icon={<EyeIcon aria-hidden="true" />}
@@ -201,10 +213,11 @@ export function CompareButton({ showLabel = true }: { showLabel?: boolean }) {
 
 /** The sidebar's tool switcher: one icon per tool, the active one filled (photocn ToggleGroup). */
 export function ToolSwitcher() {
+  const t = useI18n();
   const editor = useImageEditor();
   const disabled = editor.disabled || editor.isLoading;
   const buttons = React.useRef<(HTMLButtonElement | null)[]>([]);
-  const index = IMAGE_EDITOR_TOOLS.findIndex((t) => t.id === editor.tool);
+  const index = IMAGE_EDITOR_TOOLS.findIndex((item) => item.id === editor.tool);
   const onKeyDown = (event: React.KeyboardEvent) => {
     // W-680: Alt+Left is the browser's Back; Ctrl/Cmd keys are shortcuts.
     if (event.altKey || event.ctrlKey || event.metaKey) return;
@@ -229,7 +242,7 @@ export function ToolSwitcher() {
     <div
       className="emvb-ie-switcher"
       role="toolbar"
-      aria-label="Editor tools"
+      aria-label={t("Editor tools")}
       onKeyDown={onKeyDown}
       data-slot="editor-toolbar"
     >
@@ -238,14 +251,14 @@ export function ToolSwitcher() {
         const active = tool.id === editor.tool;
         // W-860 (IE-3): a Kumo tooltip names each tool, as photocn's ToggleGroup does.
         return (
-          <Tooltip key={tool.id} content={tool.label} side="bottom" asChild>
+          <Tooltip key={tool.id} content={t(tool.label)} side="bottom" asChild>
             <button
               ref={(el) => {
                 buttons.current[i] = el;
               }}
               type="button"
               className="emvb-ie-switch"
-              aria-label={tool.label}
+              aria-label={t(tool.label)}
               aria-pressed={active}
               tabIndex={active || (index < 0 && i === 0) ? 0 : -1}
               disabled={disabled}
@@ -271,11 +284,12 @@ export function CompactToolBar({
   disabled?: boolean;
   className?: string;
 }) {
+  const t = useI18n();
   const editor = useImageEditor();
   return (
     <nav
       className={`emvb-ie-compact-tools${className ? ` ${className}` : ""}`}
-      aria-label="Editor tools"
+      aria-label={t("Editor tools")}
     >
       {IMAGE_EDITOR_TOOLS.map((tool) => {
         const ToolIcon = TOOL_ICONS[tool.id];
@@ -291,7 +305,7 @@ export function CompactToolBar({
             onClick={() => onSelect(tool.id)}
           >
             <ToolIcon aria-hidden="true" />
-            {tool.label}
+            {t(tool.label)}
           </button>
         );
       })}
@@ -311,14 +325,15 @@ export function PanelHeader({
   onReset?: () => void;
   resetDisabled?: boolean;
 }) {
+  const t = useI18n();
   return (
     <div className="emvb-ie-panel-head">
       <div className="emvb-ie-panel-titles">
-        <h2>{title}</h2>
-        {description ? <p>{description}</p> : null}
+        <h2>{t(title)}</h2>
+        {description ? <p>{t(description)}</p> : null}
       </div>
       <IconButton
-        label="Reset"
+        label={t("Reset")}
         showLabel
         variant="outline"
         icon={<ArrowCounterClockwiseIcon aria-hidden="true" />}
@@ -358,17 +373,18 @@ export function CenteredSlider({
   onCommit?: () => void;
   name: string;
 }) {
+  const t = useI18n();
   const id = React.useId();
   const fill = ((value - min) / (max - min)) * 100;
   return (
     <div className="emvb-ie-slider" data-disabled={disabled || undefined}>
       <div className="emvb-ie-slider-head">
-        <label htmlFor={id}>{label}</label>
+        <label htmlFor={id}>{t(label)}</label>
         <button
           type="button"
           className="emvb-ie-slider-value"
           disabled={disabled || value === 0}
-          title="Reset"
+          title={t("Reset")}
           onClick={() => {
             onChange(0);
             onCommit?.();
@@ -435,6 +451,7 @@ export function ValueSlider({
   onChange: (value: number) => void;
   onCommit?: () => void;
 }) {
+  const t = useI18n();
   const id = React.useId();
   const labelId = `${id}-label`;
   const [draft, setDraft] = React.useState<string | null>(null);
@@ -451,13 +468,13 @@ export function ValueSlider({
     <div className="emvb-ie-slider" data-disabled={disabled || undefined}>
       <div className="emvb-ie-slider-head">
         <label id={labelId} htmlFor={id}>
-          {label}
+          {t(label)}
         </label>
         <input
           type="text"
           inputMode="decimal"
           className="emvb-ie-number"
-          aria-label={`${label} value`}
+          aria-label={t("{label} value", { label: t(label) })}
           disabled={disabled}
           data-emvb-image-number={name}
           value={draft ?? format(value)}
@@ -523,19 +540,23 @@ export function SectionTabs<T extends string>({
   variant?: "underline" | "segmented";
   name: string;
 }) {
+  const t = useI18n();
   return (
     <div
       className="emvb-ie-tabs"
       data-variant={variant}
       data-emvb-image-tabs={name}
       role="group"
-      aria-label={label}
+      aria-label={t(label)}
     >
       <Tabs
         variant={variant}
         size="sm"
         value={value}
-        tabs={items.map((item) => ({ value: item.value, label: item.label }))}
+        tabs={items.map((item) => ({
+          value: item.value,
+          label: typeof item.label === "string" ? t(item.label) : item.label,
+        }))}
         onValueChange={(next) => {
           const match = items.find((item) => item.value === next);
           if (match) onChange(match.value);
@@ -547,12 +568,13 @@ export function SectionTabs<T extends string>({
 
 /** Live RGB histogram of the rendered image (photocn ImageEditorHistogram). */
 export function Histogram() {
+  const t = useI18n();
   const editor = useImageEditor();
   const pixels = editor.histogram.data?.pixels;
   return (
     <div className="emvb-ie-histogram" data-slot="image-editor-histogram">
       <div className="emvb-ie-histogram-head">
-        <span>Histogram</span>
+        <span>{t("Histogram")}</span>
         <span className="emvb-ie-mono">{pixels ? pixels.toLocaleString() : "—"}</span>
       </div>
       <canvas aria-hidden="true" height={64} width={256} ref={editor.histogram.canvasRef} />

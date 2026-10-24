@@ -1,3 +1,9 @@
+/**
+ * [INPUT]: 依赖布局字段与设置面板的调用参数。
+ * [OUTPUT]: 标签与提示由调用方翻译；只返回布尔值。
+ * [POS]: 元素设置面板的 HintedSwitch 边界。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
 import { Switch } from "@cloudflare/kumo";
 import * as React from "react";
 

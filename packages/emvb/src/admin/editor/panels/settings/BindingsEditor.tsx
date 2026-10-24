@@ -1,3 +1,10 @@
+/**
+ * [INPUT]: 依赖布局节点、后台界面翻译与同目录字段控件。
+ * [OUTPUT]: 动态数据绑定；选择内容、站点设置与 URL 参数源。
+ * [POS]: 元素设置面板的 BindingsEditor；不拥有页面保存与发布。
+ * [PROTOCOL]: 变更时更新此头部，然后检查 AGENTS.md
+ */
+import { useI18n } from "../../../i18n/index.ts";
 import * as React from "react";
 import {
   BIND_SOURCES,
@@ -47,6 +54,7 @@ export function BindingsEditor({
   /** The post the canvas shows (a sample outside a post template). */
   post?: ThemePostFields;
 }) {
+  const t = useI18n();
   const fields = bindableFields(node.type);
   const live = useLiveData();
   if (fields.length === 0) return null;
@@ -54,10 +62,12 @@ export function BindingsEditor({
   return (
     <section className="emvb-bind" data-emvb-bindings="" aria-labelledby={`${listId}-title`}>
       <h3 className="emvb-bind-title" id={`${listId}-title`}>
-        Dynamic data
+        {t("Dynamic data")}
       </h3>
       <p className="emvb-helper">
-        Show live data instead of the typed value. The typed value is used when there is none.
+        {t(
+          "Show live data instead of the typed value. The typed value is used when there is none.",
+        )}
       </p>
       {fields.map((field) => {
         const binding = node.bind?.[field.key];
@@ -75,15 +85,15 @@ export function BindingsEditor({
           <div className="emvb-bind-row" key={field.key} data-emvb-bind-field={field.key}>
             {/* "Text source", not "Text": the field's own input is already named "Text". */}
             <label className="emvb-bind-label" id={`${selectId}-label`}>
-              {`${field.label} source`}
+              {t("{name} source", { name: t(field.label) })}
             </label>
             <PanelSelect
               labelledBy={`${selectId}-label`}
               value={source ?? STATIC}
               data={{ "data-emvb-bind-source": field.key }}
               options={[
-                { value: STATIC, label: "Typed value" },
-                ...BIND_SOURCES.map((s) => ({ value: s, label: BIND_SOURCE_LABELS[s] })),
+                { value: STATIC, label: t("Typed value") },
+                ...BIND_SOURCES.map((s) => ({ value: s, label: t(BIND_SOURCE_LABELS[s]) })),
               ]}
               onChange={(next) => {
                 if (next === STATIC) onChange(withBinding(node, field.key, undefined));
@@ -108,14 +118,15 @@ export function BindingsEditor({
                 {refused ? (
                   <>
                     {offSiteOption && !binding.outside
-                      ? "Not a link on this site, so the typed value shows."
-                      : "Not a usable URL, so the typed value shows."}
+                      ? t("Not a link on this site, so the typed value shows.")
+                      : t("Not a usable URL, so the typed value shows.")}
                   </>
                 ) : value === undefined ? (
-                  <>No value here, so the typed value shows.</>
+                  <>{t("No value here, so the typed value shows.")}</>
                 ) : (
                   <>
-                    Live: <b>{value}</b>
+                    {t("Live: ")}
+                    <b>{value}</b>
                   </>
                 )}
               </p>
@@ -132,17 +143,17 @@ export function BindingsEditor({
                       onChange(withBinding(node, field.key, next));
                     }}
                   />
-                  {`Allow outside sites for ${field.label}`}
+                  {t("Allow outside sites for {name}", { name: t(field.label) })}
                 </label>
                 {binding.outside ? (
                   <p className="emvb-bind-warning" role="note">
-                    Phishing risk: anyone can share a link to this page that sends visitors to any
-                    site or shows any image under your address. Only allow this if you trust where
-                    those links come from.
+                    {t(
+                      "Phishing risk: anyone can share a link to this page that sends visitors to any site or shows any image under your address. Only allow this if you trust where those links come from.",
+                    )}
                   </p>
                 ) : (
                   <p className="emvb-helper">
-                    Only links and images on this site are used. Others show the typed value.
+                    {t("Only links and images on this site are used. Others show the typed value.")}
                   </p>
                 )}
               </div>
@@ -168,6 +179,7 @@ function BindKeyInput({
   options: string[];
   onCommit: (key: string) => void;
 }) {
+  const t = useI18n();
   const [draft, setDraft] = React.useState(binding.key);
   React.useEffect(() => setDraft(binding.key), [binding.key]);
   const valid = KEY.test(draft);
@@ -179,7 +191,9 @@ function BindKeyInput({
     <>
       <input
         className="emvb-native-input"
-        aria-label={`${fieldLabel} ${binding.source === "param" ? "parameter name" : "field name"}`}
+        aria-label={t(binding.source === "param" ? "{name} parameter name" : "{name} field name", {
+          name: t(fieldLabel),
+        })}
         aria-invalid={valid ? undefined : true}
         list={options.length > 0 ? listId : undefined}
         value={draft}
@@ -202,10 +216,11 @@ function BindKeyInput({
 
 /** The URL parameters the canvas previews with; they never reach the published page. */
 function PreviewQuery() {
+  const t = useI18n();
   const live = useLiveData();
   return (
     <label className="emvb-bind-row" data-emvb-preview-query="">
-      <span className="emvb-bind-label">Preview URL parameters (editor only)</span>
+      <span className="emvb-bind-label">{t("Preview URL parameters (editor only)")}</span>
       <input
         className="emvb-native-input"
         style={{ gridColumn: "1 / -1" }}
