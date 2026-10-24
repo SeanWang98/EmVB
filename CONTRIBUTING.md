@@ -4,6 +4,25 @@ Thanks for helping. This page covers setup, the checks to run, code style and co
 
 ## Set up
 
+### Nix development environment
+
+With Nix and Flakes enabled, enter the pinned toolchain:
+
+```bash
+nix develop
+bun install --frozen-lockfile
+```
+
+The Flake provides Bun 1.4.3 and Node 24 on macOS and Linux, for ARM64 and x86-64.
+`flake.lock` pins Nixpkgs; `bun.lock` pins workspace dependencies.
+Entering the shell does not install or update dependencies.
+
+If you use direnv with Nix Flake support, run `direnv allow` once.
+Format `flake.nix` with `nix fmt`.
+For a single command, use `nix develop -c bun run check`.
+
+### Without Nix
+
 You need [Bun](https://bun.sh) 1.4.3 or later and Node 24. End-to-end tests use Chromium at `/usr/bin/chromium`, or the binary in `EMVB_CHROMIUM`.
 
 ```bash

@@ -19,6 +19,9 @@ test/ - 跨包、宿主与文档回归检查。
 
 <config>
 package.json - workspace、检查命令与开发依赖。
+flake.nix - Bun 1.4.3、Node 24 开发环境与 Nix 格式器。
+flake.lock - nixpkgs 修订与内容哈希。
+.envrc - direnv 自动加载默认开发环境。
 bun.lock - workspace 精确依赖解析。
 bunfig.toml - Bun 测试的 DOM 与虚拟 EmDash 预加载。
 tsconfig.base.json - 严格 TypeScript 公共约束。
@@ -68,6 +71,10 @@ Site styles 继续使用独立草稿与发布流程。
 业务文件补齐 INPUT、OUTPUT、POS 头部。
 新增文件应少于 800 行。
 
+运行 `nix develop` 进入固定开发环境。
+可选运行 `direnv allow` 启用自动加载。
+Bun 与 CI 同为 1.4.3，Node 使用 24 系列。
+依赖安装显式运行 `bun install --frozen-lockfile`。
 运行 `bun run check` 检查 workspace。
 运行 `bun run pack:smoke` 检查发布包形状。
 宿主还须验证保存、预览、发布与生产 SSR。

@@ -25,6 +25,7 @@ playwright-report/
 .seeded-bug-backup/
 
 # Tooling caches
+.direnv/
 .fallow/
 *.tsbuildinfo
 .DS_Store
