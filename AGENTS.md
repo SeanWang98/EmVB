@@ -19,7 +19,7 @@ test/ - 跨包、宿主与文档回归检查。
 </directory>
 
 <config>
-package.json - workspace、检查命令与开发依赖。
+package.json - workspace、检查命令、开发依赖与临时安全覆盖。
 flake.nix - Bun 1.4.3、Node 24 开发环境与 Nix 格式器。
 flake.lock - nixpkgs 修订与内容哈希。
 .envrc - direnv 自动加载默认开发环境。
@@ -49,6 +49,16 @@ LICENSE - MIT 许可证。
 `astro` 依赖 `core`，只渲染请求可见的内容。
 浏览器代码不得导入服务端内容接口。
 纯布局逻辑不得依赖 React、数据库或 DOM。
+
+## 依赖安全边界
+
+插件与桥接器使用 Zod 4.6.7 修复线。
+根 overrides 将 EmDash 的旧 Zod 固定为 4.6.7。
+Miniflare 的 Undici 单独固定为 7.30.1。
+其他 Undici 依赖保留原有主版本。
+宿主安装不继承本仓库的根 overrides。
+宿主接入须遵循安装指南的 Zod 覆盖约定。
+上游解除旧版本固定后，删除对应覆盖并重新审计。
 
 ## Page canvas 扩展
 

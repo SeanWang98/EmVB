@@ -15,7 +15,7 @@ npm i @perkyzz/emvb
 # or: bun add @perkyzz/emvb
 ```
 
-EmVB ships TypeScript source and has no build step; your site's Vite build compiles it. Its peers are what an EmDash 1.x site already has: `emdash` ^1.0.0, `astro` ^7, `react` and `react-dom` ^19, `@cloudflare/kumo` 2.6.0 (EmDash's exact pin) and `@phosphor-icons/react` ^2.1.10. npm and Bun install missing peers on their own. EmVB currently supports Astro 7 up to 7.3.5: Astro 7.3.6 and later depend on zod ^4.6.5, while EmDash pins zod to exactly 4.5.4, and the second copy of zod breaks type checking of EmDash plugin routes. Keep your site on `astro` 7.3.5 for now; this will be widened once EmDash moves its zod pin.
+EmVB ships TypeScript source and has no build step; your site's Vite build compiles it. Its peers are what an EmDash 1.x site already has: `emdash` ^1.0.0, `astro` ^7, `react` and `react-dom` ^19, `@cloudflare/kumo` 2.6.0 (EmDash's exact pin) and `@phosphor-icons/react` ^2.1.10. npm and Bun install missing peers on their own. This repository tests Astro 7.3.5 with patched Zod 4.6.7. Keep that Astro version until a newer host combination passes the same checks.
 
 It also installs two dependencies: `zod` and `@perkyzz/emvb-icons`, the icon sets for the editor's Icon library (pinned to the exact version EmVB was built with). Only the editor loads the icon sets; a placed icon is saved into the page as SVG, so public pages never fetch them.
 
@@ -24,6 +24,24 @@ Optional (forms on EmVB pages):
 ```bash
 bun add @emdash-cms/plugin-forms@0.2.9
 ```
+
+### Patched Zod
+
+This repository's build uses Zod 4.6.7. EmDash 1.3.1, `@emdash-cms/auth` and `@emdash-cms/plugin-types` still pin Zod 4.5.4, which is covered by a [memory-exhaustion advisory](https://github.com/advisories/GHSA-mrhx-c7xc-m3w5).
+
+When installing this build into an EmDash 1.3.1 host, merge this override into the host's root `package.json`:
+
+```json
+{
+  "overrides": {
+    "zod": "4.6.7"
+  }
+}
+```
+
+Run the host's package manager install command again, then type-check, build and audit the host. This keeps the host and plugin on one patched schema library. The plugin's Zod dependency alone cannot replace EmDash's exact pin, and this repository's root overrides are not inherited by consumers.
+
+The workspace also scopes an Undici 7.30.1 override to Miniflare. This is a development-tool dependency; it does not force Undici 8 consumers onto Undici 7. Remove an override after the corresponding upstream dependency accepts a patched version, then repeat the checks. See [the security policy](../../SECURITY.md#temporary-dependency-overrides).
 
 ## 2. Register the plugin
 

@@ -21,3 +21,13 @@ Out of scope: the demo sites' dev-only sign-in (`/_emdash/api/setup/dev-bypass`)
 EmVB is a plugin that runs inside your EmDash site. Health checks and request tracing belong to the host EmDash site and its hosting; EmVB adds no endpoints of its own for them. EmVB's own meter measures page weight only (HTML, CSS, JS and image bytes against its budgets).
 
 Dependency advisories are checked in CI with `bun audit --audit-level=high`, separately from the offline checks.
+
+## Temporary dependency overrides
+
+This repository uses patched Zod 4.6.7 throughout the workspace. EmDash 1.3.1, its auth package and plugin types still pin Zod 4.5.4, so the root `package.json` overrides that pin. This removes the [Zod memory-exhaustion advisory](https://github.com/advisories/GHSA-mrhx-c7xc-m3w5) and keeps host and plugin schema types on the same version.
+
+The root also overrides only Miniflare's Undici dependency to 7.30.1. Other Undici consumers retain their own major version; the lockfile carries the patched Undici 8 version used by Astro's font loader. `body-parser` and `fast-uri` use fixes within their existing dependent ranges.
+
+Root overrides are not inherited by applications that install the plugin. Hosts using this repository's build with EmDash 1.3.1 must apply the [Zod override in the install guide](docs/guides/install-in-a-host-site.md#patched-zod).
+
+Remove each override when its upstream dependency accepts a patched version. Rerun the dependency audit, workspace checks and host builds before removing it.
